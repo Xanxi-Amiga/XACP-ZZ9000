@@ -1,0 +1,19 @@
+ZZFwUpdate 2.1 upstream reference
+
+Project:
+https://github.com/BlitterStudio/zz9000-drivers
+
+Historical release:
+https://github.com/BlitterStudio/zz9000-drivers/releases/tag/v2.1.0
+
+Source file:
+ZZFwUpdate/ZZFwUpdate.c
+
+Source Git blob SHA:
+5e84264f8dca32fda2c191c8354eac7c81e8e563
+
+Original author:
+Dimitris Panokostas (MiDWaN)
+
+License:
+GPL-3.0-or-later
