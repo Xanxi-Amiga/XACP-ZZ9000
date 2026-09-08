@@ -65,6 +65,51 @@ Corresponding source:
 firmware/source/XX19a/ZZ9000_proto.sdk/ZZ9000OS/src/tml.h
 
 ----------------------------------------------------------------------
+ZZ9000 Firmware Update (FWUP) / ZZFwUpdate 2.1
+----------------------------------------------------------------------
+
+Firmware-side FWUP implementation and the corresponding historical
+ZZFwUpdate 2.1 utility:
+
+Copyright (C) 2026, Dimitris Panokostas <midwan@gmail.com>
+
+Original project / upstream:
+BlitterStudio ZZ9000 projects
+
+Firmware source:
+https://github.com/BlitterStudio/zz9000-firmware
+
+AmigaOS utility:
+https://github.com/BlitterStudio/zz9000-drivers
+
+License:
+GNU General Public License version 3 or later (GPL-3.0-or-later).
+
+The FWUP core files included in XX19a are unmodified from the original
+BlitterStudio implementation introduced in May 2026:
+
+firmware/source/XX19a/ZZ9000_proto.sdk/ZZ9000OS/src/fw_update.c
+Git blob SHA: 91307d8a61f579c660bd424ea9b8d2bbc5577ea9
+
+firmware/source/XX19a/ZZ9000_proto.sdk/ZZ9000OS/src/fw_update.h
+Git blob SHA: 3e63611b41e6e456e61a3f95fd8a817465f6cbbc
+
+Reference BlitterStudio firmware commit:
+cd0a6507631515a51011be85e89dae236e8f5036
+"feat(fwup): file-push protocol for AmigaOS firmware updates"
+
+The original copyright and SPDX license notices are preserved in the
+corresponding source files.
+
+XACP integrates this original FWUP core into its own firmware main loop
+and reset/storage lifecycle.
+
+XACP firmware integration: Xanxi.
+
+The historical ZZFwUpdate 2.1 utility redistributed under
+firmware/tools/ZZFwUpdate/ retains its original copyright and GPL notice.
+
+----------------------------------------------------------------------
 Firmware license
 ----------------------------------------------------------------------
 

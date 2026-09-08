@@ -553,7 +553,28 @@ The current firmware binary is:
 BOOT_XX19a.bin
 ```
 
-Firmware may be installed using the normal ZZ9000 SD-card procedure or a compatible firmware-update tool.
+Firmware may be installed using the normal ZZ9000 SD-card procedure or the historical ZZFwUpdate 2.1 utility supplied under:
+
+```text
+firmware/tools/ZZFwUpdate/
+```
+
+ZZFwUpdate and the firmware-side FWUP core originate from Dimitris Panokostas (MiDWaN) in the BlitterStudio ZZ9000 projects and are distributed under GPL-3.0-or-later.
+
+The FWUP core files `fw_update.c` and `fw_update.h` included in the XX19a source tree are unmodified from the original BlitterStudio implementation introduced in May 2026. XACP integrates that original FWUP core into its own firmware main loop and reset/storage lifecycle.
+
+XACP firmware integration: Xanxi.
+
+The bundled ZZFwUpdate 2.1 is the historical pre-RESTORE version using the original FWUP command set:
+
+```text
+OPEN
+WRITE
+CLOSE
+ABORT
+```
+
+Later BlitterStudio ZZFwUpdate / FWUP versions add protocol extensions such as `RESTORE` and should not be assumed to be compatible with this XACP firmware branch.
 
 When updating:
 
@@ -664,13 +685,31 @@ The corresponding firmware source is available under:
 firmware/source/XX19a/
 ```
 
-The firmware uses third-party components which retain their respective original licenses and copyright notices.
+The firmware uses upstream and third-party components which retain their respective original licenses and copyright notices.
 
 In particular:
 
 ```text
-TinySoundFont   - Bernhard Schelling - MIT License
-TinyMidiLoader  - Bernhard Schelling - zlib License
+FWUP / firmware update core
+    Dimitris Panokostas (MiDWaN)
+    BlitterStudio ZZ9000 projects
+    GPL-3.0-or-later
+
+TinySoundFont
+    Bernhard Schelling
+    MIT License
+
+TinyMidiLoader
+    Bernhard Schelling
+    zlib License
+```
+
+The original FWUP source files retain the copyright and SPDX notices of Dimitris Panokostas. Their XACP-specific integration into the XX19a firmware main loop and storage/reset lifecycle is part of the XACP firmware integration by Xanxi.
+
+Detailed third-party notices are provided in:
+
+```text
+firmware/source/XX19a/THIRD_PARTY_LICENSES.txt
 ```
 
 Publication of the XX19a firmware source does not imply that every Amiga-side XACP application is open source.
@@ -731,5 +770,7 @@ The purpose of this rule is to prevent the memory-map fragmentation that develop
 XACP / Xanxi, 2026.
 
 Thanks to the MNT ZZ9000 project and to the Amiga / ZZ9000 community for the hardware platform, testing, feedback and technical discussion.
+
+FWUP / ZZFwUpdate: Dimitris Panokostas (MiDWaN), BlitterStudio, GPL-3.0-or-later.
 
 Third-party components retain their original authorship and licenses.
