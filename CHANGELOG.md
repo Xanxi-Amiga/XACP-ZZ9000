@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.7.0 / XX19b â€” XACP v1.7 public baseline
+## v1.7.0 / XX19b - XACP v1.7 public baseline
 
 XX19b supersedes XX19a as the current firmware baseline.
 
@@ -423,6 +423,8 @@ XX19a / v1.6     coordinated Core0 / Core1 shared DDR ABI
 The current platform baseline is:
 
 ```text
-XX19a
-XACP v1.6
+The current platform baseline is:
+
+XX19b
+XACP v1.7
 ```
