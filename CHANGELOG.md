@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.7.0 / XX19b â€” XACP v1.7 public baseline
+
+XX19b supersedes XX19a as the current firmware baseline.
+
+### Added
+
+- 248 MiB ARM-only Core1 arena at `0x30000000-0x3F800000`.
+- 4 MiB guard at `0x3F800000-0x3FC00000`.
+- protected firmware/hardware region at `0x3FC00000-0x40000000`.
+- versioned firmware source under `firmware/source/XX19b/`.
+
+### Changed
+
+- XACP protocol/ABI baseline advances from v1.6 to v1.7.
+- Legacy SMUSH Codec1/37/47 implementation is removed from the firmware build because its fixed scratch buffers occupied the new high Core1 arena.
+- Existing `ACC_CMPTYPE` values remain reserved; legacy requests are unsupported.
+- XACP v1.6 allocations below `0x30000000` remain unchanged.
+
+
 ## v1.6.0 / XX19a — XACP v1.6 public baseline
 
 XX19a is the current Xanxi/XACP firmware baseline for the MNT ZZ9000.
