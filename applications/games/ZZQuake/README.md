@@ -207,8 +207,6 @@ ZZQuake
 Mission packs and music backends can also be selected from the command line
 using the same keywords as the Workbench ToolTypes.
 
-A `DEBUG` command-line option enables verbose launcher diagnostics. It is not
-part of normal Workbench operation.
 
 ## Release scope
 
