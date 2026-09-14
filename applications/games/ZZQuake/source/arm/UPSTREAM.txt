@@ -1,0 +1,20 @@
+ZZQuake 1.0 upstream provenance
+
+quakegeneric repository:
+https://github.com/erysdren/quakegeneric
+
+Verified commit:
+13052102577c629650cf07a46151a4b6e1b19c3c
+
+Commit message:
+source/makefile: overhaul
+
+Commit date:
+2025-01-28
+
+Verified source tree SHA-1:
+aad02dc8f4e9efc1f5dcb1fa67aceb430299bf99
+
+The tree SHA was independently recomputed from the files in
+quakegeneric_source/ after excluding snd_dma.c, snd_mem.c and snd_mix.c.
+It matches the source/ tree recorded by Git for the commit above.

@@ -1,0 +1,10 @@
+ZZQuake 1.0 - validated 320x240 ARM blob
+
+Reference binary (not included in this source archive):
+zzquake.bin
+Size:   395228 bytes
+MD5:    26519fdf7a3836ae68afd291b21825f6
+SHA256: 9d3789f340296d355a8d6fcf3e083eb1232b7344cc2effd100a6ffc0bcd9cb89
+
+Release build mode:
+ZZQ_PROD=1
