@@ -83,6 +83,14 @@ Historical builds and source remain archived for regression testing.
 
 Application material lives under `applications/`.
 
+## Host drivers
+
+| Driver | Role |
+|---|---|
+| **ZZ9000AX Fitzsteve Edition** | Two-channel variant of the MNT ZZ9000AX AHI 4.19 driver for XACP game ports using AHI SFX together with MP3 or ZZMIDI music |
+
+Driver material lives under `drivers/`.
+
 ## Compatibility
 
 Use application, firmware, shared-memory definitions and `zz9000.card`
@@ -93,6 +101,7 @@ firmware or the card driver, perform a complete power-off before testing.
 
 ```text
 applications/   Amiga applications and Core1 programs
+drivers/        AmigaOS host drivers and XACP compatibility variants
 docs/           protocol/developer documentation
 firmware/       current firmware, source and historical archive
 sdk/            shared XACP headers

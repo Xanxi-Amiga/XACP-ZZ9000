@@ -1,0 +1,62 @@
+--- a/ahi/driver/zz9000ax-ahi.c
++++ b/ahi/driver/zz9000ax-ahi.c
+@@ -8,6 +8,9 @@
+  * Based on code by _Bnu (thanks a ton!) and AHI example drivers.
+  * Modified by Thomas Wenzel (TW)
+  *
++ * Fitzsteve Edition FS1 (19.09.2026)
++ * Two AHI mixing channels for XACP game ports using SFX with MP3 or ZZMIDI music.
++ *
+  * SPDX-License-Identifier: GPL-3.0-or-later
+  * GNU General Public License v3.0 or later
+  *
+@@ -51,10 +54,10 @@
+ #define XSTR(s) STR(s)
+ 
+ #define DEVICE_NAME "zz9000ax.audio"
+-#define DEVICE_DATE "(03.01.2023)"
++#define DEVICE_DATE "(19.09.2026)"
+ #define DEVICE_VERSION 4
+ #define DEVICE_REVISION 19
+-#define DEVICE_ID_STRING "ZZ9000AX " XSTR(DEVICE_VERSION) "." XSTR(DEVICE_REVISION) " " DEVICE_DATE
++#define DEVICE_ID_STRING "ZZ9000AX " XSTR(DEVICE_VERSION) "." XSTR(DEVICE_REVISION) "-FS1 " DEVICE_DATE
+ #define DEVICE_PRIORITY 0
+ 
+ #define REAL_HARDWARE 1
+@@ -63,6 +66,9 @@
+ #define AUDIO_BUFSZ ZZ_BYTES_PER_PERIOD*8 // TODO: query from hardware
+ #define WORKER_PRIORITY 127 // TW: High priority because this is time-critical for high-level access.
+ 
++/* Two AHI mixing channels for XACP game ports (SFX + MP3/ZZMIDI). */
++#define FITZSTEVE_MAX_CHANNELS 2
++
+ #define REG_ZZ_CONFIG       0x04
+ #define REG_ZZ_AUDIO_SWAB   0x70
+ #define REG_ZZ_AUDIO_SCALE  0x74
+@@ -71,7 +77,7 @@
+ #define REG_ZZ_AUDIO_CONFIG 0xF4
+ 
+ struct ExecBase     *SysBase;
+-struct UtilityBase  *UtilityBase;
++struct Library      *UtilityBase;
+ struct Library      *AHIsubBase  = NULL;
+ struct DosLibrary   *DOSBase     = NULL;
+ struct z9ax_base    *Z9AXBase;
+@@ -144,7 +150,7 @@
+   if (!(DOSBase = (struct DosLibrary *)OpenLibrary((STRPTR)"dos.library",0)))
+     return 0;
+ 
+-  if (!(UtilityBase = (struct UtilityBase *)OpenLibrary((STRPTR)"utility.library",0)))
++  if (!(UtilityBase = (struct Library *)OpenLibrary((STRPTR)"utility.library",0)))
+     return 0;
+ 
+   if (!(ExpansionBase = (struct ExpansionBase *)OpenLibrary((STRPTR)"expansion.library",0)))
+@@ -570,7 +576,7 @@
+     case AHIDB_Realtime:
+       return TRUE;
+     case AHIDB_MaxChannels:
+-      return 1;
++      return FITZSTEVE_MAX_CHANNELS;
+     case AHIDB_MaxPlaySamples:
+       return ZZ_BYTES_PER_PERIOD;
+     case AHIDB_MaxRecordSamples:
