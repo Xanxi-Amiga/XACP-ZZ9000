@@ -31,8 +31,7 @@ The source also includes a small `UtilityBase` type adjustment so the old 4.19 s
 From the repository root:
 
 ```sh
-./build.sh
-```
+./drivers/ZZ9000AX-Fitzsteve/build.sh```
 
 Equivalent command:
 
