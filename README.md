@@ -99,6 +99,12 @@ Historical builds and source remain archived for regression testing.
 | **mpega.library integration** | MPEGA-compatible ARM decode path |
 | **ZZBench GUI** | 68k/ARM/memory benchmarking |
 
+### In development
+
+| Project | Role |
+|---|---|
+| **ZZDarkForcesNEXT** | Dark Forces / The Force Engine port on Core1 — nearing completion |
+
 Application material lives under `applications/`.
 
 ## Host drivers
