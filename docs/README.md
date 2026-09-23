@@ -18,6 +18,16 @@ XACP v1.6 = protocol / ABI / shared-memory baseline
 
 ---
 
+## Project overview
+
+For the origins, design philosophy and purpose of XACP, see:
+
+**[Why XACP?](WHY_XACP.md)**
+
+Technical documentation below describes the protocol and implementation.
+
+---
+
 ## Current documentation
 
 The current architecture and developer reference is:
