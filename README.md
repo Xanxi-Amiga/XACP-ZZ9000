@@ -15,6 +15,23 @@ Protocol: XACP v1.7
 
 Firmware build numbers and XACP protocol versions are separate.
 
+
+## Why XACP?
+
+The ZZ9000 is already an excellent RTG graphics card. XACP explores another
+part of the hardware: its dual-core ARM processor and DDR memory.
+
+The central idea is to make that processing power available to Amiga software,
+allowing the ARM to act as an additional processor for demanding workloads
+while the 68k and AmigaOS remain in control of the machine.
+
+XACP has grown from early ARM/68k experiments and public fractal demonstrations
+in May 2026 into a platform supporting complete ARM-side engines, emulation,
+multimedia and persistent services such as SoundFont MIDI synthesis.
+
+**[Why XACP? — Origins, philosophy and goals](docs/WHY_XACP.md)**
+
+
 ## Architecture
 
 ### Core0 services
