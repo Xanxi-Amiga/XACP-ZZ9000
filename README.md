@@ -25,9 +25,10 @@ The central idea is to make that processing power available to Amiga software,
 allowing the ARM to act as an additional processor for demanding workloads
 while the 68k and AmigaOS remain in control of the machine.
 
-XACP has grown from early ARM/68k experiments and public fractal demonstrations
-in May 2026 into a platform supporting complete ARM-side engines, emulation,
-multimedia and persistent services such as SoundFont MIDI synthesis.
+XACP has grown from early ARM/68k experiments in March and April 2026 and
+public ARM fractal demonstrations on 7 May 2026 into a platform supporting
+complete ARM-side engines, emulation, multimedia and persistent services
+such as SoundFont MIDI synthesis.
 
 **[Why XACP? — Origins, philosophy and goals](docs/WHY_XACP.md)**
 
