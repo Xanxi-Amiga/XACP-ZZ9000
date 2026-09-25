@@ -19,7 +19,7 @@ XX19b supersedes XX19a as the current firmware baseline.
 - XACP v1.6 allocations below `0x30000000` remain unchanged.
 
 
-## v1.6.0 / XX19a — XACP v1.6 public baseline
+## v1.6.0 / XX19a - XACP v1.6 public baseline
 
 XX19a is the current Xanxi/XACP firmware baseline for the MNT ZZ9000.
 
@@ -90,7 +90,7 @@ Publication of firmware source does not imply that every Amiga-side XACP applica
 
 ---
 
-## Application ecosystem — 2026 expansion
+## Application ecosystem - 2026 expansion
 
 During the development cycle leading to XACP v1.6, the XACP platform expanded significantly beyond its original audio and demonstration applications.
 
@@ -207,7 +207,61 @@ ZZSpeech demonstrates a resident service architecture implemented through a dyna
 
 ---
 
-## v1.5.0 / XX19 — XACP v1.5 public baseline
+### ZZDarkForcesNEXT 1.0
+
+Public release of The Force Engine / STAR WARS: Dark Forces for Amiga
+systems equipped with a ZZ9000.
+
+The TFE engine and software renderer run natively on ZZ9000 ARM Core1
+through XACP, while AmigaOS handles Workbench integration, Picasso96
+display, input, AHI audio, filesystem access and optional CAMD MIDI.
+
+Main features include:
+
+```text
+native The Force Engine execution on ARM Core1
+320x200, 320x240, 640x400, 640x480 and 800x600
+Picasso96 asynchronous triple buffering
+AHI sound effects
+internal Roland SC-55 SoundFont music
+internal TimGM6mb SoundFont music
+external MIDI through CAMD
+save/load and quicksave/quickload
+pilot progression
+persistent in-game configuration
+Smooth VUE
+Autorun
+Crouch Toggle
+secret-found messages
+automap key colors
+automap secret display
+clean cooperative Core1 stop and return
+```
+
+Dark Forces game data is preloaded into the XACP v1.7 248 MiB ARM-only
+Core1 arena before gameplay, allowing the engine to operate without
+repeated Amiga-side disk access once started.
+
+The release includes the closed-source Amiga 68k launcher and the
+GPL-2.0 Core1 blob. Complete corresponding source/build material for
+the TFE-derived Core1 component is published in the repository.
+
+Original STAR WARS: Dark Forces commercial game data is not included.
+
+Public release:
+
+```text
+ZZDarkForcesNEXT-1.0
+25 September 2026
+```
+
+Release page:
+
+https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZDarkForcesNEXT-1.0
+
+---
+
+## v1.5.0 / XX19 - XACP v1.5 public baseline
 
 XX19 established the first formal large multimedia shared-memory baseline.
 
@@ -255,7 +309,7 @@ XX19 has now been superseded by XX19a / XACP v1.6.
 
 ---
 
-## XX18m — first ZZMIDI firmware line
+## XX18m - first ZZMIDI firmware line
 
 Firmware generation introducing ZZMIDI into the XACP firmware tree.
 
@@ -275,7 +329,7 @@ XX18m fixed that initialization problem.
 
 ---
 
-## XX18c — ZZDoom public baseline
+## XX18c - ZZDoom public baseline
 
 Firmware generation associated with the first public ZZDoom baseline.
 
@@ -311,7 +365,7 @@ ZZDoom established much of the practical Core1 execution model later reused by o
 
 ---
 
-## XX16c — MP3 / MP2 / ZZMPEG baseline
+## XX16c - MP3 / MP2 / ZZMPEG baseline
 
 First major public XACP multimedia firmware generation.
 
@@ -343,7 +397,7 @@ XX16c is the firmware generation where XACP became a practical multimedia offloa
 
 ---
 
-## ZZ-MPEG — MPEG-1 / MP2 multimedia path
+## ZZ-MPEG - MPEG-1 / MP2 multimedia path
 
 ZZ-MPEG demonstrated the Core1 multimedia model for video playback.
 
@@ -361,7 +415,7 @@ clean STOP / return path
 
 ---
 
-## ZZBench GUI — platform validation
+## ZZBench GUI - platform validation
 
 ZZBench GUI provides CPU and memory-bandwidth measurements for the XACP hardware/software architecture.
 
@@ -380,7 +434,7 @@ Later releases expanded the benchmark while retaining its role as an XACP valida
 
 ---
 
-## JuliaV2 — Core1 validation
+## JuliaV2 - Core1 validation
 
 JuliaV2 established the clean Core1 application lifecycle later reused by larger projects.
 
