@@ -36,6 +36,28 @@ Port by **Xanxi**, 2026.
   - Smooth VUE
 - Cooperative Core1 return on exit.
 
+## The NEXT part
+
+ZZDarkForcesNEXT is not limited to reproducing the original 320x200 DOS
+experience on the ZZ9000. It uses a recent The Force Engine codebase and brings
+selected modern TFE gameplay and presentation features to the classic Amiga.
+
+The current release includes:
+
+- rendering from the original 320x200 mode up to 800x600;
+- Smooth VUE interpolation;
+- Autorun;
+- Crouch Toggle;
+- secret-found messages;
+- automap key colors;
+- automap secret display;
+- persistent in-game configuration;
+- TFE save/load, quicksave/quickload and pilot progression.
+
+These features remain optional where appropriate, so the original Dark Forces
+gameplay can still be kept close to the classic experience.
+
+
 ## Requirements
 
 - Classic Amiga with ZZ9000.
