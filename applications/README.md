@@ -30,14 +30,13 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `emulators/ZZPicodrive/ZZPicodriveMD/`  | **ZZPicoDriveMD 1.1**     | Sega Mega Drive / Genesis emulator             | Current              |
 | `emulators/ZZPicodrive/ZZPicodriveSMS/` | **ZZPicoDriveSMS 1.1**    | Sega Master System emulator                    | Current              |
 | `games/ZZDoom/`                         | **ZZDoom**                | Doom engine running on ARM Core1               | Current              |
-| `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current  
-| 
-| `games/ZZDarkForcesNEXT/`               | **ZZDarkForcesNEXT**       | The Force Engine / Dark Forces on ARM Core1    | Current              |          |
+| `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current              |
+| `games/ZZDarkForcesNEXT/`               | **ZZDarkForcesNEXT**      | The Force Engine / Dark Forces on ARM Core1    | Current              |
 | `games/ZZRastan/`                       | **ZZRastan 1.0**          | Rastan arcade hardware recreation on ARM Core1 | Current              |
 | `mpegplayer/`                           | **ZZ-MPEG**               | MPEG-1 video / MP2 audio playback              | Advanced Beta        |
 | `mp3/`                                  | **ZZMP3Play / ZZPlayGUI** | ARM-accelerated MP3 / MP2 playback             | Current / historical |
-| `mp3/`                                  | **zz9000.engine**         | AmigaAMP external ARM decoding engine          | Current / historical |
-| `mp3/`                                  | **mpega.library**         | XACP-backed MPEGA-compatible decoding          | Current / historical |
+| `mp3/`                                  | **zz9000.engine**          | AmigaAMP external ARM decoding engine          | Current / historical |
+| `mp3/`                                  | **mpega.library**          | XACP-backed MPEGA-compatible decoding          | Current / historical |
 | `benchmarks/`                           | **ZZBench GUI**           | 68k / ARM / memory bandwidth benchmark         | Current              |
 | `fractals/core1-julia-v2/`              | **JuliaV2**               | Core1 execution and clean-return validation    | Current validation   |
 | `fractals/`                             | **early ZZFractal demos** | Early XACP graphical experiments               | Historical only      |
@@ -105,7 +104,7 @@ Unlike ZZMIDI, ZZSpeech does not require the speech engine to be permanently bui
 
 The Flite Core1 program is loaded dynamically when ZZSpeech starts.
 
-Only one dynamically loaded Core1 application can execute at a time, so ZZSpeech should be stopped cleanly before launching another Core1 application such as ZZPicoDrive, ZZDoom, ZZQuake or ZZRastan.
+Only one dynamically loaded Core1 application can execute at a time, so ZZSpeech should be stopped cleanly before launching another Core1 application such as ZZPicoDrive, ZZDoom, ZZQuake, ZZDarkForcesNEXT or ZZRastan.
 
 ZZSpeech 1.0 is distributed as closed-source freeware. See its own documentation and license files for redistribution and third-party licensing terms.
 
@@ -254,6 +253,46 @@ clean Core1 stop and return
 Quake game data is not included. Users must provide their own `pak0.pak` and, for registered Quake, `pak1.pak`.
 
 The ARM Core1 component is derived from GPL-licensed Quake / quakegeneric code. Corresponding source is included in the ZZQuake directory. The Amiga-side launcher is distributed separately as proprietary freeware.
+
+---
+
+# ZZDarkForcesNEXT
+
+Directory:
+
+```text
+games/ZZDarkForcesNEXT/
+```
+
+ZZDarkForcesNEXT runs The Force Engine and STAR WARS: Dark Forces natively on the ZZ9000 ARM Cortex-A9 Core1 while AmigaOS provides Workbench integration, Picasso96 display, input, AHI audio, filesystem access and optional CAMD MIDI.
+
+Unlike a minimal reproduction of the original DOS version, ZZDarkForcesNEXT also exposes selected modern The Force Engine features while retaining the classic software-rendered game.
+
+Main features include:
+
+```text
+native TFE execution on ARM Core1
+320x200 to 800x600 software rendering
+Picasso96 asynchronous triple buffering
+Workbench launch and ToolTypes
+AHI sound effects
+internal SoundFont music
+external CAMD MIDI
+save/load and quicksave/quickload
+pilot progression
+persistent in-game configuration
+Smooth VUE
+Autorun
+Crouch Toggle
+secret-found messages
+automap key colors
+automap secret display
+clean Core1 stop and return
+```
+
+Original Dark Forces commercial data is not included.
+
+The TFE-derived Core1 component and corresponding source are distributed under GPL-2.0. The Amiga-side launcher is distributed separately as a closed-source binary.
 
 ---
 
