@@ -145,6 +145,7 @@ Examples include:
 ```text
 ZZDoom
 ZZQuake
+ZZDarkForcesNEXT
 ZZPicoDrive
 ZZRastan
 ZZSpeech
@@ -322,17 +323,18 @@ XACP is used by several classes of application.
 Examples include:
 
 ```text
-ZZMIDI        persistent Core0 SoundFont / MIDI service
-ZZDoom        Core1 Doom engine
-ZZQuake       Core1 Quake engine
-ZZPicoDrive   Core1 Mega Drive / Genesis emulator
-ZZRastan      Core1 arcade game recreation
-ZZSpeech      ARM-assisted speech synthesis
-ZZPPC         experimental PPC32 / FPU execution
-ZZ-MPEG       MPEG-1 / MP2 multimedia playback
-ZZPlayGUI     MP3 / MP2 playback
-ZZBench       68k / ARM / memory benchmarking
-JuliaV2       Core1 validation and rendering
+ZZMIDI             persistent Core0 SoundFont / MIDI service
+ZZDoom             Core1 Doom engine
+ZZQuake            Core1 Quake engine
+ZZDarkForcesNEXT   Core1 The Force Engine / Dark Forces port
+ZZPicoDrive        Core1 Mega Drive / Genesis emulator
+ZZRastan           Core1 arcade game recreation
+ZZSpeech           ARM-assisted speech synthesis
+ZZPPC              experimental PPC32 / FPU execution
+ZZ-MPEG            MPEG-1 / MP2 multimedia playback
+ZZPlayGUI          MP3 / MP2 playback
+ZZBench            68k / ARM / memory benchmarking
+JuliaV2            Core1 validation and rendering
 ```
 
 Additional integration includes ARM-assisted MP3/MP2 playback through:
@@ -355,9 +357,6 @@ Application-specific material belongs under:
 Current work includes:
 
 ```text
-ZZDarkForcesNEXT    Dark Forces / The Force Engine based XACP port,
-                    currently nearing completion
-
 JPEG datatype       ARM-assisted JPEG decoding for Amiga datatype use
 
 PNG datatype        ARM-assisted PNG decoding for Amiga datatype use
