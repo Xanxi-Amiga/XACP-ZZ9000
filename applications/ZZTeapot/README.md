@@ -6,7 +6,7 @@ The demo uses GL-style rendering performed entirely in software on the ZZ9000’
 
 ## Demo video
 
-The video below shows ZZTeapot Hello running on real Amiga hardware with a ZZ9000.
+The video below shows ZZTeapot running on real Amiga hardware with a ZZ9000.
 
 [Watch the ZZTeapot demo on YouTube](https://youtu.be/GSLhxQDLhEI)
 
