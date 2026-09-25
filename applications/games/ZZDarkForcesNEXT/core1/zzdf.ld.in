@@ -1,0 +1,93 @@
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ENTRY(zzdf_entry)
+
+SECTIONS {
+    . = 0x04900000;
+
+    .text : {
+        _text_start = .;
+        KEEP(*(.text.zzdf_entry))
+        KEEP(*(.text.core1_entry))
+        *(.text*)
+        *(.rodata*)
+        _text_end = .;
+    }
+
+    .init_array : {
+        . = ALIGN(4);
+        __init_array_start = .;
+        KEEP(*(SORT_BY_INIT_PRIORITY(.init_array.*)))
+        KEEP(*(.init_array))
+        __init_array_end = .;
+    }
+
+    .fini_array : {
+        . = ALIGN(4);
+        __fini_array_start = .;
+        KEEP(*(SORT_BY_INIT_PRIORITY(.fini_array.*)))
+        KEEP(*(.fini_array))
+        __fini_array_end = .;
+    }
+
+     
+
+
+
+
+    .data.mmu : ALIGN(16384) {
+        _mmu_table_start = .;
+        KEEP(*(.data.mmu))
+        _mmu_table_end = .;
+    }
+
+    .data : {
+        _data_start = .;
+        *(.data*)
+        _data_end = .;
+    }
+
+    .ARM.extab : { *(.ARM.extab*) }
+    .ARM.exidx : {
+        __exidx_start = .;
+        *(.ARM.exidx*)
+        __exidx_end = .;
+    }
+
+    _image_end = .;
+
+    /* NOBITS: not in the .bin, zeroed at boot by core1_entry. */
+    . = 0x05000000;
+    .bss (NOLOAD) : {
+        _bss_start = .;
+        *(.bss*)
+        *(COMMON)
+        . = ALIGN(4);
+        _bss_end = .;
+    }
+
+    _blob_end = .;
+}
+
+@ASSERT@
