@@ -42,9 +42,9 @@ synthesis and shared multimedia operations.
 
 ### Core1 applications
 
-Complete engines can be dynamically loaded onto the second Cortex-A9.  Current
-projects include ZZDoom, ZZQuake, ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech and
-other experimental engines.
+Complete engines can be dynamically loaded onto the second Cortex-A9. Current
+projects include ZZDoom, ZZQuake, ZZDarkForcesNEXT, ZZPicoDrive, ZZRastan,
+ZZPPC, ZZSpeech and other experimental engines.
 
 ## XACP v1.7
 
@@ -91,6 +91,7 @@ Historical builds and source remain archived for regression testing.
 | **ZZPPC** | Experimental PPC32/FPU execution on Core1 |
 | **ZZDoom** | Doom engine on Core1 |
 | **ZZQuake** | WinQuake/quakegeneric software renderer on Core1 |
+| **ZZDarkForcesNEXT** | The Force Engine / Dark Forces on Core1 with enhanced TFE features |
 | **ZZRastan** | Rastan arcade hardware recreation on Core1 |
 | **ZZSpeech** | Speech synthesis acceleration |
 | **ZZ-MPEG** | MPEG-1 / MP2 playback |
@@ -99,11 +100,6 @@ Historical builds and source remain archived for regression testing.
 | **mpega.library integration** | MPEGA-compatible ARM decode path |
 | **ZZBench GUI** | 68k/ARM/memory benchmarking |
 
-### In development
-
-| Project | Role |
-|---|---|
-| **ZZDarkForcesNEXT** | Dark Forces / The Force Engine port on Core1 — nearing completion |
 
 Application material lives under `applications/`.
 

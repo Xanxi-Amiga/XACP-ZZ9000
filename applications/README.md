@@ -30,7 +30,9 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `emulators/ZZPicodrive/ZZPicodriveMD/`  | **ZZPicoDriveMD 1.1**     | Sega Mega Drive / Genesis emulator             | Current              |
 | `emulators/ZZPicodrive/ZZPicodriveSMS/` | **ZZPicoDriveSMS 1.1**    | Sega Master System emulator                    | Current              |
 | `games/ZZDoom/`                         | **ZZDoom**                | Doom engine running on ARM Core1               | Current              |
-| `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current              |
+| `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current  
+| 
+| `games/ZZDarkForcesNEXT/`               | **ZZDarkForcesNEXT**       | The Force Engine / Dark Forces on ARM Core1    | Current              |          |
 | `games/ZZRastan/`                       | **ZZRastan 1.0**          | Rastan arcade hardware recreation on ARM Core1 | Current              |
 | `mpegplayer/`                           | **ZZ-MPEG**               | MPEG-1 video / MP2 audio playback              | Advanced Beta        |
 | `mp3/`                                  | **ZZMP3Play / ZZPlayGUI** | ARM-accelerated MP3 / MP2 playback             | Current / historical |
