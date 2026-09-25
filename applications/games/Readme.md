@@ -16,9 +16,10 @@ Picasso96 display, input, audio and file access. The public 1.0 release targets
 ### ZZDarkForcesNEXT
 The Force Engine / STAR WARS: Dark Forces running natively on the ZZ9000 ARM
 Core1, with AmigaOS handling Picasso96 display, input, AHI audio, filesystem
-access and optional CAMD MIDI output. Supports resolutions from 320x200 up to
-800x600, internal SoundFont music and external MIDI. Original Dark Forces game
-data is not included.
+access and optional CAMD MIDI output. Supports resolutions from the original
+320x200 up to 800x600, internal SoundFont music, external MIDI and selected
+modern TFE features including Smooth VUE, autorun, crouch toggle and enhanced
+secret/automap options. Original Dark Forces game data is not included.
 
 ### ZZRastan
 Standalone recreation of the Taito Rastan arcade hardware for ZZ9000 Core1.
