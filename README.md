@@ -43,9 +43,9 @@ synthesis and shared multimedia operations.
 ### Core1 applications
 
 Complete engines can be dynamically loaded onto the second Cortex-A9. Current
-Current
 projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZDarkForcesNEXT,
 ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech and other experimental engines.
+
 ## XACP v1.7
 
 v1.7 preserves the XX19a / XACP v1.6 low DDR map and adds a large ARM-only
@@ -115,7 +115,7 @@ Driver material lives under `drivers/`.
 ## Compatibility
 
 Use application, firmware, shared-memory definitions and `zz9000.card`
-combinations that have been explicitly validated together.  After replacing
+combinations that have been explicitly validated together. After replacing
 firmware or the card driver, perform a complete power-off before testing.
 
 ## Repository structure
@@ -133,7 +133,7 @@ CHANGELOG.md    project history
 
 Firmware and individual applications have separate licensing requirements.
 Some Amiga-side Xanxi applications are proprietary freeware, while GPL and
-other third-party components retain their original licenses.  Each application
+other third-party components retain their original licenses. Each application
 directory documents its own source/licensing split.
 
 ## Credits

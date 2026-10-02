@@ -13,6 +13,12 @@ Quake software renderer running on the ZZ9000 ARM Core1, with AmigaOS handling
 Picasso96 display, input, audio and file access. The public 1.0 release targets
 320x240 in 32-bit RTG mode. Quake game data is not included.
 
+### ZZQuake HighRes
+Companion high-resolution pack for ZZQuake with separate 640x480, 800x600 and
+1024x768 builds. Each variant uses its own Amiga launcher and matching Core1
+blob. The original ZZQuake 1.0 320x240 release remains available separately.
+Quake game data is not included.
+
 ### ZZDarkForcesNEXT
 The Force Engine / STAR WARS: Dark Forces running natively on the ZZ9000 ARM
 Core1, with AmigaOS handling Picasso96 display, input, AHI audio, filesystem
