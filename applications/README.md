@@ -31,6 +31,7 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `emulators/ZZPicodrive/ZZPicodriveSMS/` | **ZZPicoDriveSMS 1.1**    | Sega Master System emulator                    | Current              |
 | `games/ZZDoom/`                         | **ZZDoom**                | Doom engine running on ARM Core1               | Current              |
 | `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current              |
+| `games/ZZQuakeHighRes/`                 | **ZZQuake HighRes 1.0**   | Quake 640x480 / 800x600 / 1024x768 on Core1   | Current              |
 | `games/ZZDarkForcesNEXT/`               | **ZZDarkForcesNEXT**      | The Force Engine / Dark Forces on ARM Core1    | Current              |
 | `games/ZZRastan/`                       | **ZZRastan 1.0**          | Rastan arcade hardware recreation on ARM Core1 | Current              |
 | `mpegplayer/`                           | **ZZ-MPEG**               | MPEG-1 video / MP2 audio playback              | Advanced Beta        |
@@ -104,7 +105,7 @@ Unlike ZZMIDI, ZZSpeech does not require the speech engine to be permanently bui
 
 The Flite Core1 program is loaded dynamically when ZZSpeech starts.
 
-Only one dynamically loaded Core1 application can execute at a time, so ZZSpeech should be stopped cleanly before launching another Core1 application such as ZZPicoDrive, ZZDoom, ZZQuake, ZZDarkForcesNEXT or ZZRastan.
+Only one dynamically loaded Core1 application can execute at a time, so ZZSpeech should be stopped cleanly before launching another Core1 application such as ZZPicoDrive, ZZDoom, ZZQuake, ZZQuake HighRes, ZZDarkForcesNEXT or ZZRastan.
 
 ZZSpeech 1.0 is distributed as closed-source freeware. See its own documentation and license files for redistribution and third-party licensing terms.
 
@@ -229,7 +230,7 @@ games/ZZQuake/
 
 ZZQuake 1.0 runs the Quake software renderer on the ZZ9000 ARM Cortex-A9 Core1 while AmigaOS provides the launcher, Picasso96 display, input, file access and audio integration.
 
-The current public release targets 320x240 in 32-bit RTG mode.
+The original public release targets 320x240 in 32-bit RTG mode.
 
 Main features include:
 
@@ -253,6 +254,35 @@ clean Core1 stop and return
 Quake game data is not included. Users must provide their own `pak0.pak` and, for registered Quake, `pak1.pak`.
 
 The ARM Core1 component is derived from GPL-licensed Quake / quakegeneric code. Corresponding source is included in the ZZQuake directory. The Amiga-side launcher is distributed separately as proprietary freeware.
+
+---
+
+# ZZQuake HighRes
+
+Directory:
+
+```text
+games/ZZQuakeHighRes/
+```
+
+ZZQuake HighRes 1.0 is the companion high-resolution pack for ZZQuake. It
+provides three fixed-resolution builds while leaving the original 320x240
+ZZQuake 1.0 release unchanged:
+
+```text
+ZZQuake640    640x480
+ZZQuake800    800x600
+ZZQuake1024   1024x768
+```
+
+The Quake engine and software renderer run on ZZ9000 ARM Core1. AmigaOS
+provides Picasso96 presentation, input, file access and audio integration.
+
+The public directory contains the three compiled Amiga launchers, Workbench
+icons, matching Core1 blobs, and complete GPL-covered Core1 source/build
+material. The Amiga launcher source remains private.
+
+Original Quake game data is required and is not included.
 
 ---
 
@@ -335,5 +365,3 @@ Rastan World and Rastan Saga Japan ROM sets are supported.
 No commercial game ROMs or game assets are distributed.
 
 The source corresponding to the ARM Core1 blob is included where required by the applicable third-party licenses. The Amiga-side launcher and GUI remain proprietary.
-
----

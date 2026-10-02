@@ -211,7 +211,8 @@ using the same keywords as the Workbench ToolTypes.
 ## Release scope
 
 ZZQuake 1.0 is released at 320x240 only. Higher-resolution builds are not part
-of this release.
+of this release. They are distributed separately as **ZZQuake HighRes 1.0**
+under `../ZZQuakeHighRes/`, with 640x480, 800x600 and 1024x768 variants.
 
 ## Source and licensing
 
