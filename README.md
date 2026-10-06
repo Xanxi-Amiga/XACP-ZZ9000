@@ -42,7 +42,7 @@ synthesis and shared multimedia operations.
 
 Complete engines can be dynamically loaded onto the second Cortex-A9. Current
 projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZDarkForcesNEXT,
-ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech and other experimental engines.
+ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech, ZZScreensavers and other experimental engines.
 
 ## XACP v1.7
 
@@ -106,6 +106,7 @@ Historical builds and source remain archived for regression testing.
 | **ZZDarkForcesNEXT** | The Force Engine / Dark Forces on Core1 with enhanced TFE features |
 | **ZZRastan** | Rastan arcade hardware recreation on Core1 |
 | **ZZSpeech** | Speech synthesis acceleration |
+| **ZZScreensavers** | Core1 Julia fractal and textured Earth screensavers |
 | **ZZ-MPEG** | MPEG-1 / MP2 playback |
 | **ZZPlayGUI / MP3 tools** | ARM-accelerated MP3/MP2 decoding |
 | **zz9000.engine** | AmigaAMP external XACP engine |

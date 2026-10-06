@@ -1,5 +1,28 @@
 # Changelog
 
+```markdown
+## ZZScreensavers 1.0 - 6 October 2026
+
+Initial public release of the XACP screensaver package.
+
+### Added
+
+- `ZZScreensaverE`: rotating textured Earth rendered on ZZ9000 Core1.
+- 640x480 32-bit RTG Earth display path.
+- Embedded 1024x512 RGB565 NASA Visible Earth / Blue Marble texture with bilinear sampling.
+- `ZZScreensaverJ`: animated Julia fractal rendered on Core1 at 320x240 16-bit.
+- `ZZScreensaverHotkeys`: optional Commodities helper using Ctrl-Alt-E and Ctrl-Alt-J.
+- Silent launch and clean exit on keyboard or mouse activity.
+- Closed-source freeware binary release.
+
+### Requirements
+
+- XACP v1.7 / XX19b or later.
+- XX19c recommended.
+
+---
+```
+
 ## XX19c - XACP v1.7 stability baseline
 
 XX19c supersedes XX19b as the current firmware baseline while retaining the
@@ -522,6 +545,6 @@ The current platform baseline is:
 ```text
 The current platform baseline is:
 
-XX19b
+XX19c
 XACP v1.7
 ```

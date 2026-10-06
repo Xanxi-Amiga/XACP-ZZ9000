@@ -1,0 +1,28 @@
+ZZScreensavers 1.0 - Freeware License
+=======================================
+
+Copyright (C) 2026 Xanxi.
+All rights reserved.
+
+ZZScreensaverE, ZZScreensaverJ and ZZScreensaverHotkeys are proprietary
+closed-source freeware.
+
+The software may be used free of charge.
+
+Redistribution of the complete, unmodified release package is permitted.
+The source code is not distributed and no source-code license is granted.
+
+Modification of the binaries, redistribution of modified binaries, or
+incorporation of the binaries into another software product or distribution
+requires prior permission from the author.
+
+This software is provided "as is", without warranty of any kind. Use is at
+the user's own risk.
+
+The NASA imagery embedded in ZZScreensaverE is not covered by this Xanxi
+license and is not claimed as Xanxi-owned content. See NASA_CREDITS.txt for
+its source, attribution and applicable NASA media-use guidelines.
+
+ZZ9000 is a product of MNT Research GmbH.
+ZZScreensavers is an independent project and is not an official MNT Research
+or NASA product.

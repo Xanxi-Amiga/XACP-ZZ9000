@@ -1,0 +1,40 @@
+NASA imagery used by ZZScreensaverE
+=====================================
+
+ZZScreensaverE embeds a 1024x512 RGB565 derivative of the NASA Visible Earth
+image:
+
+"The Blue Marble: Land Surface, Ocean Color, Sea Ice and Clouds"
+
+Original source image used for the texture lineage:
+land_ocean_ice_cloud_2048.jpg
+2048x1024 pixels
+NASA Visible Earth record 57735
+Published 8 February 2002
+
+Source page:
+https://visibleearth.nasa.gov/images/57735/the-blue-marble-land-surface-ocean-color-sea-ice-and-clouds
+
+Direct source image:
+https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57735/land_ocean_ice_cloud_2048.jpg
+
+Credit:
+NASA Goddard Space Flight Center
+Image by Reto Stockli (land surface, shallow water, clouds)
+Enhancements by Robert Simmon (ocean color, compositing, 3D globes,
+animation)
+Data and technical support: MODIS Land Group, MODIS Science Data Support
+Team, MODIS Atmosphere Group, MODIS Ocean Group
+Additional data: USGS EROS Data Center and USGS Terrestrial Remote Sensing
+Flagstaff Field Center
+
+NASA states that its content, including texture maps used for 3D rendering,
+is generally not subject to copyright in the United States and may be used
+under the NASA Media Usage Guidelines. NASA should be acknowledged as the
+source and the use must not imply NASA endorsement.
+
+NASA Media Usage Guidelines:
+https://www.nasa.gov/nasa-brand-center/images-and-media/
+
+NASA does not endorse ZZScreensavers, XACP, Xanxi, or this software release.
+No NASA insignia, logotype or seal is included in this package.

@@ -111,6 +111,33 @@ ZZSpeech 1.0 is distributed as closed-source freeware. See its own documentation
 
 ---
 
+# ZZScreensavers
+
+Directory:
+
+```text
+ZZScreensaver/
+```
+
+ZZScreensavers 1.0 provides two silent XACP screensavers running their
+rendering workload on ZZ9000 ARM Core1:
+
+```text
+ZZScreensaverE       rotating textured Earth, 640x480 RTG
+ZZScreensaverJ       animated Julia fractal, 320x240 16-bit
+ZZScreensaverHotkeys optional Ctrl-Alt-E / Ctrl-Alt-J Commodities helper
+```
+
+The executables contain their Core1 programs internally. XX19b / XACP v1.7
+or later is required; current XX19c firmware is recommended.
+
+The programs are distributed as proprietary closed-source freeware. The
+Earth texture is derived from NASA Visible Earth / Blue Marble imagery and is
+credited separately in the application directory.
+```
+
+---
+
 # ZZPicoDrive
 
 Directory:
