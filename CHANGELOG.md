@@ -1,5 +1,25 @@
 # Changelog
 
+## ZZMIDI 1.01 - 7 October 2026
+
+Maintenance update for the XX19c / XACP v1.7 firmware baseline.
+
+### Changed
+
+- XX19c / XACP v1.7 is now the ZZMIDI firmware baseline.
+- Removed `ZZMIDIGate` from the distribution.
+- ZZDoom and other compatible Core1 applications can now be launched normally while ZZMIDI realtime is active.
+- The historical Core0/Core1 startup/cache-coherency conflict previously requiring `ZZMIDIGate` is fixed directly in XX19c firmware.
+- Updated ZZDoom/Core1 usage and firmware compatibility documentation.
+
+### Compatibility
+
+- The remaining ZZMIDI application binaries and the synthesis/audio path are unchanged from ZZMIDI 1.0.
+- Users intentionally remaining on XX19a or XX19b should continue using ZZMIDI 1.0 together with `ZZMIDIGate`.
+- ZZMIDI 1.01 requires XX19c / XACP v1.7 or a later firmware explicitly documented as compatible.
+
+---
+
 ## ZZScreensavers 1.0 - 6 October 2026
 
 Initial public release of the XACP screensaver package.
