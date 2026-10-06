@@ -5,10 +5,10 @@ This directory contains the applications, games, emulators, multimedia tools and
 XACP applications use the ARM Cortex-A9 processors and DDR memory of the ZZ9000 to offload workloads from the Amiga 68k while retaining AmigaOS integration for display, input, files, audio and user interfaces.
 
 The current platform baseline is:
-
-```text
-Firmware:  XX19b
-Protocol:  XACP v1.7
+ 
+ ```text
+ Firmware:  XX19c
+ Protocol:  XACP v1.7
 ```
 
 ## Current compatibility

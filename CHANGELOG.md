@@ -1,5 +1,48 @@
 # Changelog
 
+## XX19c - XACP v1.7 stability baseline
+
+XX19c supersedes XX19b as the current firmware baseline while retaining the
+same XACP v1.7 protocol and shared-memory map.
+
+### Fixed
+
+- Core0/Core1 coexistence during dynamic Core1 startup.
+- A launch/cache-coherency race that could produce a white screen or system
+  lock-up when a Core1 application was started while a persistent Core0
+  service such as ZZMIDI was active.
+- Core1 cache maintenance no longer operates the shared PL310 L2 controller
+  from the Core1 execution path; launch-side maintenance is restricted to L1
+  where appropriate.
+- Core1 is halted before its vector, target and GO state are republished,
+  with explicit memory-ordering barriers around launch metadata.
+- The ZZMIDIGate workaround is no longer required on XX19c for the historical
+  ZZDoom/ZZMIDI Core0/Core1 startup conflict.
+
+### Added
+
+- Linker-time hard guard preventing the low firmware image from reaching the
+  framebuffer at `0x00200000`.
+- Additional 64 KiB safety limit at `0x001F0000`.
+- `__low_firmware_end` verification at link time.
+
+### Compatibility
+
+- XACP remains **v1.7**.
+- The XACP v1.7 high Core1 arena is unchanged.
+- The shared DDR ABI is unchanged.
+- Applications validated for XX19b remain compatible unless they document a
+  stricter firmware dependency.
+
+Validated XX19c low-firmware end:
+
+```text
+0x001B9A2E
+```
+
+---
+
+
 ## v1.7.0 / XX19b - XACP v1.7 public baseline
 
 XX19b supersedes XX19a as the current firmware baseline.

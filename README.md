@@ -9,12 +9,11 @@ input, files, GUI, AHI audio and CAMD MIDI.
 Current public baseline:
 
 ```text
-Firmware: XX19b
+Firmware: XX19c
 Protocol: XACP v1.7
 ```
 
 Firmware build numbers and XACP protocol versions are separate.
-
 
 ## Why XACP?
 
@@ -31,7 +30,6 @@ complete ARM-side engines, emulation, multimedia and persistent services
 such as SoundFont MIDI synthesis.
 
 **[Why XACP? — Origins, philosophy and goals](docs/WHY_XACP.md)**
-
 
 ## Architecture
 
@@ -68,16 +66,29 @@ docs/XACP_V1_7_DEVELOPER_NOTES.md
 sdk/xacp_memory_map_v1_7.h
 ```
 
+## XX19c stability update
+
+XX19c supersedes XX19b while keeping the XACP v1.7 ABI and shared-memory map
+unchanged.
+
+It fixes a Core0/Core1 coexistence problem that could occur when a Core1
+application was launched while a persistent Core0 service such as ZZMIDI was
+active. On XX19c, the ZZMIDIGate workaround previously required for this
+ZZDoom/Core1 startup conflict is no longer necessary.
+
+XX19c also adds linker-time protection for the low firmware image so future
+firmware growth cannot silently reach the framebuffer at `0x00200000`.
+
 ## Current firmware
 
 ```text
-firmware/BOOT_XX19b.bin
+firmware/BOOT_XX19c.bin
 ```
 
 Corresponding source:
 
 ```text
-firmware/source/XX19b/
+firmware/source/XX19c/
 ```
 
 Historical builds and source remain archived for regression testing.
@@ -101,7 +112,6 @@ Historical builds and source remain archived for regression testing.
 | **mpega.library integration** | MPEGA-compatible ARM decode path |
 | **ZZBench GUI** | 68k/ARM/memory benchmarking |
 
-
 Application material lives under `applications/`.
 
 ## Host drivers
@@ -117,6 +127,9 @@ Driver material lives under `drivers/`.
 Use application, firmware, shared-memory definitions and `zz9000.card`
 combinations that have been explicitly validated together. After replacing
 firmware or the card driver, perform a complete power-off before testing.
+
+XX19c remains XACP v1.7-compatible with applications validated for XX19b,
+unless an individual application documents a stricter requirement.
 
 ## Repository structure
 

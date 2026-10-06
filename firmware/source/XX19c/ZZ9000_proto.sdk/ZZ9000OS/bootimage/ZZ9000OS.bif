@@ -1,0 +1,7 @@
+//arch = zynq; split = false; format = BIN
+the_ROM_image:
+{
+	[bootloader]/home/mntmn/code/ZZ9000_proto/ZZ9000_proto.sdk/ZZ9000FSBL/Debug/ZZ9000FSBL.elf
+	/home/mntmn/code/ZZ9000_proto/ZZ9000_proto.sdk/zz9000_ps_wrapper_hw_platform_0/zz9000_ps_wrapper.bit
+	/home/mntmn/code/ZZ9000_proto/ZZ9000_proto.sdk/ZZ9000OS/Debug/ZZ9000OS.elf
+}
