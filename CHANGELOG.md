@@ -542,8 +542,6 @@ XX19a / v1.6     coordinated Core0 / Core1 shared DDR ABI
 The current platform baseline is:
 
 ```text
-The current platform baseline is:
-
 XX19c
 XACP v1.7
 ```
