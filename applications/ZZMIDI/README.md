@@ -1,10 +1,25 @@
 # ZZMIDI
 
-**ZZMIDI 1.0** is a General MIDI SoundFont synthesizer for Amiga systems equipped with an **MNT ZZ9000** running **XACP-compatible firmware**.
+**ZZMIDI 1.01** is a General MIDI SoundFont synthesizer for Amiga systems equipped with an **MNT ZZ9000** running **XACP-compatible firmware**.
 
 The Amiga sends MIDI data to the ZZ9000, where the ARM Cortex-A9 runs the SoundFont synthesis engine. Audio is returned to the Amiga and played through **AHI**, leaving the 68k CPU almost completely free for the application or game.
 
 ZZMIDI supports standard **CAMD** applications, standalone MIDI file playback, and ZZDoom integration.
+
+---
+
+## Version 1.01
+
+ZZMIDI 1.01 is a maintenance update for the current **XX19c / XACP v1.7** firmware baseline.
+
+Changes from 1.0:
+
+- **XX19c / XACP v1.7** is now the required baseline.
+- `ZZMIDIGate` has been removed from the distribution.
+- The old special ZZDoom/Core1 launch sequence is no longer required because XX19c fixes the historical Core0/Core1 startup/cache-coherency conflict in firmware.
+- Documentation and firmware compatibility information have been updated.
+
+The remaining ZZMIDI application binaries are unchanged from ZZMIDI 1.0. There is no synthesis-engine or audio-path change in this maintenance package.
 
 ---
 
@@ -19,8 +34,7 @@ ZZMIDI supports standard **CAMD** applications, standalone MIDI file playback, a
 * Shell control tools
 * standalone MIDI player: **ZZMIDIPlay**
 * SoundFont analyser: **ZZSF2Info**
-* Core0/Core1 coexistence with current **XX19c** firmware
-* **ZZMIDIGate** compatibility helper for older XX19a/XX19b firmware
+* Core0/Core1 coexistence with **XX19c**
 * very low 68k CPU usage
 
 Applications using standard CAMD clusters can use ZZMIDI without being specifically written for it.
@@ -38,12 +52,12 @@ Examples include:
 
 ## Firmware requirement
 
-ZZMIDI 1.0 requires:
+ZZMIDI 1.01 requires:
 
-* **XACP v1.6 / firmware XX19a or later**, or
-* another firmware explicitly documented as compatible with the ZZMIDI/XACP interface.
+* **Firmware XX19c / XACP v1.7**, or
+* a later firmware explicitly documented as compatible with the required ZZMIDI/XACP interface.
 
-The current recommended firmware is:
+Current firmware:
 
 **Firmware XX19c / XACP v1.7**
 
@@ -53,9 +67,9 @@ XX19c keeps the XACP v1.7 ABI and fixes the Core0/Core1 startup conflict that co
 
 ### Important
 
-ZZMIDI 1.0 is **not compatible with the official MNT ZZ9000 firmware 1.13**.
+ZZMIDI 1.01 is **not compatible with the official MNT ZZ9000 firmware 1.13**.
 
-ZZMIDI 1.0 is **not compatible with BlitterStudio firmware releases**, unless a future firmware is explicitly documented as XACP-compatible.
+ZZMIDI 1.01 is **not compatible with BlitterStudio firmware releases**, unless a future firmware is explicitly documented as XACP-compatible.
 
 Do not assume that a firmware is compatible merely because it runs on a ZZ9000.
 
@@ -66,7 +80,7 @@ Do not assume that a firmware is compatible merely because it runs on a ZZ9000.
 * AmigaOS 3.1 or later
 * 68020 or better
 * MNT ZZ9000
-* XACP-compatible firmware, with **XX19c / XACP v1.7 recommended**
+* **XX19c / XACP v1.7**, or later explicitly compatible XACP firmware
 * AHI
 * `camd.library`
 
@@ -109,53 +123,25 @@ With only one channel, the game audio and ZZMIDI can compete for the same AHI ou
 
 ---
 
-## ZZDoom, Core1 applications and ZZMIDIGate
-
-### XX19c and later compatible firmware
+## ZZDoom and Core1 applications
 
 Firmware **XX19c** fixes the Core0/Core1 startup/cache-coherency conflict that could occur when a Core1 application was launched while the ZZMIDI realtime engine was active.
 
-With XX19c, **ZZMIDIGate is no longer required for the historical ZZDoom/ZZMIDI Core0/Core1 startup conflict**.
+With ZZMIDI 1.01 and XX19c, **ZZDoom can be launched normally while ZZMIDI realtime is running**. No pause, gate or special launch sequence is required for the historical startup conflict fixed by XX19c.
 
-ZZDoom and other compatible Core1 applications can therefore be launched normally while ZZMIDI is active.
+When ZZDoom is configured to use CAMD MIDI, it can use ZZMIDI for music while its game engine runs on ZZ9000 Core1.
 
-### Older XX19a / XX19b firmware
+The same firmware fix applies to other compatible Core1 applications: the old `ZZMIDIGate` step is no longer required for this historical Core0/Core1 startup issue.
 
-On older **XX19a** and **XX19b** firmware, starting ZZDoom or another Core1 application while the ZZMIDI realtime engine is active can cause a white screen or system lock-up.
+`ZZMIDIGate` was a workaround for firmware XX19a and XX19b and is not included with ZZMIDI 1.01.
 
-For those older firmware versions, use **ZZMIDIGate** before launching the Core1 application.
-
-Procedure:
-
-1. Start ZZMIDI normally.
-
-2. Run:
-
-```text
-ZZMIDIGate
-```
-
-3. Wait for:
-
-```text
-*** realtime paused -- LAUNCH CORE1 APP NOW ***
-```
-
-4. Only then launch ZZDoom or the other Core1 application.
-
-ZZMIDIGate pauses ZZMIDI realtime before the Core1 startup, waits until the Core1 application is running, then restores and verifies ZZMIDI realtime.
-
-When ZZDoom exits, ZZMIDIGate detects the exit, performs a ZZMIDI `RT_OFF` / `RT_ON` re-prime, verifies that the service has been restored, and then exits.
-
-For Core1 applications that are not automatically detected, leave ZZMIDIGate running until the application has finished, then return to its Shell and press **Ctrl-C** so it can restore ZZMIDI realtime and exit cleanly.
-
-ZZMIDIGate is retained for compatibility with older XACP firmware installations; it is not required for this historical startup issue on XX19c.
+Users who intentionally remain on XX19a or XX19b should use the older ZZMIDI 1.0 package together with `ZZMIDIGate`.
 
 ---
 
 ## Included applications
 
-The ZZMIDI 1.0 release includes:
+The ZZMIDI 1.01 release includes:
 
 ### ZZMIDIDaemon
 
@@ -172,10 +158,6 @@ Workbench/GadTools control panel for selecting a SoundFont and starting, stoppin
 ### ZZMIDIctl
 
 Shell control utility.
-
-### ZZMIDIGate
-
-Compatibility helper for safely using ZZMIDI with Core1 applications on older XX19a/XX19b firmware.
 
 ### ZZMIDIPlay
 
@@ -209,7 +191,7 @@ The ZZMIDI realtime service accepts SoundFont 2 banks up to:
 10485760 bytes
 ```
 
-For ZZMIDI 1.0:
+For ZZMIDI 1.01:
 
 * avoid spaces in SoundFont paths
 * keep paths below approximately 250 characters
@@ -221,6 +203,14 @@ For ZZMIDI 1.0:
 ---
 
 ## Historical versions
+
+### ZZMIDI 1.0
+
+ZZMIDI 1.0 supported the earlier XX19a/XX19b firmware baseline and included `ZZMIDIGate` as a workaround for the historical Core0/Core1 startup conflict.
+
+Users remaining on XX19a/XX19b should keep ZZMIDI 1.0.
+
+### ZZMIDIPlay v0.5
 
 The original public **ZZMIDIPlay v0.5** release targeted:
 
@@ -237,9 +227,7 @@ archive/ZZMIDIPlay-v0.5/
 
 **ZZMIDIPlay v0.5 is not compatible with the current XX19c / XACP v1.7 baseline.**
 
-It uses the older XACP v1.5 shared-memory layout and must not be used with ZZMIDI 1.0 or current XACP v1.7 firmware.
-
-Use the current ZZMIDI 1.0 `ZZMIDIPlay` instead.
+Use the current ZZMIDI 1.01 `ZZMIDIPlay` instead.
 
 ---
 
@@ -247,17 +235,17 @@ Use the current ZZMIDI 1.0 `ZZMIDIPlay` instead.
 
 Binary releases are provided through the GitHub **Releases** section.
 
-The ZZMIDI 1.0 distribution is supplied as an Amiga `.lha` archive containing the programs, documentation and applicable third-party license notices.
+The ZZMIDI 1.01 distribution is supplied as an Amiga `.lha` archive containing the programs, documentation and applicable third-party license notices.
 
 ---
 
 ## License
 
-### ZZMIDI 1.0
+### ZZMIDI 1.01
 
-ZZMIDI 1.0 is **proprietary freeware**.
+ZZMIDI 1.01 is **proprietary freeware**.
 
-Copyright © 2026 Xanxi.
+Copyright (C) 2026 Xanxi.
 All rights reserved.
 
 The current Amiga-side ZZMIDI application source code is **not distributed**.
@@ -266,7 +254,7 @@ Third-party applications may freely use ZZMIDI through its documented CAMD and c
 
 Developers wishing to embed, bundle, integrate or redistribute ZZMIDI itself as part of another software package or distribution are welcome to contact the author for permission.
 
-The historical ZZMIDIPlay v0.5 source remains available in the archive because it was previously published. Its presence does not make ZZMIDI 1.0 open source.
+The historical ZZMIDIPlay v0.5 source remains available in the archive because it was previously published. Its presence does not make ZZMIDI 1.01 open source.
 
 ### Firmware
 
@@ -276,8 +264,8 @@ The XACP / XX19c firmware is a separate project and is distributed under its own
 
 ZZMIDI uses:
 
-* **TinySoundFont** by Bernhard Schelling — MIT License
-* **TinyMidiLoader** by Bernhard Schelling — zlib License
+* **TinySoundFont** by Bernhard Schelling - MIT License
+* **TinyMidiLoader** by Bernhard Schelling - zlib License
 
 Additional data files included in binary distributions retain their respective original licenses.
 
