@@ -27,6 +27,7 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | --------------------------------------- | ------------------------- | ---------------------------------------------- | -------------------- |
 | `ZZMIDI/`                               | **ZZMIDI**                | SoundFont MIDI synthesis using the ZZ9000 ARM  | Current              |
 | `ZZSpeech/`                             | **ZZSpeech**              | CMU Flite speech synthesis on ARM Core1        | Current              |
+| `ZZScreensaver/`                        | **ZZScreensavers 1.0**     | Core1 Julia and textured Earth screensavers    | Current              |
 | `emulators/ZZPicodrive/ZZPicodriveMD/`  | **ZZPicoDriveMD 1.1**     | Sega Mega Drive / Genesis emulator             | Current              |
 | `emulators/ZZPicodrive/ZZPicodriveSMS/` | **ZZPicoDriveSMS 1.1**    | Sega Master System emulator                    | Current              |
 | `games/ZZDoom/`                         | **ZZDoom**                | Doom engine running on ARM Core1               | Current              |
@@ -134,7 +135,6 @@ or later is required; current XX19c firmware is recommended.
 The programs are distributed as proprietary closed-source freeware. The
 Earth texture is derived from NASA Visible Earth / Blue Marble imagery and is
 credited separately in the application directory.
-```
 
 ---
 
