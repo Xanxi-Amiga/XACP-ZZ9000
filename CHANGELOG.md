@@ -1,6 +1,5 @@
 # Changelog
 
-```markdown
 ## ZZScreensavers 1.0 - 6 October 2026
 
 Initial public release of the XACP screensaver package.
@@ -21,7 +20,7 @@ Initial public release of the XACP screensaver package.
 - XX19c recommended.
 
 ---
-```
+
 
 ## XX19c - XACP v1.7 stability baseline
 
