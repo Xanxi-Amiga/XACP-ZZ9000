@@ -115,6 +115,20 @@ Historical builds and source remain archived for regression testing.
 
 Application material lives under `applications/`.
 
+## FPGA Acceleration Demos
+
+| Project | Description |
+|---|---|
+| **[XACP-GPU / ZZGearRIX](demos/ZZGearRIX/README.md)** | Experimental RasterIX FPGA 3D acceleration on a real Amiga 4000/68060 with ZZ9000. Demonstrated on 11 October 2026: 59.53 FPS displayed and 163–166 FPS offscreen in ZZGear. |
+
+XACP-GPU uses the ZZ9000's Cortex-A9 Core1 and the FPGA
+RasterIX pipeline to accelerate 3D rendering.
+
+[Video, technical details and benchmarks](demos/ZZGearRIX/README.md)
+
+Experimental GPU demos and associated documentation are stored
+under `demos/`.
+
 ## Host drivers
 
 | Driver | Role |
