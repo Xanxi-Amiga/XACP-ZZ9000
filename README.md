@@ -154,6 +154,7 @@ drivers/        AmigaOS host drivers and XACP compatibility variants
 docs/           protocol/developer documentation
 firmware/       current firmware, source and historical archive
 sdk/            shared XACP headers
+demos/          FPGA acceleration and technical demonstrations
 CHANGELOG.md    project history
 ```
 
