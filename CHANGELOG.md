@@ -1,5 +1,25 @@
 # Changelog
 
+## XACP-GPU — FPGA 3D Acceleration
+
+**First RasterIX hardware 3D demonstration on a
+real Amiga 4000/68060 + MNT ZZ9000.**
+
+- 59.53 FPS displayed at 60 Hz
+- 163.5–165.9 FPS offscreen (ZZGear benchmark)
+- Cortex-A9 Core1 + RasterIX FPGA
+- librixgpu 1.0 source snapshot
+- Quake II hardware rendering in development
+
+[Watch the ZZGear demo](https://youtu.be/A24W72UVJ0A)
+
+[Source code, benchmarks and documentation](demos/ZZGearRIX/README.md)
+
+RasterIX by ToNi3141; XACP-GPU integration by
+Xanxi-Amiga.
+
+---
+
 ## ZZMIDI 1.01 - 7 October 2026
 
 Maintenance update for the XX19c / XACP v1.7 firmware baseline.
