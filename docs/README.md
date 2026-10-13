@@ -383,7 +383,8 @@ Current public firmware:
 Corresponding public source:
 
 ```text
-../firmware/source/XX19c/```
+../firmware/source/XX19c/
+```
 
 See:
 
