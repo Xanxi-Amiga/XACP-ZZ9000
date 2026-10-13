@@ -5,14 +5,14 @@ This directory contains the architecture, protocol, developer and historical doc
 The current public baseline is:
 
 ```text
-Firmware: XX19b
+Firmware: XX19c
 Protocol: XACP v1.7
 ```
 
 Firmware build numbers and XACP protocol versions are separate.
 
 ```text
-XX19b      = public firmware build
+XX19c      = public firmware build
 XACP v1.7  = protocol / ABI / shared-memory baseline
 ```
 
@@ -377,14 +377,13 @@ Development projects are not automatically part of the current stable public ABI
 Current public firmware:
 
 ```text
-../firmware/BOOT_XX19b.bin
+../firmware/BOOT_XX19c.bin
 ```
 
 Corresponding public source:
 
 ```text
-../firmware/source/XX19b/
-```
+../firmware/source/XX19c/```
 
 See:
 
@@ -426,7 +425,7 @@ shared-memory layout
 The current public baseline for new software is:
 
 ```text
-XX19b / XACP v1.7
+XX19c / XACP v1.7
 ```
 
 Historical combinations should only be used when explicitly required by older software.
