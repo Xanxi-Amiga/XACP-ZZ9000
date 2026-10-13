@@ -23,7 +23,7 @@ The established low-memory layout remains defined by:
 xacp_memory_map_v1_6.h
 ```
 
-The XX19b high Core1 arena is defined by:
+The XACP v1.7 high Core1 arena, introduced with XX19b and retained by XX19c, is defined by:
 
 ```text
 xacp_memory_map_v1_7.h
@@ -101,7 +101,7 @@ physical addresses and must not be treated as framebuffer-relative offsets.
 For current development, use the explicitly validated combination:
 
 ```text
-XX19b
+XX19c
 XACP v1.7
 matching application binaries and shared-memory definitions
 ```
