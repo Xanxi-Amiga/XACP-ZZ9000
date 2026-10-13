@@ -126,7 +126,7 @@ XX19b supersedes XX19a as the current firmware baseline.
 
 ## v1.6.0 / XX19a - XACP v1.6 public baseline
 
-XX19a is the current Xanxi/XACP firmware baseline for the MNT ZZ9000.
+XX19a was the XACP v1.6 public firmware baseline for the MNT ZZ9000.
 
 It implements **XACP v1.6**, which formalizes the shared DDR allocation model used by persistent Core0 firmware services and dynamically loaded Core1 applications.
 
