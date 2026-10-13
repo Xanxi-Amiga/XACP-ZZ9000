@@ -7,7 +7,7 @@ branch.
 Current public baseline:
 
 ```text
-Firmware: XX19b
+Firmware: XX19c
 Protocol: XACP v1.7
 ```
 
