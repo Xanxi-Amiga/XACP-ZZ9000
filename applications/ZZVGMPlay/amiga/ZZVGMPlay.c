@@ -465,11 +465,21 @@ static void draw_row(int row, const char *src)
     }
 }
 
-static void chipmask_text(char *dst, ULONG mask)
+/* UI strings are bounded. An invalid or combined chip mask must never
+ * overwrite the local buffers (or the return address during a redraw). */
+static void append_text(char *dst, size_t capacity, const char *src)
+{
+    size_t used;
+    if (!capacity || !src) return;
+    used = strlen(dst);
+    if (used < capacity-1) strncat(dst, src, capacity-used-1);
+}
+static void chipmask_text(char *dst, size_t capacity, ULONG mask)
 {
     int first=1;
+    if (capacity < 4) return;
     dst[0]='\0';
-#define ADDCH(bit,name) do { if(mask&(bit)){ if(!first) strcat(dst,"+"); strcat(dst,(name)); first=0; } } while(0)
+#define ADDCH(bit,name) do { if(mask&(bit)){ if(!first) append_text(dst,capacity,"+"); append_text(dst,capacity,(name)); first=0; } } while(0)
     if(mask&ZZVGM_CMASK_YM2612_DUAL){ADDCH(ZZVGM_CMASK_YM2612_DUAL,"2x2612");}
     else {ADDCH(ZZVGM_CMASK_YM2612,"2612");}
     ADDCH(ZZVGM_CMASK_RF5C68,"RF5C68");
@@ -522,9 +532,15 @@ static void update_display(void)
     format_time(t2, total);
     {
         char chips[96];
-        chipmask_text(chips,mask);
-        sprintf(b, "%s / %s  %s  %s",
-                t1, total ? t2 : "--:--", chips, g_is_vgz ? "VGZ" : "VGM");
+        chipmask_text(chips, sizeof(chips), mask);
+        b[0] = '\0';
+        append_text(b, sizeof(b), t1);
+        append_text(b, sizeof(b), " / ");
+        append_text(b, sizeof(b), total ? t2 : "--:--");
+        append_text(b, sizeof(b), "  ");
+        append_text(b, sizeof(b), chips);
+        append_text(b, sizeof(b), "  ");
+        append_text(b, sizeof(b), g_is_vgz ? "VGZ" : "VGM");
     }
     draw_row(1, b);
 
