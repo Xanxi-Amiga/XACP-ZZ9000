@@ -1,24 +1,41 @@
 # ZZVGMPlay v1.0 - Release notes
 
-**(c) Xanxi 2026**
+(c) Xanxi 2026
 
-The first public version of ZZVGMPlay brings VGM/VGZ playback to AmigaOS 3.x using the ZZ9000's Cortex-A9 Core1 for emulation and audio mixing.
+ZZVGMPlay brings VGM/VGZ game-music playback to AmigaOS 3.x,
+with sound-chip emulation and stereo mixing performed on the
+ZZ9000 / XACP Cortex-A9 Core1.
 
-### Highlights
+## Highlights
 
-- Native 68k GadTools player with playlist, Repeat, AHI output, selectable default drawer and time/progress display.
-- Broad FM, PSG, arcade and console chip support, including OPL2/OPL3, YM2612, YM2151, AY/YM2149, SMS FM/YM2413, SCC/SCC+ and YM2610.
-- Additional System 18 backend for dual YM2612 plus RF5C68 PCM, bringing Sega's **Michael Jackson's Moonwalker** arcade soundtrack into the supported test set.
-- System 18 final mix gain adjusted by +6.02 dB; the 22-track reference pack passes the production-parser host test with zero clipped output samples.
-- Cleaner default playback status; **Debug > Show WRITES / UND** makes technical counters available on demand.
-- Defensive shutdown cleanup for asynchronous AHI requests, GUI resources and Core1 STOP handoff.
+- Native AmigaOS 3.x GadTools player, AHI audio output and playback controls.
+- VGM and compressed VGZ support, playlist management and Repeat.
+- Remembered last directory and configurable default music drawer.
+- Arcade systems including Sega System 18 and Neo Geo (YM2610).
+- Mega Drive / Genesis, Master System FM, Atari ST, MSX SCC/SCC+,
+  NES, Game Boy, PC Engine and Apple IIGS sound engines.
+- Additional supported FM and PSG chip implementations.
+- Optional Debug menu for WRITES / UND counters, hidden by default.
+- Robust handling of player shutdown and resource cleanup.
 
-### Installation
+## Installation
 
-Place `ZZVGMPlay` and the matching `zzvgm_core1.bin` in the same Amiga directory. Run the 68k executable on an AmigaOS 3.x system equipped with ZZ9000, the compatible XACP/Core1 environment and AHI.
+Keep ZZVGMPlay (68k executable) and zzvgm_core1.bin (Core1 payload)
+from the same build in one drawer. Requires AmigaOS 3.x, ZZ9000,
+a compatible XACP/Core1 environment and AHI.
 
-The XACP firmware is unchanged. The source distribution builds fully offline via `sh build_all.sh` under the configured Windows/MSYS toolchains.
+The XACP firmware is not modified.
 
-### Notes
+## Game music
 
-Game-music files are not included. Some chips and command combinations remain dependent on the original game's VGM data and are not guaranteed by the Moonwalker regression test. The GUI and shutdown changes require final real-Amiga acceptance testing before tagging the public release.
+Browse https://vgmrips.net/ for VGM/VGZ soundtrack packs.
+Game music is not included. Compatibility varies with the chip
+and command configuration used by individual files.
+
+## Source
+
+All required sources are bundled for offline Windows/MSYS building:
+
+    sh build_all.sh
+
+Third-party copyright and license notices are retained.
