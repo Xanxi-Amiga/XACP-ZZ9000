@@ -3,16 +3,35 @@
 Current public baseline:
 
 ```text
-Firmware: XX19c
-Protocol: XACP v1.7
+Firmware: XX19d-RIX
+Protocol: XACP v1.8
 ```
 
 Firmware build numbers and XACP protocol versions are separate.
 
-XX19c supersedes XX19b as the public firmware baseline. It does **not** change
-the XACP v1.7 ABI or shared-memory map.
+XX19d-RIX supersedes XX19c as the public firmware baseline. XACP v1.8
+retains existing v1.7 allocations and introduces the image-service window.
 
-## What XX19c fixes
+## New in XX19d-RIX
+
+- RasterIX hardware texturing, Z testing and blending inside the ZZ9000 FPGA;
+  ZZQuake2 is the first supported game and is distributed separately.
+- JPEG and PNG decoding backends and XACP Image Service API v1.3.
+- XACP v1.8: dedicated 1 MiB shared image window. AmigaOS datatypes are
+  under development and are not shipped with the firmware.
+- Public headers and example client in the repository's `sdk/` directory.
+
+Firmware: `BOOT_XX19d-RIX.bin`. Corresponding source and FPGA Vivado project
+are supplied as `XACP.XX19d-RIX.sources.zip` on the release page.
+
+The reference hardware is an Amiga A4000/Zorro III with MNT ZZ9000. Install
+from a backed-up FAT32 microSD card and cold-start the machine. Do not assume
+compatibility with different expansion boards or Zorro II installations.
+
+See `../docs/XACP_V1_8_DEVELOPER_NOTES.md` and the previous XX19c release
+for the history of Core0/Core1 corrections.
+
+## XX19c fixes (historical)
 
 ### Core0 / Core1 coexistence
 
@@ -71,11 +90,9 @@ memory map.
 0x3FC00000 - 0x40000000     4 MiB firmware/hardware reserved
 ```
 
-Normative header:
+Historical v1.7 header: `../sdk/xacp_memory_map_v1_7.h`.
+Current XACP v1.8 header: `../sdk/xacp_memory_map_v1_8.h`.
 
-```text
-../sdk/xacp_memory_map_v1_7.h
-```
 
 The high arena is ARM-only. Host-side data must be staged through visible
 memory and copied by ARM code.
@@ -89,18 +106,18 @@ requests are unsupported. IMA ADPCM and unrelated paths are unchanged.
 
 ## Source
 
-Corresponding source:
+XX19d-RIX corresponding sources are available directly in the repository:
+`source/XX19d-RIX/`, including the ARM firmware, FSBL, FPGA RTL and
+Vivado project. The XX19c sources remain under `source/XX19c/`.
 
-```text
-source/XX19c/
-```
 
 The firmware source is distributed under the repository firmware licensing;
 see `COPYING` and the notices in the source tree.
 
 ## Installation
 
-Install `BOOT_XX19c.bin` using the normal ZZ9000 firmware procedure, then
-perform a complete power-off before validation.
+Install `BOOT_XX19d-RIX.bin` from the release package using the documented
+microSD method, then perform a complete power-off before validation.
+Keep the prior `BOOT_XX19c.bin` for rollback.
 
 Historical firmware remains under `archive/`.

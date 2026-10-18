@@ -1,4 +1,4 @@
-# XACP v1.7
+# XACP v1.8
 
 **eXtended ARM Coprocessor Protocol for the MNT ZZ9000 Amiga RTG board.**
 
@@ -9,8 +9,8 @@ input, files, GUI, AHI audio and CAMD MIDI.
 Current public baseline:
 
 ```text
-Firmware: XX19c
-Protocol: XACP v1.7
+Firmware: XX19d-RIX
+Protocol: XACP v1.8
 ```
 
 Firmware build numbers and XACP protocol versions are separate.
@@ -29,7 +29,7 @@ public ARM fractal demonstrations on 7 May 2026 into a platform supporting
 complete ARM-side engines, emulation, multimedia and persistent services
 such as SoundFont MIDI synthesis.
 
-**[Why XACP? — Origins, philosophy and goals](docs/WHY_XACP.md)**
+**[Why XACP?  -  Origins, philosophy and goals](docs/WHY_XACP.md)**
 
 ## Architecture
 
@@ -45,7 +45,21 @@ projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZDarkForcesNEXT,
 ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech, ZZScreensavers, ZZVGMPlay and
 other experimental engines.
 
-## XACP v1.7
+## XACP v1.8  -  RasterIX and image decoding
+
+XX19d-RIX adds the RasterIX hardware 3D renderer to the ZZ9000 FPGA and
+introduces XACP v1.8 with a dedicated JPEG/PNG image-service window. The
+AmigaOS datatype clients are in development and will be released later.
+
+**ZZQuake2** is the first RasterIX-compatible game and is distributed
+separately. Its software and ARM TinyGL modes continue to work with XX19c.
+
+- [Firmware and corresponding sources](firmware/README.md)
+- [XACP v1.8 developer notes](docs/XACP_V1_8_DEVELOPER_NOTES.md)
+- [Image service and GPU SDK](sdk/README.md)
+- [RasterIX FPGA source guide](docs/FPGA_RASTERIX_SOURCE.md)
+
+## XACP v1.7 (retained memory layout)
 
 v1.7 preserves the XX19a / XACP v1.6 low DDR map and adds a large ARM-only
 Core1 allocation:
@@ -67,7 +81,7 @@ docs/XACP_V1_7_DEVELOPER_NOTES.md
 sdk/xacp_memory_map_v1_7.h
 ```
 
-## XX19c stability update
+## XX19c stability update (previous release)
 
 XX19c supersedes XX19b while keeping the XACP v1.7 ABI and shared-memory map
 unchanged.
@@ -83,13 +97,13 @@ firmware growth cannot silently reach the framebuffer at `0x00200000`.
 ## Current firmware
 
 ```text
-firmware/BOOT_XX19c.bin
+firmware/BOOT_XX19d-RIX.bin
 ```
 
 Corresponding source:
 
 ```text
-firmware/source/XX19c/
+firmware/source/XX19d-RIX/
 ```
 
 Historical builds and source remain archived for regression testing.
@@ -104,6 +118,7 @@ Historical builds and source remain archived for regression testing.
 | **ZZPPC** | Experimental PPC32/FPU execution on Core1 |
 | **ZZDoom** | Doom engine on Core1 |
 | **ZZQuake** | WinQuake/quakegeneric software renderer on Core1 |
+| **ZZQuake2** | First RasterIX-capable game; separate application release |
 | **ZZQuake HighRes** | 640x480, 800x600 and 1024x768 Quake builds on Core1 |
 | **ZZDarkForcesNEXT** | The Force Engine / Dark Forces on Core1 with enhanced TFE features |
 | **ZZRastan** | Rastan arcade hardware recreation on Core1 |
@@ -121,7 +136,7 @@ Application material lives under `applications/`.
 
 | Project | Description |
 |---|---|
-| **[XACP-GPU / ZZGearRIX](demos/ZZGearRIX/README.md)** | Experimental RasterIX FPGA 3D acceleration on a real Amiga 4000/68060 with ZZ9000. Demonstrated on 11 October 2026: 59.53 FPS displayed and 163–166 FPS offscreen in ZZGear. |
+| **[XACP-GPU / ZZGearRIX](demos/ZZGearRIX/README.md)** | Experimental RasterIX FPGA 3D acceleration on a real Amiga 4000/68060 with ZZ9000. Demonstrated on 11 October 2026: 59.53 FPS displayed and 163-166 FPS offscreen in ZZGear. |
 
 XACP-GPU uses the ZZ9000's Cortex-A9 Core1 and the FPGA
 RasterIX pipeline to accelerate 3D rendering.
@@ -140,6 +155,11 @@ under `demos/`.
 Driver material lives under `drivers/`.
 
 ## Compatibility
+
+XX19d-RIX / XACP v1.8 is the current public baseline. It retains the
+v1.7 high Core1 arena. Applications targeting v1.7 must still check
+runtime capabilities for new GPU and image-service functions.
+
 
 Use application, firmware, shared-memory definitions and `zz9000.card`
 combinations that have been explicitly validated together. After replacing

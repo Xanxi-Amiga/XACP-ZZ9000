@@ -7,13 +7,26 @@ branch.
 Current public baseline:
 
 ```text
-Firmware: XX19c
-Protocol: XACP v1.7
+Firmware: XX19d-RIX
+Protocol: XACP v1.8
 ```
 
 Firmware build numbers and XACP protocol versions are separate.
 
 ## Current memory-map headers
+
+For XX19d-RIX use `xacp_memory_map_v1_8.h`. It extends v1.7 without moving
+the high Core1 arena and reserves framebuffer-relative `0x06300000..0x06400000`
+(ARM physical `0x06500000..0x06600000`) for the JPEG/PNG image service.
+
+The image-service ABI is defined by `xacp_image_service.h` (opcode `0x0220`,
+service version 1.3). The `amiga/` directory contains an example 68k client.
+GPU command submission definitions are in `zz_rasterix_submit.h` and must be
+capability-checked independently of the image-service API.
+
+See [XACP v1.8 developer notes](../docs/XACP_V1_8_DEVELOPER_NOTES.md).
+
+### Previous header versions
 
 XACP v1.7 is an additive extension of the XACP v1.6 memory map.
 
@@ -101,8 +114,8 @@ physical addresses and must not be treated as framebuffer-relative offsets.
 For current development, use the explicitly validated combination:
 
 ```text
-XX19c
-XACP v1.7
+XX19d-RIX
+XACP v1.8
 matching application binaries and shared-memory definitions
 ```
 
@@ -115,9 +128,10 @@ that layout rather than replacing it.
 
 ## Developer notes
 
-Additional v1.7 information is available in:
+Developer information for v1.8 and historical v1.7 is available in:
 
 ```text
+../docs/XACP_V1_8_DEVELOPER_NOTES.md
 ../docs/XACP_V1_7_DEVELOPER_NOTES.md
 ../firmware/README.md
 ```
