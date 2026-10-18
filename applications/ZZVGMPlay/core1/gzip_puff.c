@@ -1,0 +1,4 @@
+#include "gzip_puff.h"
+#include "puff.h"
+static uint32_t le32p(const uint8_t*p){return (uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);}
+int zz_gzip_inflate(const uint8_t *s,uint32_t n,uint8_t*d,uint32_t cap,uint32_t*outlen){uint32_t p=10,isize;unsigned long dl,sl;uint8_t flg;int rc;if(n<18||s[0]!=0x1f||s[1]!=0x8b||s[2]!=8)return -1;flg=s[3];if(flg&0x04){uint32_t x;if(p+2>n)return-1;x=(uint32_t)s[p]|((uint32_t)s[p+1]<<8);p+=2;if(p+x>n)return-1;p+=x;}if(flg&0x08){while(p<n&&s[p])p++;if(++p>n)return-1;}if(flg&0x10){while(p<n&&s[p])p++;if(++p>n)return-1;}if(flg&0x02){if(p+2>n)return-1;p+=2;}if(p+8>n)return-1;isize=le32p(s+n-4);if(!isize||isize>cap)return-2;dl=isize;sl=(unsigned long)(n-p-8);rc=puff(d,&dl,s+p,&sl);if(rc||dl!=isize)return-3;*outlen=(uint32_t)dl;return 0;}

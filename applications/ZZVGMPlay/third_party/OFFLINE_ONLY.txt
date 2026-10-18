@@ -1,0 +1,2 @@
+MSYS must not download anything for this project.
+Run fetch_deps_windows.ps1 once from native Windows PowerShell, then all builds are offline in MSYS.

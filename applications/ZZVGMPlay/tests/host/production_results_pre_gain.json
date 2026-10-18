@@ -1,0 +1,266 @@
+[
+  {
+    "file": "01 Title.vgm",
+    "result": {
+      "frames": 656908,
+      "fnv64": "1a26329d0818ce65",
+      "peak": 11956,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "1a26329d0818ce65",
+    "ok": true
+  },
+  {
+    "file": "02 Voice Wohoou (Credit Inserted).vgm",
+    "result": {
+      "frames": 61270,
+      "fnv64": "e19ba7ecc1e00891",
+      "peak": 6221,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "e19ba7ecc1e00891",
+    "ok": true
+  },
+  {
+    "file": "03 Bad (Round 1 & 5).vgm",
+    "result": {
+      "frames": 9482185,
+      "fnv64": "0b1a409f69fbce35",
+      "peak": 8774,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "0b1a409f69fbce35",
+    "ok": true
+  },
+  {
+    "file": "04 Smooth Criminal (Round 2).vgm",
+    "result": {
+      "frames": 5785715,
+      "fnv64": "c913f60aee6b80a9",
+      "peak": 8917,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "c913f60aee6b80a9",
+    "ok": true
+  },
+  {
+    "file": "05 Round 2 Boss.vgm",
+    "result": {
+      "frames": 2722985,
+      "fnv64": "2d76e840cd03a419",
+      "peak": 9023,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "2d76e840cd03a419",
+    "ok": true
+  },
+  {
+    "file": "06 Beat It (Round 3).vgm",
+    "result": {
+      "frames": 2774223,
+      "fnv64": "9856507dc29fd1e9",
+      "peak": 10836,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "9856507dc29fd1e9",
+    "ok": true
+  },
+  {
+    "file": "07 Another Part of Me (Round 4).vgm",
+    "result": {
+      "frames": 2651024,
+      "fnv64": "28375fec28484579",
+      "peak": 11457,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "28375fec28484579",
+    "ok": true
+  },
+  {
+    "file": "08 Round 4 Boss.vgm",
+    "result": {
+      "frames": 4055754,
+      "fnv64": "4eab5e85be1eefdd",
+      "peak": 11277,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "4eab5e85be1eefdd",
+    "ok": true
+  },
+  {
+    "file": "09 Round 5 Boss.vgm",
+    "result": {
+      "frames": 4089044,
+      "fnv64": "c9ae8c7529af8f41",
+      "peak": 11424,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "c9ae8c7529af8f41",
+    "ok": true
+  },
+  {
+    "file": "10 Billie Jean (Ending).vgm",
+    "result": {
+      "frames": 7522436,
+      "fnv64": "f74c21d853e24a6d",
+      "peak": 11959,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "f74c21d853e24a6d",
+    "ok": true
+  },
+  {
+    "file": "11 Game Over.vgm",
+    "result": {
+      "frames": 181204,
+      "fnv64": "797a1f6dafd76f2d",
+      "peak": 7099,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "797a1f6dafd76f2d",
+    "ok": true
+  },
+  {
+    "file": "12 Unused Jingle.vgm",
+    "result": {
+      "frames": 147953,
+      "fnv64": "692ae021501eac25",
+      "peak": 12748,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "692ae021501eac25",
+    "ok": true
+  },
+  {
+    "file": "13 Bad (Intro 1).vgm",
+    "result": {
+      "frames": 90554,
+      "fnv64": "dc77823a69297691",
+      "peak": 4584,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "dc77823a69297691",
+    "ok": true
+  },
+  {
+    "file": "14 Bad (Intro 2).vgm",
+    "result": {
+      "frames": 90678,
+      "fnv64": "6202aef3dfcc8ded",
+      "peak": 10026,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "6202aef3dfcc8ded",
+    "ok": true
+  },
+  {
+    "file": "15 Dance Magic 1.vgm",
+    "result": {
+      "frames": 275814,
+      "fnv64": "c991a91f0ef55a0d",
+      "peak": 4583,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "c991a91f0ef55a0d",
+    "ok": true
+  },
+  {
+    "file": "16 Dance Magic 1 (Short Version).vgm",
+    "result": {
+      "frames": 185911,
+      "fnv64": "7cd550bdbbe50eed",
+      "peak": 4547,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "7cd550bdbbe50eed",
+    "ok": true
+  },
+  {
+    "file": "17 Dance Magic 2.vgm",
+    "result": {
+      "frames": 368441,
+      "fnv64": "5b067aaccec40665",
+      "peak": 8574,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "5b067aaccec40665",
+    "ok": true
+  },
+  {
+    "file": "18 Dance Magic 2 (Short Version).vgm",
+    "result": {
+      "frames": 184550,
+      "fnv64": "3f3c0f02e256c71d",
+      "peak": 8574,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "3f3c0f02e256c71d",
+    "ok": true
+  },
+  {
+    "file": "19 Dance Magic 3.vgm",
+    "result": {
+      "frames": 285689,
+      "fnv64": "349adb081a8ed3b9",
+      "peak": 5646,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "349adb081a8ed3b9",
+    "ok": true
+  },
+  {
+    "file": "20 Dance Magic 3 (Short Version).vgm",
+    "result": {
+      "frames": 192381,
+      "fnv64": "cb833a6e44a9b119",
+      "peak": 5646,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "cb833a6e44a9b119",
+    "ok": true
+  },
+  {
+    "file": "21 Dance Magic 4.vgm",
+    "result": {
+      "frames": 260489,
+      "fnv64": "65751e2a0d1f4615",
+      "peak": 7593,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "65751e2a0d1f4615",
+    "ok": true
+  },
+  {
+    "file": "22 Dance Magic 4 (Short Version).vgm",
+    "result": {
+      "frames": 182846,
+      "fnv64": "04126089cb1e8a39",
+      "peak": 7593,
+      "pool_used": 131776,
+      "chip_mask": 786440
+    },
+    "expected": "04126089cb1e8a39",
+    "ok": true
+  }
+]

@@ -1,0 +1,5 @@
+The RF5C68 logic here is based on the MAME/libvgm rf5c68.c source:
+https://github.com/ValleyBell/libvgm/blob/master/emu/cores/rf5c68.c
+Copyright (c) Olivier Galibert, Aaron Giles.
+BSD 3-Clause License; see the libvgm upstream license.
+This adaptation is not a verbatim copy of upstream, but retains attribution.
