@@ -1,0 +1,8 @@
+// XACP XX19d-RIX: HP3 FSBL, RasterIX FPGA image and XACP firmware ELF.
+// Run bootgen in a directory containing the three named build outputs.
+the_ROM_image:
+{
+  [bootloader] FSBL_exec_HP3_64.elf
+  ZZ9000_G4C_C1_EXPERIMENTAL.bit
+  ZZ9000OS.elf
+}

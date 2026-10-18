@@ -1,0 +1,24 @@
+{
+  "arm_firmware_elf_sha256": "ec22e5168b08c3879ff7ad5f0557f072b11b81161136a00bde0484cb6af34742",
+  "bitstream_sha256": "44183c24b06955aed9725703c67c1fd9976f6a77cf356b3661a59b0c7ed9f3b1",
+  "boot_sha256": "901393712ca3056ffe8e8895afc08b553d3c50590648d3182a56b1ab2e0ef23b",
+  "boot_size_bytes": 4593344,
+  "construction": "HP3 first-stage bootloader, RasterIX FPGA bitstream, and XACP ARM firmware; build manifest SHA-256 verified",
+  "fpga_device": "xc7z020clg400-1",
+  "fpga_rtl_sha256": {
+    "RasterIX_EF.v": "c7e70de180a31e4bfb9e6ca2e668b1caf45f1bedf0c9a8be2e9d990a43ab27e9",
+    "XACPCommandReadCredit.v": "b80c25957169593eed5cb3270dad52cd1af2582ff7db53d4a69b00827dcb10be"
+  },
+  "fsbl_sha256": "e50e1d55a01e6248811ca1a913db6e1f9520b7369d3be4a1c18698450da1c97e",
+  "note": "Identity proven from archived BOOT9 SHA-256 and supplied BOOT image. Clean source snapshot not independently rebuilt with Vivado in this environment.",
+  "original_xpr_sha256": "5ade332e7bf57e91fb8e6e61f5268ae6f89b66a109a6bb03749b15a20ec50930",
+  "rasterix_upstream_commit": "9269a01c9bd4c3342bfa70ef8e3cdd751c15c6d0",
+  "release": "XX19d-RIX",
+  "released_xpr_sha256": "9654a836d6bbf22845f1a268508263b0435fd00467167e995ea3f951b57009e9",
+  "source_distribution": "Vivado project metadata was adjusted for relocation and vendor-generated build products omitted; no post-cleanup rebuild performed",
+  "source_snapshot_date": "2026-10-16",
+  "vivado_version_used": "2025.2",
+  "xpr_modified_metadata_only": "Removed orphaned checkpoint metadata that made the sanitized XPR invalid XML; stripped six obsolete local ImportPath annotations. No custom RTL changed.",
+  "xpr_referenced_files_in_original": 102,
+  "xpr_referenced_files_in_release": 100
+}
