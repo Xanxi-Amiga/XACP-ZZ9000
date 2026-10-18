@@ -42,7 +42,8 @@ synthesis and shared multimedia operations.
 
 Complete engines can be dynamically loaded onto the second Cortex-A9. Current
 projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZDarkForcesNEXT,
-ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech, ZZScreensavers and other experimental engines.
+ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech, ZZScreensavers, ZZVGMPlay and
+other experimental engines.
 
 ## XACP v1.7
 
@@ -98,6 +99,7 @@ Historical builds and source remain archived for regression testing.
 | Project | Role |
 |---|---|
 | **ZZMIDI** | SoundFont MIDI synthesis on Core0 with AHI playback |
+| **[ZZVGMPlay](applications/ZZVGMPlay/README.md)** | VGM/VGZ game music; arcade, console and computer sound-chip emulation on Core1 |
 | **ZZPicoDrive** | Sega emulation on Core1 |
 | **ZZPPC** | Experimental PPC32/FPU execution on Core1 |
 | **ZZDoom** | Doom engine on Core1 |

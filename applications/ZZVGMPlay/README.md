@@ -30,7 +30,7 @@ Support is determined by the VGM commands and sound-chip configuration used by e
 
 ## Requirements
 
-- AmigaOS 3.x, a supported 68k Amiga and a ZZ9000 with a compatible XACP/Core1 environment.
+- AmigaOS 3.x, a supported 68k Amiga and a ZZ9000 with **XACP firmware XX19c or later**.
 - AHI audio support.
 - The matching pair `ZZVGMPlay` (68k executable) and `zzvgm_core1.bin` (ARM payload) from the **same build**.
 

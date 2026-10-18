@@ -22,7 +22,7 @@ ZZ9000 / XACP Cortex-A9 Core1.
 
 Keep ZZVGMPlay (68k executable) and zzvgm_core1.bin (Core1 payload)
 from the same build in one drawer. Requires AmigaOS 3.x, ZZ9000,
-a compatible XACP/Core1 environment and AHI.
+XACP firmware XX19c or later, and AHI.
 
 The XACP firmware is not modified.
 

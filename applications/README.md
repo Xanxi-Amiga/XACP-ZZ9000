@@ -26,6 +26,7 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | Directory                               | Application               | Role                                           | Status               |
 | --------------------------------------- | ------------------------- | ---------------------------------------------- | -------------------- |
 | `ZZMIDI/`                               | **ZZMIDI**                | SoundFont MIDI synthesis using the ZZ9000 ARM  | Current              |
+| `ZZVGMPlay/` | **[ZZVGMPlay 1.0](ZZVGMPlay/README.md)** | VGM/VGZ music, sound-chip emulation on Core1 | Current |
 | `ZZSpeech/`                             | **ZZSpeech**              | CMU Flite speech synthesis on ARM Core1        | Current              |
 | `ZZScreensaver/`                        | **ZZScreensavers 1.0**     | Core1 Julia and textured Earth screensavers    | Current              |
 | `emulators/ZZPicodrive/ZZPicodriveMD/`  | **ZZPicoDriveMD 1.1**     | Sega Mega Drive / Genesis emulator             | Current              |
@@ -80,6 +81,36 @@ See the ZZMIDI directory for detailed release documentation and SoundFont recomm
 
 ---
 
+# ZZVGMPlay
+
+Directory:
+
+```text
+ZZVGMPlay/
+```
+
+ZZVGMPlay 1.0 is a VGM/VGZ game-music player for AmigaOS 3.x and ZZ9000.
+The 68k application provides a GadTools interface, playlist, Repeat,
+file loading and AHI output; chip emulation and stereo mixing run on
+Cortex-A9 Core1.
+
+Supported sound hardware includes OPL2/OPL3, YM2151, YM2203, YM2413,
+YM2612, YM2610, SN76489, AY-3-8910/YM2149, SCC/SCC+, RF5C68, and
+selected console and arcade sound engines. Supported music includes
+soundtracks from Sega System 18, Neo Geo, Mega Drive / Genesis,
+Master System FM, NES, Game Boy, PC Engine, Atari ST, MSX and Apple IIGS.
+Individual VGM/VGZ files may use unsupported chips or commands.
+
+**Requires XACP firmware XX19c or later** and AHI audio support.
+Download music packs from https://vgmrips.net/ (no copyrighted music
+is distributed with the player).
+
+Sources and offline MSYS build instructions: [ZZVGMPlay/README.md](ZZVGMPlay/README.md).
+
+Release: https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZVGMPlay-1.0
+
+---
+
 # ZZSpeech
 
 Directory:
@@ -106,7 +137,7 @@ Unlike ZZMIDI, ZZSpeech does not require the speech engine to be permanently bui
 
 The Flite Core1 program is loaded dynamically when ZZSpeech starts.
 
-Only one dynamically loaded Core1 application can execute at a time, so ZZSpeech should be stopped cleanly before launching another Core1 application such as ZZPicoDrive, ZZDoom, ZZQuake, ZZQuake HighRes, ZZDarkForcesNEXT or ZZRastan.
+Only one dynamically loaded Core1 application can execute at a time, so ZZSpeech should be stopped cleanly before launching another Core1 application such as ZZPicoDrive, ZZDoom, ZZQuake, ZZQuake HighRes, ZZDarkForcesNEXT, ZZRastan or ZZVGMPlay.
 
 ZZSpeech 1.0 is distributed as closed-source freeware. See its own documentation and license files for redistribution and third-party licensing terms.
 
