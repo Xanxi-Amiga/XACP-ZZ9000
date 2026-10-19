@@ -125,7 +125,7 @@ int GLimp_SetMode(int *pwidth, int *pheight, int mode, qboolean fullscreen)
     zz_pump = ri.Cvar_Get("rix_pump", "32", 0);
     {   /* 0.9.5: ref_gl's gl_ztrick (no depth clear: the depth range alternates between the two halves every
            frame), set once per run at the first mode set (R_Register has created it before R_SetMode).
-           Validated by Hakim, 16/10: 33.4 fps in timedemo d1.  "gl_ztrick 0" in the console switches it off
+           Validated on Amiga 4000, 16/10/2026: 33.4 fps in timedemo d1..  "gl_ztrick 0" in the console switches it off
            for the rest of the run; "+set rix_ztrick 0" keeps ref_gl's default from the start. */
         static int ztrick_done;
         cvar_t *zt = ri.Cvar_Get("rix_ztrick", "1", 0);
