@@ -1,28 +1,27 @@
-ZZScreensavers 1.0 - Freeware License
-=======================================
+ZZScreensavers 1.1 — component licensing
+======================================
 
 Copyright (C) 2026 Xanxi.
-All rights reserved.
 
 ZZScreensaverE, ZZScreensaverJ and ZZScreensaverHotkeys are proprietary
-closed-source freeware.
+freeware. Redistribution of the complete, unmodified Xanxi freeware binaries
+in this package is permitted; modification or separate redistribution of
+modified versions requires the copyright holder's permission. Their original
+1.0 licensing terms are retained for these separately identifiable programs.
 
-The software may be used free of charge.
+ZZScreensaverS (Solar Winds) is a distinct GPL-2.0-or-later program. It is a
+derivative of Solar Winds by Terence M. Welsh (C) 1999-2010, with Amiga/Core1
+adaptation (C) 2026 Xanxi. The Solar Winds executable and its corresponding
+source are licensed under GNU GPL version 2 or later, not under the Xanxi
+proprietary freeware terms above. See COPYING_SolarWinds.txt and the separate
+source ZIP distributed alongside this package.
 
-Redistribution of the complete, unmodified release package is permitted.
-The source code is not distributed and no source-code license is granted.
+The three distinct programs and commodity may be distributed together as an
+aggregate; no closed-source restriction is asserted over GPL-covered code.
 
-Modification of the binaries, redistribution of modified binaries, or
-incorporation of the binaries into another software product or distribution
-requires prior permission from the author.
+NASA imagery embedded in ZZScreensaverE is not owned by Xanxi; see
+NASA_CREDITS.txt and NASA media use guidance.
 
-This software is provided "as is", without warranty of any kind. Use is at
-the user's own risk.
-
-The NASA imagery embedded in ZZScreensaverE is not covered by this Xanxi
-license and is not claimed as Xanxi-owned content. See NASA_CREDITS.txt for
-its source, attribution and applicable NASA media-use guidelines.
-
-ZZ9000 is a product of MNT Research GmbH.
-ZZScreensavers is an independent project and is not an official MNT Research
-or NASA product.
+Software is provided as-is, without warranty. ZZScreensavers is an
+independent project, not an official MNT Research, NASA, or Really Slick
+Screensavers release.

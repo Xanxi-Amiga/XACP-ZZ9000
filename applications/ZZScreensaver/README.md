@@ -1,90 +1,58 @@
-# ZZScreensavers 1.0
+# ZZScreensavers 1.1 — classic AmigaOS 3.x / ZZ9000 / XACP
 
-**ZZScreensaverE** and **ZZScreensaverJ** are XACP screensavers for classic
-Amiga systems equipped with an MNT ZZ9000.
+ZZScreensavers includes two classic Core1 screensavers, Earth and Julia, plus the new RasterIX-accelerated **Solar Winds** port. The 68k Amiga handles display, keyboard/mouse input and OS integration; the ZZ9000 Cortex-A9 Core1 performs the simulation and rendering preparation, while Solar Winds uses the integrated FPGA RasterIX renderer.
 
-The Amiga side handles launch, Picasso96 display presentation and input while
-the rendering workload runs on ZZ9000 ARM Cortex-A9 Core1.
+| Executable | Feature | Firmware |
+|---|---|---|
+| `ZZScreensaverE` | Rotating textured Earth, 640x480 | XX19b or later |
+| `ZZScreensaverJ` | Animated Julia fractal, 320x240 | XX19b or later |
+| `ZZScreensaverS` | Solar Winds, RasterIX GPU, 640x480 RGB565 | **XX19d-RIX** |
+| `ZZScreensaverHotkeys` | Optional Commodities hotkeys | Depends on selected saver |
 
-Current release:
+### Hotkeys and presets
+
+Install the four executables into `C:`. Add to `S:User-Startup` or retain the existing 1.0 command:
 
 ```text
-ZZScreensavers 1.0
-Firmware: XACP v1.7 / XX19b or later
-Recommended firmware: XX19c
+Run >NIL: C:ZZScreensaverHotkeys
 ```
 
-## Included programs
+Quit the old commodity in Exchange before restarting it, or reboot after copying the new version. The helper provides Ctrl-Alt-E (Earth), Ctrl-Alt-J (Julia), Ctrl-Alt-S (Solar Winds, random among presets **1, 2, 3, 4, 6**, excluding the last accepted preset request). This is a *manual hotkey helper*, not an idle-time screen blanker.
 
-| Program | Description |
+The Solar Winds program supports six manual presets:
+
+| Preset | Name |
 |---|---|
-| **ZZScreensaverE** | Rotating textured Earth on Core1, 640x480 RTG output |
-| **ZZScreensaverJ** | Animated Julia fractal on Core1, 320x240 16-bit output |
-| **ZZScreensaverHotkeys** | Optional Commodities helper: Ctrl-Alt-E / Ctrl-Alt-J |
-
-Both screensavers are silent standalone executables with their Core1 program
-embedded in the Amiga executable.
-
-They exit on keyboard input, mouse click, mouse movement, or Ctrl-C when
-applicable from Shell.
-
-## ZZScreensaverE
-
-ZZScreensaverE renders a rotating Earth using a dedicated Core1 renderer.
-The final display path is 640x480 32-bit RTG. The Earth texture is an embedded
-1024x512 RGB565 equirectangular map with bilinear sampling.
-
-The texture is derived from NASA Visible Earth / Blue Marble imagery. Full
-attribution is provided in `NASA_CREDITS.txt` and in the binary release.
-
-## ZZScreensaverJ
-
-ZZScreensaverJ renders an animated Julia fractal on Core1 using a 320x240
-16-bit display path. The 68k remains primarily responsible for AmigaOS and
-input integration.
-
-## Hotkeys
-
-`ZZScreensaverHotkeys` uses `commodities.library` and provides:
+| 1 | Regular (default) |
+| 2 | Cosmic Strings |
+| 3 | Cold Pricklies |
+| 4 | Space Fur |
+| 5 | Jiggly (**not in Hotkeys Random**) |
+| 6 | Undertow |
 
 ```text
-Ctrl-Alt-E    ZZScreensaverE
-Ctrl-Alt-J    ZZScreensaverJ
+ZZScreensaverS
+ZZScreensaverS PRESET 3
+ZZScreensaverS PRESET 6
+ZZScreensaverS DEBUG PRESET 3 > RAM:ZZSW_3.txt
 ```
 
-The helper launches `C:ZZScreensaverE` and `C:ZZScreensaverJ`.
+Solar Winds is silent by default. The A1 launcher implements mouse-pointer hiding/restoration and exit on keyboard/mouse activity. The hardware measurements inherited from A0 cover presets 1–5; results for the final 1.1 binary and preset 6 should not be inferred from host simulation. No fixed 60 FPS claim is made. Only one dynamically loaded Core1 application should be active at a time.
 
-## Requirements
+### Requirements
 
-- Classic Amiga with MNT ZZ9000
-- Picasso96
-- XACP v1.7 compatible firmware
-- XX19b or later; XX19c is recommended
+Classic AmigaOS 3.x with ZZ9000, Picasso96 and the compatible XACP `zz9000.card` driver. XACP **XX19d-RIX** firmware is required to enable FPGA-accelerated Solar Winds. Firmware and driver installation instructions are provided separately with the firmware release.
 
-Only one dynamically loaded Core1 application can execute at a time.
+### Downloads
 
-## Download
+- `ZZScreensavers-1.1.lha` — full Amiga package, including the original Earth/Julia binaries and icons, uploaded 1.1 Solar Winds and Hotkeys binaries, and license notices.
+- `ZZScreensavers-1.1-GPL-source.zip` — corresponding source for Solar Winds (68k launcher + ARM Core1 + RasterIX transport and build scripts).
+- `ZZScreensavers-1.1-SHA256SUMS.txt` — release-archive checksums.
 
-The complete Amiga package is distributed through the GitHub Releases page as:
+### Licensing and provenance
 
-```text
-ZZScreensavers-1.0.lha
-```
+`ZZScreensaverE`, `ZZScreensaverJ` and `ZZScreensaverHotkeys` remain separate Xanxi-owned proprietary freeware executables. Their permissions are described in `LICENSE_ZZSCREENSAVER.txt`. The Earth texture uses NASA Visible Earth / Blue Marble imagery, credited in `NASA_CREDITS.txt`.
 
-## Source and license
+**Solar Winds** is derived from the original screensaver by Terence M. Welsh (1999–2010) and distributed as **GPL-2.0-or-later**, including its corresponding 68k and Core1 source. The XACP adaptation is by Xanxi (2026). 0BSD XACP support components preserve their original notices. See `THIRD_PARTY_LICENSES.txt`, `source/SolarWinds/COPYING`, and `source/SolarWinds/PROVENANCE.md`. RasterIX GPU by ToNi3141; MNT ZZ9000 by MNT Research GmbH. This is an independent project.
 
-ZZScreensaverE, ZZScreensaverJ and ZZScreensaverHotkeys are proprietary
-closed-source freeware.
-
-No source code is distributed.
-
-The embedded NASA imagery is separate material and is not claimed as
-Xanxi-owned content. See `NASA_CREDITS.txt`.
-
-## Author
-
-Xanxi, 2026.
-
-ZZ9000 is a product of MNT Research GmbH.
-ZZScreensavers is an independent software project and is not an official MNT
-Research or NASA product.
+Previous Release: [ZZScreensavers 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.0).

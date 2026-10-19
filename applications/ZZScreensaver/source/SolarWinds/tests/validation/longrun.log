@@ -1,0 +1,5 @@
+== Solar Winds transport: status=ff error=00000000 caps=17ff dl=1 swap=1 idle=1
+   frames built=6000 submitted=6000 fenced=6000 swapped=6000 published=6000 flipped=5999 dropped=0 stalls=5997 fence_timeouts=0
+   tris/frame=2079 (mesh 0, culled 0/frame) chunks=91931 (15.3/frame) words/frame=58937 ringwait=4558 us/frame xform=4643 us/frame
+   virtual elapsed=101813.5 ms  gpu avg=6678 us min=3336 max=17908  swap avg=2831 us  loop avg=16961 us  68k pans=5999  violations=0
+   previous-frame copies=5999, source/destination lifetime violations=0

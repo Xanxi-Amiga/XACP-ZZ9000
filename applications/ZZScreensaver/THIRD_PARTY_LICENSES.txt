@@ -1,0 +1,13 @@
+ZZScreensavers 1.1 — third-party credits
+======================================
+Solar Winds: Terence M. Welsh, copyright (C) 1999-2010.
+Original project: https://github.com/reallyslickscreensavers/reallyslickscreensavers
+License: GPL-2.0-or-later. The corresponding source is in the release source ZIP.
+
+XACP adaptation: Xanxi, copyright (C) 2026. Some librixgpu/ZZGL components
+carry 0BSD notices; original headers and LICENSES/0BSD.txt are retained in
+the Solar Winds source ZIP. The combined Solar Winds executable is provided
+under GPL-2.0-or-later.
+
+NASA Visible Earth / Blue Marble: see NASA_CREDITS.txt.
+MNT ZZ9000: MNT Research GmbH. RasterIX GPU: ToNi3141.
