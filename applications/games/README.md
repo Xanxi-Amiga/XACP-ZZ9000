@@ -27,6 +27,22 @@ access and optional CAMD MIDI output. Supports resolutions from the original
 modern TFE features including Smooth VUE, autorun, crouch toggle and enhanced
 secret/automap options. Original Dark Forces game data is not included.
 
+### ZZQuake2 1.0
+
+[ZZQuake2](ZZQuake2/README.md) brings Quake II to the ZZ9000 ARM Core1.
+It provides three rendering backends:
+
+- Core1 software: 320x240, 640x480 and 800x600.
+- ARM TinyGL software OpenGL: 320x240 and 640x480.
+- FPGA RasterIX hardware acceleration: 320x240, 640x480 and 800x600.
+
+The RasterIX mode requires the [XX19d-RIX firmware](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19d-RIX).
+Software and TinyGL rendering remain compatible with XX19c.
+The 68k handles AmigaOS integration, Picasso96 display, input, file access
+and audio. User-supplied Quake II data is required.
+
+[Download ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0).
+
 ### ZZRastan
 Standalone recreation of the Taito Rastan arcade hardware for ZZ9000 Core1.
 The original arcade CPUs and hardware are emulated on the ARM side, while the
