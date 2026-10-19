@@ -5,15 +5,22 @@ This directory contains the applications, games, emulators, multimedia tools and
 XACP applications use the ARM Cortex-A9 processors and DDR memory of the ZZ9000 to offload workloads from the Amiga 68k while retaining AmigaOS integration for display, input, files, audio and user interfaces.
 
 The current platform baseline is:
- 
- ```text
- Firmware:  XX19c
- Protocol:  XACP v1.7
+
+```text
+Firmware: XX19d-RIX
+Protocol: XACP v1.8
 ```
 
 ## Current compatibility
 
-**All current public XACP applications in this repository are compatible with the latest firmware published in the repository.**
+XX19d-RIX / XACP v1.8 is the current public firmware baseline. It retains
+the v1.7 high Core1 arena and existing service allocations. Consult each
+application's own README for minimum firmware requirements and validated
+features; new GPU/image capabilities must be queried before use.
+
+The XACP-compatible `zz9000.card` is required. Users moving from non-XACP
+firmware must install the driver included in the XX19d-RIX firmware package.
+The driver is unchanged from earlier XACP releases, including XX19c.
 
 Historical firmware builds are retained for reference, regression testing and documentation of the platform's evolution, but they are not required for normal use of current applications.
 
@@ -161,7 +168,7 @@ ZZScreensaverHotkeys optional Ctrl-Alt-E / Ctrl-Alt-J Commodities helper
 ```
 
 The executables contain their Core1 programs internally. XX19b / XACP v1.7
-or later is required; current XX19c firmware is recommended.
+or later is required; XX19d-RIX is the current public firmware.
 
 The programs are distributed as proprietary closed-source freeware. The
 Earth texture is derived from NASA Visible Earth / Blue Marble imagery and is
