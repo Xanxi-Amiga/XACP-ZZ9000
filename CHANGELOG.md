@@ -133,7 +133,7 @@ real Amiga 4000/68060 + MNT ZZ9000.**
 - 163.5-165.9 FPS offscreen (ZZGear benchmark)
 - Cortex-A9 Core1 + RasterIX FPGA
 - librixgpu 1.0 source snapshot
-- Quake II hardware rendering in development
+- Quake II hardware rendering in development at this milestone (subsequently released on 19 October 2026)
 
 [Watch the ZZGear demo](https://youtu.be/A24W72UVJ0A)
 
