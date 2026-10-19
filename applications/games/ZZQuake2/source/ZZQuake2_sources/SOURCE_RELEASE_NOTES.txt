@@ -1,0 +1,30 @@
+ZZQuake2 - public ARM Core1 source release (19 October 2026)
+
+This release-source archive corresponds to the final source set handed over
+on 18 October 2026.  The original user-supplied archive was named
+ZZQuake2_sources.zip, with MD5 ccc8b79af32b67646812c9a3de35bff1.
+
+Changes made solely to source-package metadata:
+- Added LICENSE.0BSD for components already marked with SPDX 0BSD headers.
+- Rebuilt MD5SUMS.txt to correct the impossible self-checksum entry.
+- Added a new SHA256SUMS.txt.  These manifest files exclude themselves.
+
+All C source, headers, build scripts, vendored snapshots and binary build
+inputs are preserved byte-for-byte from the supplied source archive.
+
+NOTE: The accompanying README.txt states that the nine Core1 binaries were
+rebuilt byte-for-byte with arm-none-eabi-gcc 13.2.1. That verification
+was reported by the original compiler (Claude/Hakim workflow). The present
+packaging audit did not rebuild the code because that toolchain is not
+available in this environment. Final Amiga launch/GUI binaries have not
+been supplied in matching final form and must be checked separately.
+
+Licensing: Quake II engine is GPL-2.0; related Core1 integration is
+GPL-2.0-or-later; TinyGL carries its upstream MIT-style license; the GPU
+client library librixgpu and ZZGL are 0BSD. FPGA RasterIX is distributed
+separately as part of the XACP firmware. The independent Amiga launcher
+and GUI are not included in this public source archive.
+
+Game data (.pak files, CD MP3 tracks and copyrighted game assets) are not
+bundled for execution. The upstream quake2generic snapshot retains
+its original documentation and screenshots.
