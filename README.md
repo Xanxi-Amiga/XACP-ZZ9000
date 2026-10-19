@@ -41,8 +41,9 @@ synthesis and shared multimedia operations.
 ### Core1 applications
 
 Complete engines can be dynamically loaded onto the second Cortex-A9. Current
-projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZDarkForcesNEXT,
-ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech, ZZScreensavers, ZZVGMPlay and
+projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZQuake2,
+ZZDarkForcesNEXT, ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech,
+ZZScreensavers (Earth, Julia and Solar Winds), ZZVGMPlay and
 other experimental engines.
 
 ## XACP v1.8  -  RasterIX and image decoding
@@ -51,9 +52,17 @@ XX19d-RIX adds the RasterIX hardware 3D renderer to the ZZ9000 FPGA and
 introduces XACP v1.8 with a dedicated JPEG/PNG image-service window. The
 AmigaOS datatype clients are in development and will be released later.
 
-**ZZQuake2** is the first RasterIX-compatible game and is distributed
-separately. Its software and ARM TinyGL modes continue to work with XX19c.
+RasterIX is now used by two separately released applications:
+[ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0)
+with software, ARM TinyGL and FPGA RasterIX renderers; and
+[ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1)
+with FPGA-accelerated Solar Winds alongside the existing Earth and Julia
+screensavers.
 
+The ZZQuake2 software and ARM TinyGL renderers continue to work with
+XX19c. RasterIX acceleration requires XX19d-RIX.
+
+- [Firmware XX19d-RIX release](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19d-RIX)
 - [Firmware and corresponding sources](firmware/README.md)
 - [XACP v1.8 developer notes](docs/XACP_V1_8_DEVELOPER_NOTES.md)
 - [Image service and GPU SDK](sdk/README.md)
@@ -118,12 +127,12 @@ Historical builds and source remain archived for regression testing.
 | **ZZPPC** | Experimental PPC32/FPU execution on Core1 |
 | **ZZDoom** | Doom engine on Core1 |
 | **ZZQuake** | WinQuake/quakegeneric software renderer on Core1 |
-| **ZZQuake2** | First RasterIX-capable game; separate application release |
+| **[ZZQuake2 1.0](applications/games/ZZQuake2/README.md)** | Quake II on Core1 with software, ARM TinyGL and FPGA RasterIX rendering |
 | **ZZQuake HighRes** | 640x480, 800x600 and 1024x768 Quake builds on Core1 |
 | **ZZDarkForcesNEXT** | The Force Engine / Dark Forces on Core1 with enhanced TFE features |
 | **ZZRastan** | Rastan arcade hardware recreation on Core1 |
 | **ZZSpeech** | Speech synthesis acceleration |
-| **ZZScreensavers** | Core1 Julia fractal and textured Earth screensavers |
+| **[ZZScreensavers 1.1](applications/ZZScreensaver/README.md)** | Core1 Earth and Julia plus FPGA RasterIX-accelerated Solar Winds |
 | **ZZ-MPEG** | MPEG-1 / MP2 playback |
 | **ZZPlayGUI / MP3 tools** | ARM-accelerated MP3/MP2 decoding |
 | **zz9000.engine** | AmigaAMP external XACP engine |
