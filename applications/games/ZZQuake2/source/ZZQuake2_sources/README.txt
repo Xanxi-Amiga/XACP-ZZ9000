@@ -9,14 +9,12 @@ ZZ9000), and everything needed to rebuild them byte for byte.
   Renderer        Version  Blobs
   --------------  -------  ----------------------------------------------
   Software        0.8.5    zzq2a0.bin (640x480), zzq2_320.bin, zzq2_800.bin
-  TinyGL          0.6.1    zzq2tgl.bin (640x480), zzq2tgl_320.bin,
-                           zzq2tgl_400.bin (400x300 drawn, shown 640x480)
+  TinyGL          0.6.1    zzq2tgl.bin (640x480), zzq2tgl_320.bin
   RasterIX (GPU)  0.10.3   zzq2rix.bin (640x480), zzq2rix_320.bin,
                            zzq2rix_800.bin
 
 The 68k programs ZZQuake2_A0 (launcher, 0.8.6) and ZZQuake2GUI (0.1.2)
-are freeware, closed source, and are not part of this package, as with
-ZZQuake 1.0. No game data is included: Quake II (demo or full game) is
+are freeware executables but not part of this package. No game data is included: Quake II (demo or full game) is
 needed to play.
 
 

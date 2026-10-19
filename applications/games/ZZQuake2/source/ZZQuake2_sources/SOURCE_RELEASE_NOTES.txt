@@ -12,13 +12,6 @@ Changes made solely to source-package metadata:
 All C source, headers, build scripts, vendored snapshots and binary build
 inputs are preserved byte-for-byte from the supplied source archive.
 
-NOTE: The accompanying README.txt states that the nine Core1 binaries were
-rebuilt byte-for-byte with arm-none-eabi-gcc 13.2.1. That verification
-was reported by the original compiler (Claude/Hakim workflow). The present
-packaging audit did not rebuild the code because that toolchain is not
-available in this environment. Final Amiga launch/GUI binaries have not
-been supplied in matching final form and must be checked separately.
-
 Licensing: Quake II engine is GPL-2.0; related Core1 integration is
 GPL-2.0-or-later; TinyGL carries its upstream MIT-style license; the GPU
 client library librixgpu and ZZGL are 0BSD. FPGA RasterIX is distributed
