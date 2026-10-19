@@ -14,13 +14,17 @@ retains existing v1.7 allocations and introduces the image-service window.
 
 ## New in XX19d-RIX
 
-- RasterIX hardware texturing, Z testing and blending inside the ZZ9000 FPGA;
-  ZZQuake2 is the first supported game and is distributed separately.
+- RasterIX hardware texturing, Z testing and blending inside the ZZ9000 FPGA.
+  The separately released [ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0)
+  uses the FPGA renderer alongside two software rendering modes.
+  [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1)
+  adds the FPGA-accelerated Solar Winds screensaver.
 - JPEG and PNG decoding backends and XACP Image Service API v1.3.
 - XACP v1.8: dedicated 1 MiB shared image window. AmigaOS datatypes are
   under development and are not shipped with the firmware.
 - Public headers and example client in the repository's `sdk/` directory.
 
+Firmware release: [XX19d-RIX](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19d-RIX).
 Firmware: `BOOT_XX19d-RIX.bin`. Corresponding source and FPGA Vivado project
 are supplied as `XACP.XX19d-RIX.sources.zip` on the release page.
 
