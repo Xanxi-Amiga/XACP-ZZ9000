@@ -1,12 +1,97 @@
 # Changelog
 
-## XACP-GPU — FPGA 3D Acceleration
+## XX19d-RIX - XACP v1.8 / RasterIX FPGA integration - 19 October 2026
+
+Major public firmware update for the MNT ZZ9000. GitHub release:
+[XX19d-RIX](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19d-RIX).
+
+### Firmware and FPGA
+
+- Integrates RasterIX hardware 3D acceleration into the ZZ9000 FPGA.
+- Adds the XACP-GPU command submission interface, including the hardware
+  texturing, depth and blending capabilities documented for this build.
+- Introduces XACP v1.8 while retaining the v1.7 Core1 high-memory arena and
+  existing command, multimedia and MIDI allocations.
+- Adds JPEG and PNG decoding services through XACP Image Service API v1.3.
+  The AmigaOS JPEG/PNG datatypes are NOT included in this release and will
+  be distributed separately.
+- Includes the corresponding ARM firmware, FSBL, RasterIX RTL and Vivado
+  project sources, SDK headers, build notes and third-party license notices.
+- Provides an XACP v1.8 memory-map header, image-service client example
+  and RasterIX submission interface for developers.
+
+### Complete firmware package
+
+- Publishes `BOOT_XX19d-RIX.bin` for the MNT ZZ9000.
+- Includes the XACP-compatible Picasso96 `zz9000.card`, which is REQUIRED
+  when using XACP. Users upgrading from non-XACP firmware must install
+  this driver in `LIBS:Picasso96/` after backing up their existing driver.
+  The driver is unchanged from previous XACP packages, including XX19c;
+  existing XACP users already running it do not need to reinstall it.
+- Includes `ZZScanlines`, `ZZScanlinesGUI` with its Workbench icon, and
+  `ZZFwUpdate`, all copied unchanged from the XX19c firmware package.
+- Retains optional firmware transfer from AmigaOS using `ZZFwUpdate`,
+  conditional on FWUP support in the CURRENTLY RUNNING firmware. Direct
+  microSD installation is recommended; power off completely after updating.
+- Retains XX19c as an archived firmware for compatibility and rollback.
+
+### Compatibility and distribution
+
+- The reference configuration is an Amiga A4000 with an MNT ZZ9000 in
+  Zorro III mode.
+- The RasterIX renderer for ZZQuake2 is developed separately and is not
+  included in the firmware package.
+- Publishes the firmware and corresponding source archives as separate
+  GitHub Release assets:
+  `XACP.XX19d-RIX.firmware.package.zip` and
+  `XACP.XX19d-RIX.sources.zip`.
+
+Sources: [XX19d-RIX source tree](firmware/source/XX19d-RIX/).
+Developer notes: [XACP v1.8](docs/XACP_V1_8_DEVELOPER_NOTES.md).
+FPGA notes: [RasterIX source information](docs/FPGA_RASTERIX_SOURCE.md).
+
+RasterIX by ToNi3141; XACP integration by Xanxi. The original ZZ9000
+platform is by MNT Research. Third-party copyright and licensing apply.
+
+---
+
+## ZZVGMPlay 1.0 - 18 October 2026
+
+First public release of the XACP VGM/VGZ game-music player for AmigaOS 3.x.
+GitHub release: [ZZVGMPlay 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZVGMPlay-1.0).
+
+### Features
+
+- Plays VGM files and gzip-compressed VGZ game music from classic arcade
+  machines, consoles and computers, with no copyrighted music bundled.
+- Provides a native AmigaOS GadTools player with playlist management,
+  transport controls, repeat and a configurable default music directory.
+- Uses the Amiga 68k for GUI, file loading and AHI audio output while
+  sound-chip emulation and stereo mixing execute on ZZ9000 Cortex-A9 Core1.
+- Supports a range of sound chips and systems, including YM2151, YM2612,
+  YM2610, YM2203, YM2413, OPL2/OPL3, SN76489, AY-3-8910/YM2149,
+  MSX SCC/SCC+, NES and Game Boy APU, PC Engine PSG and Apple IIGS ES5503.
+  Individual VGM/VGZ compatibility depends on the chips and commands used.
+- Requires XACP firmware XX19c or later and AHI support. The 68k player
+  and Core1 payload must come from the same build.
+
+### Distribution
+
+- Publishes `ZZVGMPlay-1.0.lha` and an alternative Amiga ZIP package.
+- Includes the source ZIP, third-party notices, offline build scripts,
+  release README and SHA-256 manifest.
+- Source and release documentation are under
+  [applications/ZZVGMPlay/](applications/ZZVGMPlay/).
+
+---
+
+## XACP-GPU - FPGA 3D Acceleration
 
 **First RasterIX hardware 3D demonstration on a
 real Amiga 4000/68060 + MNT ZZ9000.**
 
 - 59.53 FPS displayed at 60 Hz
-- 163.5–165.9 FPS offscreen (ZZGear benchmark)
+- 163.5-165.9 FPS offscreen (ZZGear benchmark)
 - Cortex-A9 Core1 + RasterIX FPGA
 - librixgpu 1.0 source snapshot
 - Quake II hardware rendering in development
@@ -582,6 +667,6 @@ XX19a / v1.6     coordinated Core0 / Core1 shared DDR ABI
 The current platform baseline is:
 
 ```text
-XX19c
-XACP v1.7
+XX19d-RIX
+XACP v1.8
 ```
