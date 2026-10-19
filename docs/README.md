@@ -5,15 +5,15 @@ This directory contains the architecture, protocol, developer and historical doc
 The current public baseline is:
 
 ```text
-Firmware: XX19c
-Protocol: XACP v1.7
+Firmware: XX19d-RIX
+Protocol: XACP v1.8
 ```
 
 Firmware build numbers and XACP protocol versions are separate.
 
 ```text
-XX19c      = public firmware build
-XACP v1.7  = protocol / ABI / shared-memory baseline
+XX19d-RIX  = public firmware build
+XACP v1.8  = protocol / ABI / shared-memory baseline
 ```
 
 ---
@@ -36,9 +36,30 @@ Technical documentation in this directory describes how that environment is impl
 
 # Current XACP baseline
 
-## XACP v1.7
+## XACP v1.8 - XX19d-RIX
 
-XACP v1.7 is the current public ABI.
+XX19d-RIX is the current public firmware for the MNT ZZ9000. It includes
+RasterIX FPGA hardware 3D acceleration and the XACP v1.8 JPEG/PNG image
+service. The corresponding ARM firmware, FSBL, FPGA RTL and Vivado project
+are provided with the firmware release and in the repository source tree.
+
+XACP v1.8 preserves the v1.7 high Core1 arena and established service
+allocations. It adds a dedicated 1 MiB image-service transport window;
+applications should use the v1.8 SDK and query runtime capabilities.
+
+The AmigaOS JPEG/PNG datatypes and the RasterIX-enabled ZZQuake2 application
+are separate projects and are not bundled in this firmware release.
+
+Current references:
+
+- [XACP v1.8 developer notes](XACP_V1_8_DEVELOPER_NOTES.md)
+- [RasterIX FPGA and Vivado sources](FPGA_RASTERIX_SOURCE.md)
+- [XACP SDK](../sdk/README.md)
+- [Firmware release XX19d-RIX](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19d-RIX)
+
+## XACP v1.7 (previous public ABI)
+
+XACP v1.7 was the previous public ABI.
 
 It preserves the coordinated low-DDR layout introduced with XACP v1.6 and adds a large ARM-only Core1 application arena.
 
@@ -58,9 +79,9 @@ The historical ABI values remain reserved.
 
 ---
 
-## Current developer references
+## Historical v1.7 developer references
 
-For current XACP v1.7 development, use:
+For development against the earlier XACP v1.7 baseline, use:
 
 ```text
 XACP_V1_7_DEVELOPER_NOTES.md
@@ -69,10 +90,10 @@ XACP_V1_7_DEVELOPER_NOTES.md
 ../firmware/README.md
 ```
 
-The authoritative reference for exact current memory allocations is:
+The authoritative reference for the current v1.8 memory allocations is:
 
 ```text
-../sdk/xacp_memory_map_v1_7.h
+../sdk/xacp_memory_map_v1_8.h
 ```
 
 New XACP software should use the common SDK definitions rather than introducing independent hard-coded DDR allocations.
@@ -111,7 +132,7 @@ However, it is **not** the normative memory-map reference for new software.
 For current development, use:
 
 ```text
-../sdk/xacp_memory_map_v1_7.h
+../sdk/xacp_memory_map_v1_8.h
 ```
 
 ---
@@ -190,7 +211,7 @@ firmware / hardware reserved space
 The current exact layout is defined in:
 
 ```text
-../sdk/xacp_memory_map_v1_7.h
+../sdk/xacp_memory_map_v1_8.h
 ```
 
 Do not assume that an apparently unused DDR address is available.
@@ -250,9 +271,9 @@ In general:
 
 ```text
 68k writes data
-      ↓
+      v
 ARM invalidates the relevant cache range
-      ↓
+      v
 ARM reads the new data
 ```
 
@@ -260,9 +281,9 @@ and:
 
 ```text
 ARM writes data
-      ↓
+      v
 ARM flushes the relevant cache range
-      ↓
+      v
 68k reads the result
 ```
 
@@ -297,7 +318,7 @@ The public XACP SDK is stored under:
 The current memory-map definition is:
 
 ```text
-../sdk/xacp_memory_map_v1_7.h
+../sdk/xacp_memory_map_v1_8.h
 ```
 
 The SDK should be treated as the common contract between:
@@ -377,13 +398,13 @@ Development projects are not automatically part of the current stable public ABI
 Current public firmware:
 
 ```text
-../firmware/BOOT_XX19c.bin
+../firmware/BOOT_XX19d-RIX.bin
 ```
 
 Corresponding public source:
 
 ```text
-../firmware/source/XX19c/
+../firmware/source/XX19d-RIX/
 ```
 
 See:
@@ -426,10 +447,15 @@ shared-memory layout
 The current public baseline for new software is:
 
 ```text
-XX19c / XACP v1.7
+XX19d-RIX / XACP v1.8
 ```
 
 Historical combinations should only be used when explicitly required by older software.
+
+The XACP-compatible `zz9000.card` driver is required. When upgrading from a
+non-XACP firmware/driver combination, install the driver distributed in the
+firmware package to `LIBS:Picasso96/zz9000.card`. The driver is unchanged
+from previous XACP firmware packages, including XX19c.
 
 After replacing firmware or `zz9000.card`, a complete power-off before testing is recommended.
 
@@ -465,19 +491,19 @@ New platform functionality normally exists because a real application required i
 Examples include:
 
 ```text
-fractal demos   → early ARM execution and framebuffer experiments
+fractal demos   -> early ARM execution and framebuffer experiments
 
-multimedia      → streaming and shared-buffer infrastructure
+multimedia      -> streaming and shared-buffer infrastructure
 
-Doom            → reliable Core1 execution and framebuffer handling
+Doom            -> reliable Core1 execution and framebuffer handling
 
-PicoDrive       → emulator timing and audio requirements
+PicoDrive       -> emulator timing and audio requirements
 
-Quake           → larger memory and performance requirements
+Quake           -> larger memory and performance requirements
 
-ZZMIDI          → persistent realtime Core0 synthesis
+ZZMIDI          -> persistent realtime Core0 synthesis
 
-later projects  → improved Core0/Core1 coexistence and larger Core1 memory
+later projects  -> improved Core0/Core1 coexistence and larger Core1 memory
 ```
 
 The objective is not simply to increase the number of firmware operations.
@@ -515,7 +541,10 @@ XACP v1.6
     coordinated Core0 / Core1 DDR architecture
 
 XACP v1.7
-    large Core1 high-memory arena and current public ABI
+    large Core1 high-memory arena (previous public ABI)
+
+XACP v1.8
+    RasterIX FPGA integration and JPEG/PNG image-service transport
 ```
 
 Historical documentation should be used for reference and regression work, not as the basis for new memory allocations.
@@ -528,15 +557,17 @@ The documentation tree is intended to separate current material from historical 
 
 ```text
 docs/
-├── README.md
-├── WHY_XACP.md
-├── XACP_V1_7_DEVELOPER_NOTES.md
-├── XACP_V1_6_DEVELOPER_DOCUMENTATION.md
-└── archives/
-    ├── XACP_V1_NOTICE.md
-    ├── XACP_V1_Developer_Documentation.pdf
-    ├── XACP_V1_5_HISTORY_MEMORY_MAP_PART2.md
-    └── README_XACP_V1_LEGACY.md
+|-- README.md
+|-- WHY_XACP.md
+|-- XACP_V1_8_DEVELOPER_NOTES.md
+|-- FPGA_RASTERIX_SOURCE.md
+|-- XACP_V1_7_DEVELOPER_NOTES.md
+|-- XACP_V1_6_DEVELOPER_DOCUMENTATION.md
+`-- archives/
+    |-- XACP_V1_NOTICE.md
+    |-- XACP_V1_Developer_Documentation.pdf
+    |-- XACP_V1_5_HISTORY_MEMORY_MAP_PART2.md
+    `-- README_XACP_V1_LEGACY.md
 ```
 
 The corresponding SDK definitions are under:
@@ -564,8 +595,9 @@ WHY_XACP.md
 For developers targeting the current platform:
 
 ```text
-XACP_V1_7_DEVELOPER_NOTES.md
-../sdk/xacp_memory_map_v1_7.h
+XACP_V1_8_DEVELOPER_NOTES.md
+FPGA_RASTERIX_SOURCE.md
+../sdk/xacp_memory_map_v1_8.h
 ../sdk/README.md
 ```
 
