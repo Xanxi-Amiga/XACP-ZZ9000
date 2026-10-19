@@ -1,5 +1,44 @@
 # Changelog
 
+## ZZScreensavers 1.1 - Solar Winds / RasterIX - 19 October 2026
+
+Release: [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1).
+
+- Adds `ZZScreensaverS`, a GPL-2.0-or-later port of Terence M. Welsh's
+  Really Slick Solar Winds using Core1 and RasterIX FPGA acceleration.
+- Provides 640x480 RGB565 rendering and six manually selectable presets.
+- Updates the separate freeware Commodities helper to version 1.2.
+  Ctrl-Alt-S selects randomly among presets 1, 2, 3, 4 and 6;
+  preset 5 remains available manually. Ctrl-Alt-E/J remain unchanged.
+- Retains the original Earth and Julia binaries from ZZScreensavers 1.0.
+- Publishes corresponding Solar Winds 68k/ARM/RasterIX GPL source code,
+  build instructions and third-party license notices.
+- Requires XX19d-RIX for Solar Winds; Earth and Julia retain XX19b support.
+
+Documentation: [ZZScreensavers](applications/ZZScreensaver/README.md).
+
+---
+
+## ZZQuake2 1.0 - Quake II on Core1 / RasterIX - 19 October 2026
+
+Release: [ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0).
+
+- Ports Quake II to ZZ9000 ARM Cortex-A9 Core1 with AmigaOS 68k handling
+  the GUI, Picasso96 display, file access, input and audio integration.
+- Offers three renderers: software (320x240, 640x480, 800x600);
+  ARM TinyGL software OpenGL (320x240, 640x480); and FPGA RasterIX
+  hardware acceleration (320x240, 640x480, 800x600).
+- Includes save/load, sound and optional music. Cinematics are not included;
+  users provide their own legal demo or full Quake II game data.
+- Publishes freeware Amiga 68k launcher/GUI, eight matching GPL Core1
+  executables and separate corresponding GPL source/build archive.
+- Software/TinyGL work with XX19c; RasterIX requires XX19d-RIX.
+
+Documentation: [ZZQuake2](applications/games/ZZQuake2/README.md).
+
+---
+
+
 ## XX19d-RIX - XACP v1.8 / RasterIX FPGA integration - 19 October 2026
 
 Major public firmware update for the MNT ZZ9000. GitHub release:
