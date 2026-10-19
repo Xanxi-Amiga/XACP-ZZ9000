@@ -47,8 +47,9 @@ XACP v1.8 preserves the v1.7 high Core1 arena and established service
 allocations. It adds a dedicated 1 MiB image-service transport window;
 applications should use the v1.8 SDK and query runtime capabilities.
 
-The AmigaOS JPEG/PNG datatypes and the RasterIX-enabled ZZQuake2 application
-are separate projects and are not bundled in this firmware release.
+The AmigaOS JPEG/PNG datatypes remain separate development projects.
+ZZQuake2 1.0 and ZZScreensavers 1.1 (Solar Winds) have been released as
+separate application packages; neither is bundled in the firmware archive.
 
 Current references:
 
@@ -56,6 +57,9 @@ Current references:
 - [RasterIX FPGA and Vivado sources](FPGA_RASTERIX_SOURCE.md)
 - [XACP SDK](../sdk/README.md)
 - [Firmware release XX19d-RIX](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19d-RIX)
+- [ZZQuake2 1.0 - Quake II](../applications/games/ZZQuake2/README.md)
+- [ZZScreensavers 1.1 - Solar Winds](../applications/ZZScreensaver/README.md)
+
 
 ## XACP v1.7 (previous public ABI)
 
@@ -347,10 +351,13 @@ Examples include:
 ZZMIDI             persistent Core0 SoundFont / MIDI service
 ZZDoom             Core1 Doom engine
 ZZQuake            Core1 Quake engine
+ZZQuake2           Core1 Quake II: software, TinyGL and RasterIX FPGA
 ZZDarkForcesNEXT   Core1 The Force Engine / Dark Forces port
 ZZPicoDrive        Core1 Mega Drive / Genesis emulator
 ZZRastan           Core1 arcade game recreation
 ZZSpeech           ARM-assisted speech synthesis
+ZZVGMPlay          Core1 VGM/VGZ game-music player
+ZZScreensavers     Core1 Earth/Julia and FPGA RasterIX Solar Winds
 ZZPPC              experimental PPC32 / FPU execution
 ZZ-MPEG            MPEG-1 / MP2 multimedia playback
 ZZPlayGUI          MP3 / MP2 playback
