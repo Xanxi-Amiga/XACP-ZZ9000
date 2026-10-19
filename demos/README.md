@@ -16,6 +16,13 @@ The rotating ZZGear scene achieved **59.53 FPS on a 60 Hz display** and **163.5â
 
 **Availability:** `librixgpu 1.0` ARM driver source snapshot, API documentation and hardware test evidence are included under [`ZZGearRIX/`](ZZGearRIX/). The complete ZZGear application, its binaries and the FPGA Vivado project are **not** included in this milestone.
 
+The RasterIX FPGA technology demonstrated by ZZGearRIX is now included in the
+[XX19d-RIX firmware release](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19d-RIX).
+Separately released applications using the FPGA renderer include
+[ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0)
+and [ZZScreensavers 1.1 / Solar Winds](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1).
+These are application releases, not binaries bundled with the demo index.
+
 ## ARM software 3D demonstrations
 
 ### ZZTeapot â€” ARM software-rendered 3D
