@@ -1,7 +1,7 @@
 79c2cc4426b9e6f3b9098f02eb47aac1  ./COPYING
 5b165921a4462ca0fe5c34556b95da79  ./LICENSE.0BSD
-00a5b3152a54e639ea2b266ad06bcaa1  ./README.txt
-b1b65ec231418d2356eaebb89c2d9e6e  ./SOURCE_RELEASE_NOTES.txt
+7fe414e50f183c3396284a6f6a687872  ./README.txt
+6c65b3d41435af35927ecc9c5048f78b  ./SOURCE_RELEASE_NOTES.txt
 a2dd340362aa3f7509bc76c63d6b31fb  ./ZZQuake640_Core1/Core1_GPL/640/zz9000/build_zzquake.sh
 a082fc13801991e8d89a8fcce33dd8b5  ./ZZQuake640_Core1/Core1_GPL/640/zz9000/safe_mem.c
 a27d4dbbf85cbdd735fed9613cda9fbf  ./ZZQuake640_Core1/Core1_GPL/640/zz9000/snd_zz9000.c
@@ -435,7 +435,7 @@ b0ff5195f0ccbb6e367eea7ccd7ed6ad  ./rix/Core1/rix/shim/GL/gl.h
 3c1b1e3d913af0a4be455ef9682c93c9  ./rix/Core1/rix/zzq2rix_patch_refgl.py
 a0ed76951cfd657b4f1665ac3b5261ec  ./rix/Core1/rix/zzq2rix_qgl.c
 07f4c9e5eb0bd15068c08e48b3d0f3f1  ./rix/Core1/rix/zzq2rix_version.h
-f8547e1dde7079ebd6b579d1cfb7a093  ./rix/Core1/rix/zzq2rix_video.c
+0f51d662c1284066365a7f58d269757e  ./rix/Core1/rix/zzq2rix_video.c
 7b5b0c94f9a31d8e183f437d026e7ab2  ./rix/Core1/zzq2_cd.c
 e52116517177fc065a61df40c18e4bda  ./rix/Core1/zzq2_diag.h
 eca554c2c3dffb0a0680f52ddc9c7f05  ./rix/Core1/zzq2_footprint.py
