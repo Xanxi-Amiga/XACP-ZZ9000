@@ -35,11 +35,12 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `ZZMIDI/`                               | **ZZMIDI**                | SoundFont MIDI synthesis using the ZZ9000 ARM  | Current              |
 | `ZZVGMPlay/` | **[ZZVGMPlay 1.0](ZZVGMPlay/README.md)** | VGM/VGZ music, sound-chip emulation on Core1 | Current |
 | `ZZSpeech/`                             | **ZZSpeech**              | CMU Flite speech synthesis on ARM Core1        | Current              |
-| `ZZScreensaver/`                        | **ZZScreensavers 1.0**     | Core1 Julia and textured Earth screensavers    | Current              |
+| `ZZScreensaver/` | **[ZZScreensavers 1.1](ZZScreensaver/README.md)** | Earth/Julia on Core1; Solar Winds via RasterIX | Current |
 | `emulators/ZZPicodrive/ZZPicodriveMD/`  | **ZZPicoDriveMD 1.1**     | Sega Mega Drive / Genesis emulator             | Current              |
 | `emulators/ZZPicodrive/ZZPicodriveSMS/` | **ZZPicoDriveSMS 1.1**    | Sega Master System emulator                    | Current              |
 | `games/ZZDoom/`                         | **ZZDoom**                | Doom engine running on ARM Core1               | Current              |
 | `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current              |
+| `games/ZZQuake2/` | **[ZZQuake2 1.0](games/ZZQuake2/README.md)** | Quake II with software, TinyGL and RasterIX renderers | Current |
 | `games/ZZQuakeHighRes/`                 | **ZZQuake HighRes 1.0**   | Quake 640x480 / 800x600 / 1024x768 on Core1   | Current              |
 | `games/ZZDarkForcesNEXT/`               | **ZZDarkForcesNEXT**      | The Force Engine / Dark Forces on ARM Core1    | Current              |
 | `games/ZZRastan/`                       | **ZZRastan 1.0**          | Rastan arcade hardware recreation on ARM Core1 | Current              |
@@ -152,27 +153,27 @@ ZZSpeech 1.0 is distributed as closed-source freeware. See its own documentation
 
 # ZZScreensavers
 
-Directory:
+Directory: `ZZScreensaver/`
 
-```text
-ZZScreensaver/
-```
+[ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1)
+provides three screensavers for AmigaOS 3.x with the ZZ9000:
 
-ZZScreensavers 1.0 provides two silent XACP screensavers running their
-rendering workload on ZZ9000 ARM Core1:
+- `ZZScreensaverE`: rotating textured Earth at 640x480 on ARM Core1.
+- `ZZScreensaverJ`: animated Julia fractal at 320x240 on ARM Core1.
+- `ZZScreensaverS`: Really Slick Solar Winds at 640x480 RGB565 with FPGA
+  RasterIX acceleration. Solar Winds requires XX19d-RIX firmware.
+- `ZZScreensaverHotkeys` 1.2: Commodities helper for Ctrl-Alt-E, Ctrl-Alt-J
+  and Ctrl-Alt-S. The Solar Winds shortcut picks a random preset among
+  1, 2, 3, 4 and 6; preset 5 remains available manually.
 
-```text
-ZZScreensaverE       rotating textured Earth, 640x480 RTG
-ZZScreensaverJ       animated Julia fractal, 320x240 16-bit
-ZZScreensaverHotkeys optional Ctrl-Alt-E / Ctrl-Alt-J Commodities helper
-```
+Hotkeys is a manual shortcut launcher, not an automatic idle-time screen
+blanker. Earth and Julia remain unchanged from the 1.0 release.
 
-The executables contain their Core1 programs internally. XX19b / XACP v1.7
-or later is required; XX19d-RIX is the current public firmware.
+Earth, Julia and Hotkeys are separate proprietary freeware executables.
+Solar Winds is GPL-2.0-or-later, with its corresponding 68k/ARM/RasterIX
+source and build scripts published in `ZZScreensaver/source/SolarWinds/`.
 
-The programs are distributed as proprietary closed-source freeware. The
-Earth texture is derived from NASA Visible Earth / Blue Marble imagery and is
-credited separately in the application directory.
+See [ZZScreensavers documentation](ZZScreensaver/README.md).
 
 ---
 
@@ -390,6 +391,33 @@ Original Dark Forces commercial data is not included.
 The TFE-derived Core1 component and corresponding source are distributed under GPL-2.0. The Amiga-side launcher is distributed separately as a closed-source binary.
 
 ---
+
+# ZZQuake2
+
+Directory: `games/ZZQuake2/`
+
+[ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0)
+ports Quake II to ZZ9000 ARM Cortex-A9 Core1 with three rendering options:
+
+- ARM software renderer: 320x240, 640x480 and 800x600.
+- ARM TinyGL software OpenGL: 320x240 and 640x480.
+- RasterIX FPGA hardware renderer: 320x240, 640x480 and 800x600.
+
+The RasterIX renderer requires firmware XX19d-RIX; the software and TinyGL
+modes remain compatible with XX19c. The Amiga 68k provides the launcher,
+Picasso96 display, input, file access and audio integration.
+
+Game saving/loading, sound and optional music are available. Cinematics are
+not included. Users must supply their own legal Quake II demo or full-game
+data; no commercial PAK files are distributed.
+
+The eight Core1 executable variants are GPL-covered with corresponding source
+and build instructions. The separate Amiga 68k launcher and GUI are freeware.
+
+See [ZZQuake2 documentation](games/ZZQuake2/README.md).
+
+---
+
 
 # ZZRastan
 
