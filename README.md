@@ -52,12 +52,11 @@ XX19d-RIX adds the RasterIX hardware 3D renderer to the ZZ9000 FPGA and
 introduces XACP v1.8 with a dedicated JPEG/PNG image-service window. The
 AmigaOS datatype clients are in development and will be released later.
 
-RasterIX is now used by two separately released applications:
-[ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0)
-with software, ARM TinyGL and FPGA RasterIX renderers; and
-[ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1)
-with FPGA-accelerated Solar Winds alongside the existing Earth and Julia
-screensavers.
+RasterIX is now used by three separately released applications:
+
+- [ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0) - Quake II with software, TinyGL and FPGA RasterIX renderers.
+- [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1) - FPGA-accelerated Solar Winds.
+- [ZZOpenLara 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZOpenLara-1.0) - Tomb Raider I with software and FPGA RasterIX rendering.
 
 The ZZQuake2 software and ARM TinyGL renderers continue to work with
 XX19c. RasterIX acceleration requires XX19d-RIX.
