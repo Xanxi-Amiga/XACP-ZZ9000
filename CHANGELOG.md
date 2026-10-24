@@ -1,5 +1,22 @@
 # Changelog
 
+## ZZOpenLara 1.0 - Tomb Raider I / RasterIX - 24 October 2026
+
+- Adds a ZZ9000 Cortex-A9 Core1 port of OpenLara with FPGA RasterIX
+  (320x240, 640x480, 800x600) and ARM software rendering
+  (320x240, 640x480).
+- Includes freeware 68k launcher/GUI, four corresponding ARM blobs,
+  Workbench icon, keyboard and CD32 input, FMV and optional music.
+- Distributes ARM source and attribution notices separately; neither
+  proprietary PC/PSX game assets nor private launcher/GUI source is shipped.
+- Adds standalone Windows music and PSX loading-screen conversion tools,
+  including a tested combined 58-track PSX+PC audio wizard.
+- Fixes health/oxygen and menu slider bars in the 640x480 software renderer.
+- Requires XX19d-RIX for RasterIX; software mode works with XX19c+.
+
+Documentation: [ZZOpenLara](applications/games/ZZOpenLara/README.md).
+
+
 ## ZZScreensavers 1.1 - Solar Winds / RasterIX - 19 October 2026
 
 Release: [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1).

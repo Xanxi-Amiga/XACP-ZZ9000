@@ -1,0 +1,30 @@
+ZZOpenLara 1.0 - attribution terms for Xanxi's original ARM port code
+======================================================================
+
+Copyright (C) 2026 Xanxi.
+Project: ZZOpenLara / XACP for the MNT ZZ9000
+Source: https://github.com/Xanxi-Amiga/XACP-ZZ9000
+
+The original contributions identified by an explicit notice in the source
+files are licensed under GNU GPL version 3, with the following additional
+term permitted by GPLv3 section 7(b):
+
+  A redistributor of these contributions, including modified versions, must
+  preserve the following reasonable attribution in the relevant source
+  files and in the accompanying legal notices, or in the Appropriate Legal
+  Notices displayed by an interactive program that contains the material:
+
+  "ZZOpenLara / XACP-ZZ9000 ARM port - Copyright (C) 2026 Xanxi
+   https://github.com/Xanxi-Amiga/XACP-ZZ9000"
+
+This condition applies only to Xanxi's original material expressly marked
+as subject to this additional term, not to the underlying OpenLara engine,
+Quake headers, RasterIX FPGA core or other authors' code.
+
+The term does not require attribution in unrelated advertising, public
+announcements, websites, videos or promotional materials.
+The existing attribution, copyright and license obligations of other
+components remain in force. Other original 0BSD components remain 0BSD.
+
+This additional term only applies to material for which Xanxi holds
+the required rights; it does not override third-party rights or notices.
