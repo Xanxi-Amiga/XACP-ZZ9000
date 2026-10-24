@@ -58,8 +58,7 @@ RasterIX is now used by three separately released applications:
 - [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1) - FPGA-accelerated Solar Winds.
 - [ZZOpenLara 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZOpenLara-1.0) - Tomb Raider I with software and FPGA RasterIX rendering.
 
-The ZZQuake2 software and ARM TinyGL renderers continue to work with
-XX19c. RasterIX acceleration requires XX19d-RIX.
+The ZZQuake2 software and ARM TinyGL renderers, as well as the ZZOpenLara software renderer, remain compatible with XX19c. RasterIX acceleration requires XX19d-RIX.
 
 - [Firmware XX19d-RIX release](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19d-RIX)
 - [Firmware and corresponding sources](firmware/README.md)
