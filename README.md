@@ -128,6 +128,7 @@ Historical builds and source remain archived for regression testing.
 | **ZZDoom** | Doom engine on Core1 |
 | **ZZQuake** | WinQuake/quakegeneric software renderer on Core1 |
 | **[ZZQuake2 1.0](applications/games/ZZQuake2/README.md)** | Quake II on Core1 with software, ARM TinyGL and FPGA RasterIX rendering |
+| **[ZZOpenLara 1.0](applications/games/ZZOpenLara/README.md)** | Tomb Raider I on Core1 with ARM software and FPGA RasterIX rendering |
 | **ZZQuake HighRes** | 640x480, 800x600 and 1024x768 Quake builds on Core1 |
 | **ZZDarkForcesNEXT** | The Force Engine / Dark Forces on Core1 with enhanced TFE features |
 | **ZZRastan** | Rastan arcade hardware recreation on Core1 |
