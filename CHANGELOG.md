@@ -1,5 +1,50 @@
 # Changelog
 
+## ZZPicoDriveMD 1.2 - Mega Drive / Genesis - 31 October 2026
+
+Major update focused on smooth, full-speed gameplay and accurate display timing.
+
+- Reworks PAL/NTSC presentation and audio synchronisation for smooth scrolling
+  at the original console refresh rates: 50 Hz PAL and 59.98 Hz NTSC on
+  appropriately configured Picasso96 displays.
+- Improves frame pacing through ZZ9000 vertical-blank synchronisation and
+  deferred-PAN acknowledgement, with both AHI and direct Paula DMA audio.
+- Fixes savestate handling, adds PAL/NTSC compatibility checks and improves
+  clean exit and immediate relaunch.
+- Adds a persistent ROM directory, updated launcher controls and new
+  Mega Drive I / II Workbench icons.
+- Improves Cortex-A9 Core1 performance by mapping the ARM stack as cacheable
+  memory.
+- Publishes the complete corresponding 68k and ARM source code alongside
+  the compiled Amiga distribution, retaining third-party licences. Version
+  1.1 is preserved in the emulator archive.
+
+Documentation: [ZZPicoDriveMD 1.2](applications/emulators/ZZPicodrive/ZZPicodriveMD/README.md).
+
+---
+
+## ZZPicoDriveSMS 1.2 - Master System / YM2413 FM - 31 October 2026
+
+Major Master System update bringing smooth PAL/NTSC gameplay and FM audio.
+
+- Applies the new video and audio synchronisation to Master System emulation,
+  with smooth gameplay on genuine 50 Hz PAL and 59.98 Hz NTSC Picasso96 modes.
+- Adds Yamaha YM2413 FM Sound Unit emulation using emu2413, shared with
+  ZZVGMPlay, with a selectable FM option and Japanese Master System FM
+  control behaviour for compatible games.
+- Improves AHI and direct Paula DMA playback, savestates, SRAM handling and
+  clean exit/relaunch.
+- Adds persistent ROM directory selection and new Master System Workbench
+  icons.
+- Improves ARM Core1 performance with a cacheable stack mapping.
+- Publishes the complete corresponding 68k and ARM source code alongside
+  the compiled Amiga distribution, retaining third-party licences. Version
+  1.1 is preserved in the emulator archive.
+
+Documentation: [ZZPicoDriveSMS 1.2](
+
+--- 
+
 ## ZZOpenLara 1.0 - Tomb Raider I / RasterIX - 24 October 2026
 
 - Adds a ZZ9000 Cortex-A9 Core1 port of OpenLara with FPGA RasterIX
@@ -16,6 +61,7 @@
 
 Documentation: [ZZOpenLara](applications/games/ZZOpenLara/README.md).
 
+---
 
 ## ZZScreensavers 1.1 - Solar Winds / RasterIX - 19 October 2026
 
