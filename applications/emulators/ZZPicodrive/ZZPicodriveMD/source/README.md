@@ -1,145 +1,158 @@
-# ZZPicoDriveMD 1.1 corresponding source
+# ZZPicoDriveMD v1.2
 
-This directory contains the source corresponding to the public
-**ZZPicoDriveMD 1.1** release for the MNT ZZ9000.
+**ZZPicoDriveMD** is a Sega Mega Drive / Genesis emulator for classic Amiga
+systems equipped with an **MNT ZZ9000**.
 
-## Release source mapping
+The emulation core (PicoDrive) runs on the ZZ9000 ARM Core1 and renders
+directly into ZZ9000 RTG memory. The Amiga 68k side handles the launcher, file
+access, display flips, input, audio output, SRAM and savestates, and stays
+almost idle.
 
-Amiga 68k launcher:
+This is the **Genesis / Mega Drive Edition** of ZZPicoDrive.
 
-```text
-amiga/ZZPicoDriveMD_v1.1.c
-amiga/blob_data.c
-```
+## What is new in v1.2
 
-ARM Core1 side:
+- **Per-frame rendering with vblank-synchronised display.** The measured
+  display rates are 49.5-49.8 FPS for PAL and 59.0-59.8 FPS for NTSC,
+  depending on the audio backend. A small number of frames can be missed
+  during host-system stalls or audio-clock drift.
+- **Real 50 Hz output for PAL games** and **59.98 Hz output for NTSC games**,
+  with the 320x240 screen, its x2 scaler and the scanlines kept. Fluid
+  scrolling, no judder.
+- **Paula and AHI at the same level**: the display stays synchronised with
+  either backend.
+- **Savestates work with Paula and with AHI**, and a savestate of the other
+  region (PAL / NTSC) is refused instead of breaking the game.
+- **Clean exit and immediate relaunch** without resetting the ZZ9000.
+- **The mouse never quits the game** (Shift+Esc quits).
+- **Cacheable ARM stack**: the Core1 stack memory section is mapped
+  write-back/write-allocate instead of strongly ordered.
+- **Default ROM drawer** remembered in the configuration.
 
-```text
-arm/zzpico_core1.c
-arm/zzpicodrive_md_v1.1.bin
-arm/build_cyc_audioreal.sh
-arm/zzpico_*.c / .h / .S / .ld
-arm/stubs/
-```
+See [RELEASE_NOTES_v1.2.md](RELEASE_NOTES_v1.2.md) for the details.
 
-The exact embedded ARM blob is:
+## Requirements
 
-```text
-Size:    598968 bytes
-SHA-256: 07484259b5a62949322198aced99369cb3f2ae0627f32a7cc6a97946b98c671b
-```
+- Amiga with MNT ZZ9000 and a 68020 or better (tested on A4000/060).
+- XACP firmware **XX19c or later**, with its matching `zz9000.card`. The
+  current firmware (XX19d-RIX at the time of this release, or any later
+  update) is recommended; v1.2 was validated on XX19d-RIX and also works with
+  XX19c.
+- Picasso96 with a ZZ9000 **320x240, 32-bit** screen mode.
+- AHI, only for the AHI audio backend. The Paula backend needs nothing.
+- A monitor or TV that accepts 640x480 at 50 Hz and at 59.98 Hz (most do;
+  see `no50` / `no60` below if yours does not).
 
-`arm/zzpico_core1.c` is byte-for-byte identical to the final MD v1.1 Core1
-source retained in the original build archive.
+ZZPicoDriveMD is not compatible with the official MNT firmware or with other
+ZZ9000 firmware branches: it needs specific XACP Core1, memory and display
+interfaces.
 
-The historical source files are intentionally preserved rather than rewritten.
-Some comments therefore mention earlier internal development-stage names even
-though the current public firmware baseline is **XX19a / XACP v1.6**.
+## ROM formats
 
-## Upstream PicoDrive revision
+Supported: `.bin`, `.gen`, `.md`. Not supported: `.zip`, `.smd` (decompress or
+convert them first).
 
-ZZPicoDriveMD 1.1 is based on:
+No ROM is included. Only use ROM files you are legally entitled to use.
 
-```text
-notaz/picodrive
-commit 26ecb2b6358fefba24e3d68b9eb2efba7f10d5ee
-```
+## Starting
 
-The Cyclone source used by this PicoDrive revision is:
+From Workbench: double-click **ZZPicoDriveMD**, choose the ROM, region, audio
+backend and controller, then **Start**.
 
-```text
-irixxxx/cyclone68000
-commit 3ac7cf1bdeecb60e2414980e8dc72ff092f69769
-```
+**ROM drawer**: *Set ROM drawer...* chooses the drawer the ROM requester always
+opens in (shown on the *ROM dir* line); *Clear* goes back to the last drawer
+used.  Both are saved at once in `ZZPicoDriveMD.cfg` (`romdir=`, `lastdir=`).
+If the drawer's volume is not mounted, the requester opens normally and the
+setting is kept.  From the Shell, a ROM name alone that is not in the current
+directory is looked for in the ROM drawer.
 
-The exact upstream source archives are already included in:
-
-```text
-third_party/archives/
-```
-
-No repository checkout or network fetch is required to obtain the corresponding
-third-party source.
-
-The `.url` files in `third_party/` are optional upstream references only.
-
-## Historical ARM build layout
-
-The retained build script uses the original Unix-style `/tmp/zp` layout and the
-`arm-none-eabi-` GNU toolchain.
-
-For that layout:
-
-1. Put the files from `arm/` directly in `/tmp/zp/`.
-2. Extract the included PicoDrive archive so its source root is
-   `/tmp/zp/picodrive/`.
-3. Extract the included Cyclone archive into
-   `/tmp/zp/picodrive/cpu/cyclone/`, so that directory contains the Cyclone
-   `Makefile`, `Main.cpp`, `Ea.cpp`, `Cyclone.h` and the other generator
-   sources.
-4. Run `arm/build_cyc_audioreal.sh` in a shell environment with the ARM GNU
-   toolchain, `make` and a native C++ compiler available.
-
-Normal archive extraction tools are sufficient for steps 1-3.
-
-## Cyclone.s
-
-At Cyclone commit `3ac7cf1bdeecb60e2414980e8dc72ff092f69769`,
-`Cyclone.s` is intentionally **not stored in the repository**.
-
-The upstream Cyclone Makefile defines:
+From the Shell:
 
 ```text
-all: Cyclone.s
-Cyclone.s: cyclone_gen
-    ./cyclone_gen
+ZZPicoDriveMD <rom> [region] [flags]
+
+  ZZPicoDriveMD Sonic.bin
+  ZZPicoDriveMD Sonic.bin eur paula
+  ZZPicoDriveMD Sonic.bin usa ahi kbd
 ```
 
-`cyclone_gen` is built from the Cyclone C/C++ generator sources and then run on
-the build host to emit `Cyclone.s`.
+- Region and flags are keywords and can be given in any order (upper or
+  lower case). The Core1 program embedded in ZZPicoDriveMD is used; the form
+  with `-` in second position (`Sonic.bin - eur paula`) also works. Any other
+  word is taken as an external Core1 blob file (developers only).
+- `region`: `auto` (default), `usa`, `jap`, `eur`, `jappal`.
+- `flags`:
+  - audio: `ahi`, `paula`, `silence`
+  - input: `kbd`, `cd32`, `db9`, `usb`, `port=N`, `2p`
+  - display: `no50` (PAL games stay on the 60 Hz screen mode),
+    `no60` (NTSC games use the plain 59.5 Hz screen mode), `osd`
+  - diagnostics only: `pri0`, `norecheck`, `nosettle`, `tof`, `gate`, `inputlog`
 
-The retained ZZPicoDrive ARM build script checks for `Cyclone.s` and invokes the
-upstream Cyclone Makefile with PicoDrive's `cpu/cyclone_config.h` configuration
-to generate it when necessary before assembling it with `arm-none-eabi-gcc`.
+Started from the Shell, ZZPicoDriveMD prints timing and audio statistics when
+it exits (frames emulated and displayed, audio underruns, exit reason).
 
-## ARM build
+## Audio
 
-The historical build script retains the original compiler flags and exact object
-list used for the MD build.
+ZZPicoDriveMD produces 16-bit stereo PCM at 22050 Hz; YM2612 FM and PSG are
+emulated on the ARM side.
 
-The released reference blob is provided in:
+- **Paula**: direct DMA playback on AUD0/AUD1, no AHI needed.
+- **AHI**: 16-bit stereo through AHI (sound cards, mixing with other programs).
+- **None**: no sound.
 
-```text
-arm/zzpicodrive_md_v1.1.bin
-```
+## Controls
 
-Its SHA-256 is the release identity shown above. Reproducing the exact binary
-also depends on using a compatible toolchain/build environment.
+| Key | Mega Drive |
+| --- | --- |
+| Cursor keys | D-pad |
+| Keypad 1 / 2 / 3 | A / B / C |
+| Keypad 4 / 5 / 6 | X / Y / Z |
+| Keypad 0 | Mode |
+| Return | Start (player 1) |
+| Tab | Start (player 2) |
 
-## 68k launcher build
+Controllers: DB9 joystick or pad, CD32 pad, USB pad through Poseidon
+(lowlevel.library). Two players with two controllers on different ports.
 
-The launcher source records the original build command. The general form is:
+## Hotkeys
 
-```text
-m68k-amigaos-gcc -O2 -noixemul -m68020 -Wno-pointer-sign \
-    -o ZZPicoDriveMD ZZPicoDriveMD_v1.1.c blob_data.c -lamiga
-```
+| Key | Action |
+| --- | --- |
+| Shift + Esc | Quit |
+| Del | Console reset |
+| F1 - F5 | Load savestate slot 1 - 5 |
+| Shift + F1 - F5 | Save savestate slot 1 - 5 |
 
-The normal AmigaOS NDK, Picasso96 and AHI headers used by the source are also
-required.
+## Savestates
 
-## Licensing
+Savestates are stored next to the ROM as `ROM.st1` ... `ROM.st5`; battery
+saves as `ROM.srm`.
 
-PicoDrive at the revision used here is not GPL-only. Its historical
-non-commercial license requires complete source availability for modified
-binary distributions.
+**A savestate is guaranteed only when it is loaded with the same region and
+the same audio output (AHI / Paula) it was saved with. In any other case it is
+not guaranteed.** A savestate saved in the other region family (PAL / NTSC) is
+refused by the launcher with a message.
 
-See:
+## Installation
 
-```text
-../COPYING_PICODRIVE.txt
-../THIRD_PARTY_NOTICES.md
-third_party/archives/
-```
+See [INSTALL.md](INSTALL.md).
 
-Original third-party copyright and license notices must be preserved.
+## Source code and building
+
+The complete source is included: 68k launcher (`amiga/`), ARM Core1 program
+(`Core1/`), PicoDrive and Cyclone (`third_party/`), and the build scripts.
+See [BUILD.md](BUILD.md).
+
+## Credits
+
+ZZ9000 / AmigaOS port, launcher, ARM Core1 integration, audio, video, input,
+save handling and real-hardware validation: **Xanxi**.
+
+Emulation core: **PicoDrive by notaz and contributors**; Cyclone 68000 by
+Dave Haywood, notaz and irixxxx.
+
+See [COPYING_PICODRIVE.txt](COPYING_PICODRIVE.txt) and
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+Sega, Mega Drive and Genesis are trademarks of SEGA. This project is not
+affiliated with SEGA.

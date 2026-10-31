@@ -1,38 +1,14 @@
-# License / source notice
+# Licence and source notice
 
-ZZPicoDriveMD is distributed without any commercial ROM image.
+ZZPicoDriveMD is a port of PicoDrive for MNT ZZ9000 / AmigaOS.
 
-The emulation core is **PicoDrive by notaz and contributors**.
+The emulation core is **PicoDrive by notaz and contributors**, based on revision
+`26ecb2b6358fefba24e3d68b9eb2efba7f10d5ee`. The historical
+**non-commercial licence** applies; see `COPYING_PICODRIVE.txt`.
 
-ZZ9000 / AmigaOS port, launcher, ARM Core1 integration,
-audio/video/input/save handling and XACP integration are by **Xanxi**.
+The complete corresponding source is published under `source/`, including the
+Amiga 68k launcher, ARM Core1 code, PicoDrive/Cyclone source and build scripts.
+Original upstream notices and licences are retained.
 
-The corresponding source for ZZPicoDriveMD 1.1 is published under:
-
-```text
-source/
-```
-
-The release is based on PicoDrive commit:
-
-```text
-26ecb2b6358fefba24e3d68b9eb2efba7f10d5ee
-```
-
-PicoDrive at this revision uses its historical non-commercial license. Modified
-redistributions must include the complete source code for the components used by
-the binary.
-
-The exact PicoDrive and Cyclone source archives used for this publication are
-included under:
-
-```text
-source/third_party/archives/
-```
-
-The PicoDrive license text is reproduced at `COPYING_PICODRIVE.txt`; the
-original upstream files, including PicoDrive `COPYING` / `AUTHORS` and the
-Cyclone license files, are preserved inside the corresponding upstream source
-archives.
-
-See `THIRD_PARTY_NOTICES.md` and `source/third_party/README.md`.
+The ZZ9000/XACP port is credited to **Xanxi**.
+No commercial ROMs, firmware images or game data are distributed.

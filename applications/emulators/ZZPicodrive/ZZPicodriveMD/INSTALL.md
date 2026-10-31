@@ -1,78 +1,43 @@
 # Installation
 
-## 1. Install compatible ZZ9000 firmware
+## 1. Firmware
 
-Install **XACP v1.6 / firmware XX19a** and the matching `zz9000.card`, or a
-later firmware explicitly documented as compatible with ZZPicoDriveMD.
+ZZPicoDriveMD v1.2 needs the XACP firmware **XX19c or later** with its
+matching `zz9000.card`. The current firmware is recommended: XX19d-RIX at the
+time of this release, or any later update. v1.2 was validated on XX19d-RIX and
+also works with XX19c. The firmware is not included.
 
-Firmware XX19a:
+Do not mix `BOOT.bin`, `zz9000.card` and ZZPicoDrive executables from
+different firmware generations. Power the Amiga off completely after changing
+the firmware or the card file.
 
-https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19a
+## 2. Picasso96
 
-The firmware is not included in the emulator archive.
+Make sure the ZZ9000 offers a **320x240, 32-bit (True Colour)** screen mode.
+A High Colour Workbench is not enough: ZZPicoDriveMD opens its own 320x240x32
+screen.
 
-Do not mix `BOOT.bin`, `zz9000.card` and ZZPicoDriveMD executables from
-different firmware generations.
+During the game ZZPicoDriveMD reprograms the ZZ9000 output to 640x480 at
+50 Hz (PAL games) or 59.98 Hz (NTSC games) and restores it when it exits. If
+your monitor refuses one of these, start from the Shell with `no50` or `no60`.
 
-ZZPicoDriveMD is not compatible with official MNT firmware 1.13 or with
-MiDWaN / BlitterStudio firmware unless compatible XACP interfaces are provided.
+## 3. Audio
 
-This is not a criticism of other ZZ9000 firmware branches. ZZPicoDriveMD needs
-specific low-level Core1, DDR mapping and RTG/PAN mechanisms and therefore
-requires an explicitly compatible firmware.
+Install AHI only if you want the AHI backend. The Paula backend plays directly
+through the Amiga audio hardware.
 
-## 2. Power cycle
+## 4. Copy ZZPicoDriveMD
 
-Power off the Amiga completely after changing firmware/card files.
+Copy the `ZZPicoDriveMD` folder anywhere on the Amiga. The program is a single
+executable: the ARM Core1 part is embedded in it.
 
-## 3. Check Picasso96
+## 5. ROMs
 
-Make sure Picasso96 is installed and that your ZZ9000 has a valid
-320x240x32 RTG mode.
+Copy your own Mega Drive / Genesis ROMs (`.bin`, `.gen`, `.md`) to a folder of
+your choice. No ROM is included.
 
-A High Colour Workbench screen is not enough. ZZPicoDriveMD needs a real
-32-bit / True Colour ZZ9000 RTG mode.
+## 6. Run
 
-## 4. Audio
-
-Install AHI if you want to use the AHI audio backend.
-
-The Paula DMA backend does not require AHI.
-
-## 5. Copy ZZPicoDriveMD
-
-Copy the ZZPicoDriveMD directory to your Amiga.
-
-## 6. Add ROMs
-
-Copy your own Mega Drive / Genesis ROMs to a directory of your choice.
-
-No ROMs are included.
-
-Only use ROM files you legally own.
-
-Supported ROM formats:
-
-- `.bin`
-- `.gen`
-- `.md`
-
-Unsupported:
-
-- `.zip`
-- `.smd`
-
-Please decompress or convert them before use.
-
-## 7. Run
-
-Start ZZPicoDriveMD from Workbench or Shell.
-
-Select:
-
-- ROM file
-- region
-- audio backend
-- input mode
-
-Click **Start**.
+Double-click **ZZPicoDriveMD**, or start it from the Shell (see README.md).
+Choose ROM, region, audio backend and controller, then **Start**.
+Shift+Esc quits.
