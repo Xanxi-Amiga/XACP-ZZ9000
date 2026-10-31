@@ -41,7 +41,7 @@ Major Master System update bringing smooth PAL/NTSC gameplay and FM audio.
   the compiled Amiga distribution, retaining third-party licences. Version
   1.1 is preserved in the emulator archive.
 
-Documentation: [ZZPicoDriveSMS 1.2](
+Documentation: [ZZPicoDriveSMS 1.2](applications/emulators/ZZPicodrive/ZZPicodriveSMS/README.md).
 
 --- 
 
