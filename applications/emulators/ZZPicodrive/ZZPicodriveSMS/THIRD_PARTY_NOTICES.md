@@ -1,73 +1,58 @@
-# ZZPicoDriveSMS third-party notices
+# Third-party notices
 
-ZZPicoDriveSMS is a ZZ9000 / AmigaOS port built around **PicoDrive**.
+ZZPicoDriveSMS is a modified binary distribution of PicoDrive. The complete
+source of every component used by the program is included in this package.
+No ROM and no ROM-derived data are included.
 
-## PicoDrive
+## PicoDrive (`third_party/picodrive/`)
 
-Upstream project: **notaz/picodrive**
+Copyright (c) notaz, 2006-2013, and contributors; see `AUTHORS` and `COPYING`
+in the source tree and `COPYING_PICODRIVE.txt`.
 
-Corresponding release base:
+Revision: notaz/picodrive `26ecb2b6358fefba24e3d68b9eb2efba7f10d5ee`.
 
-```text
-PicoDrive commit: 26ecb2b6358fefba24e3d68b9eb2efba7f10d5ee
-Date:             2025-04-03
-```
+Licence: PicoDrive's historical non-commercial licence. Redistributions may
+not be sold or used in a commercial product, and modified binary
+redistributions must include the complete source code.
 
-PicoDrive at this revision is distributed under its historical non-commercial
-license, reproduced in `COPYING_PICODRIVE.txt`.
+Modifications in this package:
+- `pico/pico_int.h` (one macro) and `pico/state.c` (one `#ifndef NO_32X`) so
+  that the tree builds without the 32X code;
+- `pico/sound/sound.c`: saturating PSG + FM mix and clamped FM sample, under
+  `ZZPICO_FM_SAT` (diff in `docs/`);
+- `pico/sound/sound.c`: with `ZZPICO_FM_NATIVE`, the OPLL outputs at its
+  native rate in PAL too (no emu2413 rate converter before the FIR);
+- `pico/sms.c` + `pico/sound/sound.c`: with `ZZPICO_SMS_FM_MIX`, port $F2
+  bits D1 D0 drive the audio mixer of the Japanese console in the Japan
+  region (00 PSG, 01 FM, 10 none, 11 both), as in Genesis Plus GX;
+- `pico/sms.c`: with `ZZPICO_SMS_JAP_IO`, a Japanese console reads back 0 on
+  the TH/TR pins set as outputs (ports $DC/$DD), as the 315-5297 I/O chip
+  and Genesis Plus GX do (diff in `docs/`);
+- `pico/sound/emu2413/`: emu2413 1.6.3 (see below), used by
+  `pico/sound/ym2413.c`.
 
-The exact PicoDrive source archive for the revision above is retained under:
+Components with their own terms, unchanged: CZ80 (Stephane Dallongeville);
+FAME/C and Musashi are present but not compiled.
 
-```text
-source/third_party/archives/
-```
+## emu2413 (`third_party/emu2413/`, `pico/sound/emu2413/`)
 
-PicoDrive authorship, contributor information and the original `COPYING` file
-are preserved inside that upstream archive.
+Copyright (c) 2001-2019 Mitsutaka Okazaki, MIT License
+(`third_party/emu2413/LICENSE`). Version 1.6.3, upstream
+digital-sound-antiques/emu2413 commit
+`83254be0de24b3506438c45b2870017885cb778c`, the copy used and validated in
+ZZVGMPlay 1.0 (`third_party/emu2413/README_ZZVGM.txt`). Compiled (YM2413 FM).
 
-## Cyclone 68000
+## Cyclone 68000 (`third_party/picodrive/cpu/cyclone/`)
 
-The retained build links the Cyclone 68000 core referenced by the PicoDrive
-revision above:
+Copyright (c) 2004, 2011 Dave "FinalDave" Haywood, notaz, irixxxx; MAME
+licence / GPLv2 (`License.txt`, `License-GPLv2.txt`).
 
-```text
-Repository: irixxxx/cyclone68000
-Commit:     3ac7cf1bdeecb60e2414980e8dc72ff092f69769
-```
+Revision: irixxxx/cyclone68000 `3ac7cf1bdeecb60e2414980e8dc72ff092f69769`,
+unmodified. `Cyclone.s` is the generator output for `cpu/cyclone_config.h`,
+shipped pre-generated (MD5 `ff097962906336cf7879c22ff42bcc18`).
 
-The exact Cyclone source archive for that commit is retained in
-`source/third_party/archives/`.
+## ZZPicoDriveSMS (`amiga/`, `Core1/`, `tools/`, build scripts)
 
-Cyclone is dual-licensed under GNU GPL v2 and its historical MAME-style
-non-commercial license. The original Cyclone license files are preserved
-inside the upstream archive.
+Copyright (c) 2026 Xanxi (Xanxi-Amiga / XACP-ZZ9000).
 
-`Cyclone.s` is generated source and is not stored in the Cyclone repository at
-this revision. The retained build script generates it from the upstream
-Cyclone generator sources before assembling it.
-
-## emu2413 header
-
-PicoDrive references:
-
-```text
-Repository: digital-sound-antiques/emu2413
-Commit:     a2dfc20ff507e4fd075cd325620bcea655e2c1f7
-```
-
-ZZPicoDriveSMS 1.1 does **not** link the YM2413 synthesis implementation. Its
-SMS build nevertheless needs the exact `emu2413.h` interface header included by
-PicoDrive `sms.c`. That exact header is preserved under `source/third_party/emu2413/`
-and is licensed under the MIT License by Mitsutaka Okazaki.
-
-## ZZ9000 / XACP integration
-
-ZZ9000 / AmigaOS launcher, Core1 integration, shared-memory protocol,
-video/audio/input/save handling and real-hardware validation:
-
-**Xanxi, 2026**
-
-No Sega ROM images or proprietary game data are included.
-
-ZZ9000 is a product of MNT Research GmbH. ZZPicoDriveSMS and XACP are independent
-software projects and are not official MNT Research products.
+Sega and Master System are trademarks of SEGA. Not affiliated.

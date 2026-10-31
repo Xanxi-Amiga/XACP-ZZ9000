@@ -1,0 +1,335 @@
+/*
+ * ZZPicoDriveSMS - shared-memory contract between 68k and ARM Core1.
+ *
+ * The application DDR allocations originated in the XACP XX19 memory map
+ * and are retained for compatibility with the current XACP v1.8 firmware.
+ * The shared control block is non-cacheable; ARM writes native 32-bit words,
+ * while the 68k helpers convert endianness at their interface.
+ *
+ * Addresses and offsets in this header are part of the application ABI.
+ * Preserve them when extending the emulator or adapting its Core1 frontend.
+ */
+
+#ifndef ZZPICO_SHARED_H
+#define ZZPICO_SHARED_H
+
+#define ZZPICO_MAGIC        0x5A504943UL   /* 'ZPIC' */
+#define ZZPICO_VERSION      1UL
+
+/* ---- DDR map (XX19 / XACP v1.5) - single source of truth ---- */
+/* 68k-visible framebuffer window: */
+#define ZZPICO_ARM_BLOB     0x04500000UL   /* fb+0x04300000, WB/WA, 2 MB window  */
+#define ZZPICO_ARM_SHARED   0x04700000UL   /* fb+0x04500000, NC,    1 MB         */
+#define ZZPICO_ARM_ROM      0x04B00000UL   /* fb+0x04900000, WB/WA, up to 7 MB   */
+#define ZZPICO_ARM_ROM_END  0x05200000UL
+#define ZZPICO_ARM_VIDEO    0x05600000UL   /* fb+0x05400000, WB/WA (phase 4)     */
+#define ZZPICO_ARM_AUDIO    0x05700000UL   /* fb+0x05500000, NC    (phase 5)     */
+#define ZZPICO_ARM_DEBUG    0x05800000UL   /* fb+0x05600000, 2 MB debug/margin   */
+/* ARM private pool (ARM-only, not 68k-visible): */
+#define ZZPICO_ARM_BSS      0x22000000UL   /* WB/WA, 4 MB (..0x22400000)         */
+#define ZZPICO_ARM_BSS_END  0x22400000UL
+#define ZZPICO_ARM_HEAP     0x22800000UL   /* WB/WA, 8 MB (..0x23000000)         */
+#define ZZPICO_HEAP_SIZE    (8UL*1024UL*1024UL)
+
+#define ZZPICO_FB_BLOB      0x04300000UL
+#define ZZPICO_FB_SHARED    0x04500000UL
+#define ZZPICO_FB_ROM       0x04900000UL
+#define ZZPICO_ARM_FROM_FB(x)  ((x) + 0x00200000UL)
+#define ZZPICO_FB_FROM_ARM(x)  ((x) - 0x00200000UL)
+
+#define ZZPICO_BLOB_LIMIT   (ZZPICO_ARM_SHARED - 0x00010000UL)   /* 0x046F0000 */
+
+/* Launch: run value = ZZPICO_ARM_BLOB -> HI=0x0450, LO=0x0000 */
+#define ZZPICO_REG_ARM_RUN_HI   0x0090
+#define ZZPICO_REG_ARM_RUN_LO   0x0092
+
+#define ZZPICO_ROM_MAX      (4UL*1024UL*1024UL)   /* v0 (region allows 7 MB) */
+#define ZZPICO_ROM_PAD      256UL
+
+enum zzpico_status {
+    ZZPICO_ST_BOOTING=0, ZZPICO_ST_READY=1, ZZPICO_ST_RUNNING=2,
+    ZZPICO_ST_STOPPING=3, ZZPICO_ST_ERROR=0xEE, ZZPICO_ST_STOPPED=0xFF
+};
+enum zzpico_command {
+    ZZPICO_CMD_NONE=0, ZZPICO_CMD_INIT=1, ZZPICO_CMD_LOAD_ROM=2,
+    ZZPICO_CMD_START=3, ZZPICO_CMD_STOP=4, ZZPICO_CMD_STEP_FRAME=5,
+    ZZPICO_CMD_SELFTEST=6   /* declenche une UDF -> teste les vecteurs (ERROR=8) */
+};
+enum zzpico_error {
+    ZZPICO_ERR_NONE=0, ZZPICO_ERR_BAD_MAGIC=1, ZZPICO_ERR_ROM_NULL=2,
+    ZZPICO_ERR_ROM_TOO_BIG=3, ZZPICO_ERR_ROM_CRC=4, ZZPICO_ERR_PICO_INIT=5,
+    ZZPICO_ERR_DATA_ABORT=6, ZZPICO_ERR_PREFETCH_ABORT=7, ZZPICO_ERR_UNDEF_INSTR=8,
+    ZZPICO_ERR_ROM_ODD=9
+};
+enum zzpico_fb_format { ZZPICO_FBFMT_RGB555=1, ZZPICO_FBFMT_RGB565=2, ZZPICO_FBFMT_ARGB8888=3 };
+
+#define ZZPICO_SH_MAGIC 0
+#define ZZPICO_SH_VERSION 1
+#define ZZPICO_SH_STATUS 2
+#define ZZPICO_SH_COMMAND 3
+#define ZZPICO_SH_CMD_SEQ 4
+#define ZZPICO_SH_ACK_SEQ 5
+#define ZZPICO_SH_HEARTBEAT 6
+#define ZZPICO_SH_FRAME_COUNTER 7
+#define ZZPICO_SH_ERROR 8
+#define ZZPICO_SH_DIAG 9
+#define ZZPICO_SH_ROM_ADDR 10
+#define ZZPICO_SH_ROM_SIZE 11
+#define ZZPICO_SH_ROM_CRC_68K 12
+#define ZZPICO_SH_ROM_CRC_ARM 13
+#define ZZPICO_SH_ROM_FIRST4 14
+#define ZZPICO_SH_ROM_LAST4 15
+#define ZZPICO_SH_FB_ADDR 16
+#define ZZPICO_SH_FB_WIDTH 17
+#define ZZPICO_SH_FB_HEIGHT 18
+#define ZZPICO_SH_FB_PITCH 19
+#define ZZPICO_SH_FB_FORMAT 20
+#define ZZPICO_SH_FRAME_READY 21
+#define ZZPICO_SH_FLIP_SEQ 22
+#define ZZPICO_SH_TIME_MS 23
+#define ZZPICO_SH_FRAME_REQ 24
+#define ZZPICO_SH_FRAME_DONE 25
+#define ZZPICO_SH_PAD0 26
+#define ZZPICO_SH_PAD1 27
+#define ZZPICO_SH_PCM_BASE 30
+#define ZZPICO_SH_PCM_SIZE 31
+#define ZZPICO_SH_PCM_WRITE_POS 32
+#define ZZPICO_SH_PCM_READ_POS 33
+#define ZZPICO_SH_PCM_RATE 34
+#define ZZPICO_SH_PCM_FORMAT 35
+#define ZZPICO_SH_PCM_UNDERRUNS 36
+#define ZZPICO_SH_PCM_ENABLED 37
+#define ZZPICO_SH_PROF_FRAME_US 40
+#define ZZPICO_SH_PROF_RENDER_US 41
+#define ZZPICO_SH_PROF_DROPPED 42
+/* Phase 3a : CRC du rendu + rectangle actif (evite 26/27/28 = dump de faute) */
+#define ZZPICO_SH_FRAME_CRC_FULL   43
+#define ZZPICO_SH_FRAME_CRC_ACTIVE 44
+#define ZZPICO_SH_FRAME_CRC_ACC    45
+#define ZZPICO_SH_VM_START_LINE    49
+#define ZZPICO_SH_VM_LINE_COUNT    50
+#define ZZPICO_SH_VM_START_COL     51
+#define ZZPICO_SH_VM_COL_COUNT     52
+#define ZZPICO_SH_VM_MODE_SEQ      53
+#define ZZPICO_SH_MMU_BASE 48
+#define ZZPICO_SH_DBG_OPT          54
+#define ZZPICO_SH_DBG_SNDRATE      55
+#define ZZPICO_SH_DBG_SNDOUT_NULL  56
+#define ZZPICO_SH_DBG_SKIPFRAME    57
+#define ZZPICO_SH_DBG_YM_STATUS    58
+#define ZZPICO_SH_DBG_YM_MODE      59
+#define ZZPICO_SH_DBG_VDP_REG1     60
+#define ZZPICO_SH_DBG_CRAM_NZ      61
+#define ZZPICO_SH_DBG_M68K_PC      62
+#define ZZPICO_SH_DBG_PC_CHANGES   63
+/* VISUAL_TIMING_CLEAN : region (68k->blob) + timing/centrage (blob->68k) */
+#define ZZPICO_SH_REGION_IN        64   /* 68k->blob : 0=AUTO,4=USA,1=JAPN,8=EUR,2=JAPP */
+#define ZZPICO_SH_PAL_OUT          65   /* blob->68k : Pico.m.pal effectif (0=NTSC,1=PAL) */
+#define ZZPICO_SH_ACTIVE_H         66   /* blob->68k : hauteur active VDP (224/240)     */
+#define ZZPICO_SH_Y_OFFSET         67   /* blob->68k : offset vertical applique (0/8)   */
+#define ZZPICO_SH_REGION_EFF       68   /* blob->68k : regionOverride reellement pose    */
+#define ZZPICO_SH_DBG_BUF_SENT     29
+#define ZZPICO_SH_DBG_BUF_ZERO     38
+#define ZZPICO_SH_DBG_BUF_NONZERO  39
+#define ZZPICO_SH_DBG_FIRST_CHG    46
+#define ZZPICO_SH_DBG_VDP_REG12    47
+/* DIAG poll (p3a_diag_poll) : bloc 80-105, snapshot a FRAME_DONE */
+#define ZZPICO_SH_POLL_VDP_READS    80
+#define ZZPICO_SH_POLL_VDP_LAST     81
+#define ZZPICO_SH_POLL_VDP_VB       82
+#define ZZPICO_SH_POLL_VDP_HB       83
+#define ZZPICO_SH_POLL_VDP_PC       84
+#define ZZPICO_SH_POLL_BREQ_READS   85
+#define ZZPICO_SH_POLL_BREQ_WRITES  86
+#define ZZPICO_SH_POLL_BREQ_LASTW   87
+#define ZZPICO_SH_POLL_BREQ_LASTR   88
+#define ZZPICO_SH_POLL_BREQ_PC      89
+#define ZZPICO_SH_POLL_ZRST_READS   90
+#define ZZPICO_SH_POLL_ZRST_WRITES  91
+#define ZZPICO_SH_POLL_ZRST_LASTW   92
+#define ZZPICO_SH_POLL_ZRST_LASTR   93
+#define ZZPICO_SH_POLL_ZRST_PC      94
+#define ZZPICO_SH_POLL_IO_READS     95
+#define ZZPICO_SH_POLL_IO_WRITES    96
+#define ZZPICO_SH_POLL_IO_LASTADDR  97
+#define ZZPICO_SH_POLL_IO_LASTR     98
+#define ZZPICO_SH_POLL_IO_LASTW     99
+#define ZZPICO_SH_POLL_IO_PC        100
+#define ZZPICO_SH_POLL_VER_READS    101
+#define ZZPICO_SH_POLL_PAD1_READS   102
+#define ZZPICO_SH_POLL_PAD2_READS   103
+#define ZZPICO_SH_POLL_RING_COUNT   104
+#define ZZPICO_SH_POLL_RING_BASE    105
+/* DIAG first-fault recorder (p3a_diag_fault) : 106-135 */
+#define ZZPICO_SH_RESET_PC      106
+#define ZZPICO_SH_RESET_SR      107
+#define ZZPICO_SH_RESET_A7      108
+#define ZZPICO_SH_RESET_ASP     109
+#define ZZPICO_SH_F1_PC         110
+#define ZZPICO_SH_F1_SR         111
+#define ZZPICO_SH_F1_A7         112
+#define ZZPICO_SH_F1_ASP        113
+#define ZZPICO_SH_FAULT_CAPTURED 114
+#define ZZPICO_SH_FAULT_FRAME   115
+#define ZZPICO_SH_FAULT_VECT    116
+#define ZZPICO_SH_FAULT_OLDPC   117
+#define ZZPICO_SH_FAULT_OLDSR   118
+#define ZZPICO_SH_FAULT_ASP     119
+#define ZZPICO_SH_FAULT_D0      120
+#define ZZPICO_SH_FAULT_A0      128
+/* Garde-fous byteswap */
+#define ZZPICO_SH_ROM_STATE     136   /* 0=RAW_BE, 1=SWAPPED_HOST */
+#define ZZPICO_SH_POSTSWAP_SSP  137   /* attendu 0x00FFFE00 */
+#define ZZPICO_SH_POSTSWAP_PC   138   /* attendu 0x00000206 */
+/* Phase 3b : conversion ARGB8888 + CRC */
+#define ZZPICO_SH_CRC_ARGB_FULL    139
+#define ZZPICO_SH_CRC_ARGB_ACTIVE  140
+#define ZZPICO_SH_ARGB_NONZERO     141
+#define ZZPICO_SH_ARGB_FIRST_CHG   142
+#define ZZPICO_SH_CONV_MODE        143
+/* Phase 3d : rendu direct dans le framebuffer P96 (supprime la copie 68k).
+ * Le 68k publie, chaque frame, l'adresse ARM + pitch du backbuffer courant ;
+ * si P96_ENABLE=1 le blob convertit l'ARGB directement dedans (le format
+ * 0xFFRRGGBB en ARM-LE donne les octets [B][G][R][A] attendus par le scanout,
+ * deja valide en 3c fmt5). P96_ENABLE=0 => comportement 3b inchange. */
+#define ZZPICO_SH_P96_ENABLE       144
+#define ZZPICO_SH_P96_BASE         145   /* adresse ARM du backbuffer courant */
+#define ZZPICO_SH_P96_PITCH        146   /* octets par ligne du backbuffer    */
+/* Decoupe du rendu (cycles PMU CCNT, mode P96 rapide seulement) */
+#define ZZPICO_SH_PERF_PICOFRAME   147   /* cycles PicoFrame()                 */
+#define ZZPICO_SH_PERF_CONVERT     148   /* cycles boucle conversion 565->ARGB */
+#define ZZPICO_SH_PERF_DCLEAN      149   /* cycles dcache_clean(buffer P96)    */
+/* Benchmark ponctuel (frame 1) : ecriture 76800 mots, P96 vs FB3B cachee */
+#define ZZPICO_SH_PERF_WCYC_P96    150   /* cycles ecriture vers buffer P96    */
+#define ZZPICO_SH_PERF_WCYC_FB3B   151   /* cycles ecriture vers FB3B (cachee) */
+#define ZZPICO_SH_PERF_DESC_P96    152   /* descripteur section buffer P96     */
+#define ZZPICO_SH_PERF_DESC_FB3B   153   /* descripteur section FB3B (ref)     */
+#define ZZPICO_SH_PERF_DESC_P96PRE 154   /* descripteur section P96 AVANT remap */
+#define ZZPICO_SH_PERF_COPY        155   /* cycles copie bloc FB3B->P96 (fast)  */
+
+/* NTSC_TIMING_DIAG : accumulateurs sur toute la session, cycles CCNT.
+   PicoFrame min/max + somme 64 bits (hi/lo) + histogramme seuils 12/14/16.67 ms
+   (a 666667 cyc/ms : 8000004 / 9333338 / 11111117) + max convert/clean. */
+#define ZZPICO_SH_DIAG_PF_MIN      156
+#define ZZPICO_SH_DIAG_PF_MAX      157
+#define ZZPICO_SH_DIAG_PF_SUM_US   158   /* somme PicoFrame en us (cyc/667), u32 */
+#define ZZPICO_SH_DIAG_RESV159     159
+#define ZZPICO_SH_DIAG_FRAMES      160
+#define ZZPICO_SH_DIAG_N_GT12      161
+#define ZZPICO_SH_DIAG_N_GT14      162
+#define ZZPICO_SH_DIAG_N_GT1667    163
+#define ZZPICO_SH_DIAG_CONV_MAX    164
+#define ZZPICO_SH_DIAG_CLEAN_MAX   165
+#define ZZPICO_SH_DIAG_CONV_MIN    166   /* convert min (cycles)              */
+#define ZZPICO_SH_DIAG_CONV_SUM_US 167   /* somme convert en us -> moy = /frames */
+#define ZZPICO_SH_PCM_OVERRUNS     168   /* AUDIO_REAL : ARM ring plein (compte) */
+#define ZZPICO_SH_PCM_TESTPAT      169   /* AUDIO_TEST : 1=tone L 440Hz (valide L/R+endian) */
+/* ==== INPUT / CONTROLS (phase pad) : 68k ecrit, Core1 lit ==== */
+/* pad joueur 1 = ZZPICO_SH_PAD0 (26) ; joueur 2 = ZZPICO_SH_PAD1 (27) [deja definis] */
+#define ZZPICO_SH_INPUT_SEQ   170   /* incremente quand pad/emu change   */
+#define ZZPICO_SH_EMU_CMD     171   /* commande emulateur (EMU_CMD_*)    */
+#define ZZPICO_SH_EMU_ARG     172   /* argument (ex. slot savestate)     */
+/* commandes emulateur (68k -> Core1, via SH_EMU_CMD, one-shot) */
+#define EMU_CMD_NONE   0
+#define EMU_CMD_MENU   1
+#define EMU_CMD_QUIT   2
+#define EMU_CMD_PAUSE  3
+#define EMU_CMD_RESET  4
+/* menu : Core1 -> 68k (action fichier/quit demandee par le menu) */
+#define ZZPICO_SH_MENU_ACTION 78
+#define ZZPICO_MENU_ACT_NONE  0
+#define ZZPICO_MENU_ACT_SAVE  1
+#define ZZPICO_MENU_ACT_LOAD  2
+#define ZZPICO_MENU_ACT_QUIT  3
+/* ==== SAUVEGARDES (modele ZZDoom) : 68k<->DDR<->Core1, 68k transporte les octets ==== */
+#define ZZPICO_SAVE_BUF_ARM   0x07E00000UL   /* buffer d'echange DDR (adresse ARM) */
+#define ZZPICO_SAVE_MAX       (512UL*1024UL) /* savestate ~300KB + marge ; SRAM <=64KB */
+#define ZZPICO_SH_SAVE_CMD    70   /* 68k->Core1 : commande (ZZPICO_SAVE_CMD_*) */
+#define ZZPICO_SH_SAVE_SEQ    71   /* 68k incremente pour declencher            */
+#define ZZPICO_SH_SAVE_ACK    72   /* Core1 recopie SEQ quand fini              */
+#define ZZPICO_SH_SAVE_STATUS 73   /* Core1 : OK/ERR                            */
+#define ZZPICO_SH_SAVE_SLOT   74   /* slot savestate (0..N)                     */
+#define ZZPICO_SH_SAVE_SIZE   75   /* SAVE: taille produite ; LOAD: taille fournie */
+#define ZZPICO_SH_SAVE_ERR    77   /* Core1 : detail erreur                     */
+#define ZZPICO_SAVE_CMD_SRAM_SAVE   1
+#define ZZPICO_SAVE_CMD_SRAM_LOAD   2
+#define ZZPICO_SAVE_CMD_STATE_SAVE  3
+#define ZZPICO_SAVE_CMD_STATE_LOAD  4
+#define ZZPICO_SAVE_STATUS_OK   2
+#define ZZPICO_SAVE_STATUS_ERR  3
+/* bitmask interne pad (1 = presse) */
+#define ZP_UP     (1u<<0)
+#define ZP_DOWN   (1u<<1)
+#define ZP_LEFT   (1u<<2)
+#define ZP_RIGHT  (1u<<3)
+#define ZP_A      (1u<<4)
+#define ZP_B      (1u<<5)
+#define ZP_C      (1u<<6)
+#define ZP_START  (1u<<7)
+#define ZP_X      (1u<<8)
+#define ZP_Y      (1u<<9)
+#define ZP_Z      (1u<<10)
+#define ZP_MODE   (1u<<11)
+#define ZP_SELECT (1u<<12)
+#define ZP_MENU   (1u<<13)
+#define ZZPICO_SH_COUNT 176
+
+/* ==== ZZPicoDriveMD  slots 176..199 (same numbering as ZZPicoDrive32X rc1/rc2) ==== */
+#define ZZPICO_SH_DRAWMODE      176   /* 68k -> Core1: 0 = draw every frame, deferred publication (rc2);
+                                         1 = 1.1 gate (draw only when the previous frame was taken)  */
+#define ZZPICO_SH_PUB_IMMEDIATE 177   /* Core1: frames published at the end of PicoFrame           */
+#define ZZPICO_SH_PUB_DEFERRED  178   /* Core1: frames published from the pacing wait              */
+#define ZZPICO_SH_PUB_DROPPED   179   /* Core1: frames overwritten in FB3A before publication      */
+#define ZZPICO_SH_ZPM_MAGIC     180   /* 'ZPM1' = 0x5A504D31 : ZZPicoDriveMD rc2 blob (32X: 'ZVR1') */
+#define ZZPICO_ZPM_MAGIC_VAL    0x5A504D31u
+#define ZZPICO_SH_BUILD         181   /* 0x4D02 = MD rc2                                            */
+#define ZZPICO_BUILD_ID         0x5302u   /* SMS v1.2 (MD v1.2 = 0x4D02) */
+#define ZZPICO_SH_PF_W_AVG_US   188   /* PicoFrame average over the last 600 frames, us            */
+#define ZZPICO_SH_PF_W_MAX_US   189
+#define ZZPICO_SH_PF_LAST_US    190
+#define ZZPICO_SH_OSD           195   /* 68k -> Core1: 1 = OSD text line off                        */
+#define ZZPICO_SH_W_FRAMES      196
+#define ZZPICO_SH_W_DRAWN       197   /* frames published at the end of PicoFrame, in the window   */
+#define ZZPICO_SH_ENTRY_SP      198   /* SP at core1_entry (expected 0x05FFFFxx)                   */
+#define ZZPICO_SH_BUILD2        199   /* 1 = rc2                                                    */
+#define ZZPICO_BUILD2_ID        1u
+#define ZZPICO_SH_COUNT_RC2     200
+
+/* ZZPicoDriveSMS FM RC1 - YM2413 option and diagnostics (free slots 121..135) */
+#define ZZPICO_SH_FM_ENABLE     121   /* 68k->blob before START: 1 = FM unit present (POPT_EN_YM2413) */
+#define ZZPICO_SH_FM_HW         122   /* blob: Pico.m.hardware | (fm_ctl<<8) | (opt_fm<<16) | (opll!=0)<<17 */
+#define ZZPICO_SH_FM_REGW       123   /* blob: writes to port 0xF0 (register select)                   */
+#define ZZPICO_SH_FM_DATW       124   /* blob: writes to port 0xF1 (data)                              */
+#define ZZPICO_SH_FM_LAST       125   /* blob: (last register << 8) | last data                        */
+#define ZZPICO_SH_FM_REN_MAXUS  126   /* blob: worst FM synthesis + FIR time in one PicoFrame (us)     */
+#define ZZPICO_SH_FM_REN_SUMMS  127   /* blob: total FM synthesis + FIR time (ms)                      */
+#define ZZPICO_SH_FM_REN_FRAMES 129   /* blob: frames in which FM was rendered                         */
+#define ZZPICO_SH_FM_SAT        130   /* blob: saturated samples (PSG+FM mix or FM x3 clamp)           */
+#define ZZPICO_SH_FM_PEAK       131   /* blob: peak |sample| seen in the mix (before clamp)            */
+#define ZZPICO_SH_FM_SAMPLES    132   /* blob: FM samples produced (resampler output)                  */
+/* FM: CPU1 control registers (diagnostic) */
+#define ZZPICO_SH_SCTLR_ENTRY   133   /* blob: SCTLR at core1_entry, before mmu_init                   */
+#define ZZPICO_SH_SCTLR_NOW     134   /* blob: SCTLR after mmu_init (bit 11 Z = branch prediction)     */
+#define ZZPICO_SH_ACTLR_NOW     135   /* blob: ACTLR after mmu_init                                    */
+/* FM: PMU event averages per frame (PMUF = whole PicoFrame, FM included;
+   PMUM = FM synthesis only, per frame with FM activity) */
+#define ZZPICO_SH_PMUF_INSN     173
+#define ZZPICO_SH_PMUF_BRMISS   174
+#define ZZPICO_SH_PMUF_DREFILL  175
+#define ZZPICO_SH_PMUF_IREFILL  182
+#define ZZPICO_SH_PMUF_DSTALL   183
+#define ZZPICO_SH_PMUF_ISTALL   184
+#define ZZPICO_SH_PMUM_INSN     185
+#define ZZPICO_SH_PMUM_BRMISS   186
+#define ZZPICO_SH_PMUM_DREFILL  187
+#define ZZPICO_SH_PMUM_IREFILL  191
+#define ZZPICO_SH_PMUM_DSTALL   192
+#define ZZPICO_SH_PMUM_ISTALL   193
+#define ZZPICO_BUILD2_FM        2u    /* slot 199 value of the FM build (RC1)                          */
+#define ZZPICO_BUILD2_FM_RC2    3u    /* FM: no slow 1.1 path once P96_ENABLE is set               */
+#define ZZPICO_BUILD2_FM_RC3    4u    /* FM: CPU1 stack window 0x05F cached (WB/WA)                */
+#define ZZPICO_BUILD2_FM_RC4    5u    /* FM: pacing waits for a pending frame (no burst drops)     */
+#define ZZPICO_BUILD2_FM_RC6    6u    /* FM: Japanese console I/O (TH/TR outputs read back 0)      */
+#define ZZPICO_BUILD2_V12       7u    /* v1.2: + $F2 audio mixer of the Japanese console (PSG/FM)      */
+
+#endif

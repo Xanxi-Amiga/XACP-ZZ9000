@@ -1,0 +1,53 @@
+--- a/pico/sms.c
++++ b/pico/sms.c
+@@ -423,6 +423,21 @@
+ 
+ // NB: SC-3000 has a 8255 chip, mapped to 0xdc-0xdf. Not fully emulated.
+ 
++/* ZZPicoDriveSMS Japanese I/O: Japanese console I/O.  On the Japanese Master System
++   (315-5297 I/O chip) the TH and TR pins set as outputs always read back 0 on
++   ports $DC/$DD; export consoles read back the output level.  Games use this
++   to tell the region: Wonder Boy III and others enable their YM2413 music
++   only on a Japanese console.  Upstream PicoDrive always reads back the
++   level, so such games stayed on the PSG even in the Japan region.  Same rule
++   as Genesis Plus GX (io_ctrl.c, region_code == REGION_JAPAN_NTSC); not for
++   Game Gear / SG-1000 / SC-3000. */
++#ifdef ZZPICO_SMS_JAP_IO
++#define ZZ_IOCTL_RD (((Pico.m.hardware & PMS_HW_JAP) && !(PicoIn.AHW & (PAHW_GG|PAHW_SG|PAHW_SC))) \
++                     ? (Pico.ms.io_ctl & 0x0f) : Pico.ms.io_ctl)
++#else
++#define ZZ_IOCTL_RD (Pico.ms.io_ctl)
++#endif
++
+ static unsigned char z80_sms_in(unsigned short a)
+ {
+   unsigned char d = 0xff;
+@@ -484,8 +499,8 @@
+         // For SC-3000: 8255 port A, assume always configured for input
+         if (! (PicoIn.AHW & PAHW_SC) || (Pico.ms.io_sg & 7) == 7) {
+           d = ~((PicoIn.pad[0] & 0x3f) | (PicoIn.pad[1] << 6));
+-          if (!(Pico.ms.io_ctl & 0x01)) // TR as output
+-            d = (d & ~0x20) | ((Pico.ms.io_ctl << 1) & 0x20);
++          if (!(ZZ_IOCTL_RD & 0x01)) // TR as output
++            d = (d & ~0x20) | ((ZZ_IOCTL_RD << 1) & 0x20);
+         } else {
+           int i; // read kbd 8 bits
+           kbd_update();
+@@ -497,12 +512,12 @@
+       case 0xc1: /* I/O port B and miscellaneous */
+         // For SC-3000: 8255 port B, assume always configured for input
+         if (! (PicoIn.AHW & PAHW_SC) || (Pico.ms.io_sg & 7) == 7) {
+-          d = (Pico.ms.io_ctl & 0x80) | ((Pico.ms.io_ctl << 1) & 0x40) | 0x30;
++          d = (ZZ_IOCTL_RD & 0x80) | ((ZZ_IOCTL_RD << 1) & 0x40) | 0x30;
+           d |= ~(PicoIn.pad[1] >> 2) & 0x0f;
+-          if (!(Pico.ms.io_ctl & 0x04)) // TR as output
+-            d = (d & ~0x08) | ((Pico.ms.io_ctl >> 3) & 0x08);
+-          if (Pico.ms.io_ctl & 0x08) d |= 0x80; // TH as input is unconnected
+-          if (Pico.ms.io_ctl & 0x02) d |= 0x40;
++          if (!(ZZ_IOCTL_RD & 0x04)) // TR as output
++            d = (d & ~0x08) | ((ZZ_IOCTL_RD >> 3) & 0x08);
++          if (ZZ_IOCTL_RD & 0x08) d |= 0x80; // TH as input is unconnected
++          if (ZZ_IOCTL_RD & 0x02) d |= 0x40;
+         } else {
+           int i; // read kbd 4 bits
+           kbd_update();

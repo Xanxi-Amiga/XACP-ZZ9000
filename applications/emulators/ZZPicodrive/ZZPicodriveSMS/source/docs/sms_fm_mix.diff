@@ -1,0 +1,107 @@
+--- a/pico/sms.c
++++ b/pico/sms.c
+@@ -456,7 +456,11 @@
+         break;
+       case 0xf2:
+         // bit 0 = 1 active FM Pac
++#ifdef ZZPICO_SMS_FM_MIX
++        d = (Pico.ms.fm_ctl == 0xff) ? 0xff : (0xf8 | (Pico.ms.fm_ctl & 0x1));  // D1 not read back
++#else
+         d = 0xf8 | Pico.ms.fm_ctl;
++#endif
+         break;
+       }
+     }
+@@ -559,7 +563,15 @@
+           break;
+         case 0xf2:
+           // bit 0 = 1 active FM Pac
++#ifdef ZZPICO_SMS_FM_MIX
++          // ZZPicoDriveSMS v1.2: keep D1 too (audio mixer of the Japanese
++          // console, see sound.c); bring the PSG up to now first so that a
++          // PSG mute / unmute takes effect at this point of the frame
++          PsndDoPSG(z80_cyclesDone());
++          Pico.ms.fm_ctl = d & 0x3;
++#else
+           Pico.ms.fm_ctl = d & 0x1;
++#endif
+           break;
+       }
+     }
+--- a/pico/sound/sound.c
++++ b/pico/sound/sound.c
+@@ -50,6 +50,45 @@
+ 
+ // FM resampling polyphase FIR
+ static resampler_t *fmresampler;
++
++#ifdef ZZPICO_SMS_FM_MIX
++/* ZZPicoDriveSMS v1.2: audio mixer of the Japanese Master System (315-5297),
++   port $F2 bits D1 D0 (Genesis Plus GX, memz80.c):
++     00 PSG only (power-on)  01 FM only  10 PSG and FM muted  11 PSG and FM.
++   Applied in the Japan region only, as in Genesis Plus GX; elsewhere (and
++   before the game writes $F2) PSG and FM are both heard, as upstream.
++   Returns bit 0 = PSG audible, bit 1 = FM audible.  A muted chip still runs
++   (its state advances), its output is discarded. */
++static int zz_sms_mix(void)
++{
++  unsigned c = Pico.ms.fm_ctl;
++  if (!(PicoIn.AHW & PAHW_SMS) || (PicoIn.AHW & (PAHW_GG|PAHW_SG|PAHW_SC)))
++    return 3;
++  if (!(Pico.m.hardware & PMS_HW_JAP) || !(Pico.m.hardware & PMS_HW_FM) || c == 0xff)
++    return 3;
++  switch (c & 3) {
++    case 0:  return 1;
++    case 1:  return 2;
++    case 2:  return 0;
++    default: return 3;
++  }
++}
++static s16 zz_psg_discard[2*1200];
++static void zz_psg_update(s16 *buffer, int length, int stereo)
++{
++  if (zz_sms_mix() & 1) { SN76496Update(buffer, length, stereo); return; }
++  while (length > 0) {              /* muted: run the PSG into a scratch buffer */
++    int n = length > 1200 ? 1200 : length;
++    SN76496Update(zz_psg_discard, n, stereo);
++    length -= n;
++  }
++}
++#define ZZ_PSG_UPDATE(b,l,s) zz_psg_update(b,l,s)
++#define ZZ_FM_AUDIBLE()      (zz_sms_mix() & 2)
++#else
++#define ZZ_PSG_UPDATE(b,l,s) SN76496Update(b,l,s)
++#define ZZ_FM_AUDIBLE()      1
++#endif
+ static int (*PsndFMUpdate)(s32 *buffer, int length, int stereo, int is_buf_empty);
+ 
+ PICO_INTERNAL void PsndInit(void)
+@@ -315,7 +354,7 @@
+     stereo = 1;
+     pos <<= 1;
+   }
+-  SN76496Update(PicoIn.sndOut + pos, len, stereo);
++  ZZ_PSG_UPDATE(PicoIn.sndOut + pos, len, stereo);
+ }
+ 
+ PICO_INTERNAL void PsndDoSMSFM(int cyc_to)
+@@ -609,7 +648,7 @@
+     s16 *psgbuf = PicoIn.sndOut + (psglen << stereo);
+     Pico.snd.psg_pos += (length-psglen) << 20;
+     if (PicoIn.opt & POPT_EN_PSG)
+-      SN76496Update(psgbuf, length-psglen, stereo);
++      ZZ_PSG_UPDATE(psgbuf, length-psglen, stereo);
+   }
+ 
+   if (length-ym2413len > 0) {
+@@ -618,7 +657,9 @@
+     int len = (length-ym2413len);
+     if (Pico.m.hardware & PMS_HW_FMUSED) {
+       PsndFMUpdate(buf32, len, 0, 0);
+-      if (stereo)
++      if (!ZZ_FM_AUDIBLE())
++        ;                                /* FM muted by the $F2 mixer: state advanced, output dropped */
++      else if (stereo)
+         while (len--) {
+           ZZ_MIXADD(*ym2413buf, *buf32); ym2413buf++;
+           ZZ_MIXADD(*ym2413buf, *buf32); ym2413buf++; buf32++;
