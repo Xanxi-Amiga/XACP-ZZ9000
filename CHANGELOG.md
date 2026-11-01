@@ -1,5 +1,24 @@
 # Changelog
 
+## ZZPicoDrive32X 1.2 - First public Sega 32X edition - 1 November 2026
+
+First public ZZPicoDrive32X edition, based on the ZZPicoDriveMD 1.2 platform.
+
+- Brings Sega 32X cartridge emulation to the ZZ9000 ARM Cortex-A9 Core1,
+  including dynamic recompilation for both SH-2 processors.
+- Delivers smooth PAL 50 Hz and NTSC 59.98 Hz gameplay with synchronized
+  Picasso96 display output.
+- Includes AHI or direct Paula DMA audio, savestates, SRAM, Workbench
+  launcher and keyboard/gamepad controls.
+- Supports `.32x` and `.bin` 32X cartridge images, with no ROMs bundled.
+- Publishes the compiled Amiga distribution, complete corresponding 68k/ARM
+  source material and original third-party licence notices.
+- Supports XACP XX19c; XX19d-RIX or a later compatible firmware is recommended.
+
+Documentation: [ZZPicoDrive32X 1.2](applications/emulators/ZZPicodrive/ZZPicodrive32X/README.md).
+
+---
+
 ## ZZPicoDriveMD 1.2 - Mega Drive / Genesis - 31 October 2026
 
 Major update focused on smooth, full-speed gameplay and accurate display timing.

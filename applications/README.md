@@ -36,8 +36,9 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `ZZVGMPlay/` | **[ZZVGMPlay 1.0](ZZVGMPlay/README.md)** | VGM/VGZ music, sound-chip emulation on Core1 | Current |
 | `ZZSpeech/`                             | **ZZSpeech**              | CMU Flite speech synthesis on ARM Core1        | Current              |
 | `ZZScreensaver/` | **[ZZScreensavers 1.1](ZZScreensaver/README.md)** | Earth/Julia on Core1; Solar Winds via RasterIX | Current |
-| `emulators/ZZPicodrive/ZZPicodriveMD/`  | **ZZPicoDriveMD 1.1**     | Sega Mega Drive / Genesis emulator             | Current              |
-| `emulators/ZZPicodrive/ZZPicodriveSMS/` | **ZZPicoDriveSMS 1.1**    | Sega Master System emulator                    | Current              |
+| `emulators/ZZPicodrive/ZZPicodriveMD/` | **[ZZPicoDriveMD 1.2](emulators/ZZPicodrive/ZZPicodriveMD/README.md)** | Sega Mega Drive / Genesis; smooth PAL/NTSC gameplay | Current |
+| `emulators/ZZPicodrive/ZZPicodriveSMS/` | **[ZZPicoDriveSMS 1.2](emulators/ZZPicodrive/ZZPicodriveSMS/README.md)** | Sega Master System with YM2413 FM sound | Current |
+| `emulators/ZZPicodrive/ZZPicodrive32X/` | **[ZZPicoDrive32X 1.2](emulators/ZZPicodrive/ZZPicodrive32X/README.md)** | Sega 32X with dual-SH-2 recompilation and smooth PAL/NTSC gameplay | Current |
 | `games/ZZDoom/`                         | **ZZDoom**                | Doom engine running on ARM Core1               | Current              |
 | `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current              |
 | `games/ZZQuake2/` | **[ZZQuake2 1.0](games/ZZQuake2/README.md)** | Quake II with software, TinyGL and RasterIX renderers | Current |
@@ -179,77 +180,39 @@ See [ZZScreensavers documentation](ZZScreensaver/README.md).
 
 # ZZPicoDrive
 
-Directory:
+Directory: [emulators/ZZPicodrive/](emulators/ZZPicodrive/README.md)
 
-```text
-emulators/ZZPicodrive/
-```
+ZZPicoDrive runs Sega console emulation on the ZZ9000 ARM Cortex-A9 Core1.
+AmigaOS handles the Workbench launcher, Picasso96 display, audio, input and
+file access. The three current editions use synchronized PAL/NTSC output
+for smooth gameplay and support direct Paula or AHI audio.
 
-ZZPicoDrive runs the PicoDrive emulation engine on ZZ9000 ARM Core1 while the Amiga side provides file access, RTG display, input, audio output, SRAM and savestate handling.
+## [ZZPicoDriveMD 1.2](emulators/ZZPicodrive/ZZPicodriveMD/README.md)
 
-Two public editions are currently included.
+Sega Mega Drive / Genesis emulation, with SRAM, savestates and keyboard /
+gamepad input. The 1.2 release introduces smoother PAL 50 Hz and NTSC 60 Hz
+presentation and improved synchronization.
 
-## ZZPicoDriveMD 1.1
+## [ZZPicoDriveSMS 1.2](emulators/ZZPicodrive/ZZPicodriveSMS/README.md)
 
-Directory:
+Sega Master System emulation with **Yamaha YM2413 FM Sound Unit** support,
+alongside smooth PAL/NTSC presentation, SRAM and savestates.
 
-```text
-emulators/ZZPicodrive/ZZPicodriveMD/
-```
+## [ZZPicoDrive32X 1.2](emulators/ZZPicodrive/ZZPicodrive32X/README.md)
 
-Sega Mega Drive / Genesis emulator.
+First public Sega 32X edition, based on the ZZPicoDriveMD 1.2 platform.
+Uses PicoDrive's dynamic recompilation for both SH-2 processors and provides
+smooth PAL/NTSC gameplay, audio and savestates. Accepts `.32x` and `.bin`
+cartridge images.
 
-Main features include:
+**Firmware:** XACP XX19c or later compatible firmware; XX19d-RIX or a later
+compatible version is recommended, with the matching `zz9000.card`.
+The original MD and SMS 1.1 releases remain in the
+[historical archive](emulators/ZZPicodrive/archive/).
 
-```text
-Mega Drive / Genesis emulation
-ARM Core1 execution
-PAL and NTSC operation
-Picasso96 RTG output
-AHI stereo audio
-direct Paula DMA audio
-keyboard input
-DB9 joystick input
-lowlevel.library / CD32-style controllers
-two-player support
-SRAM
-savestates
-embedded ARM Core1 blob
-```
+Each edition provides its Amiga executable, corresponding sources and
+third-party licensing notices. No commercial game ROMs are included.
 
-No commercial ROMs are included.
-
----
-
-## ZZPicoDriveSMS 1.1
-
-Directory:
-
-```text
-emulators/ZZPicodrive/ZZPicodriveSMS/
-```
-
-Sega Master System edition of ZZPicoDrive.
-
-It uses the same general XACP / Core1 architecture as the Mega Drive edition.
-
-Features include:
-
-```text
-Master System emulation
-ARM Core1 execution
-PAL and NTSC operation
-Picasso96 RTG output
-AHI or Paula audio
-keyboard / joystick / controller input
-two-player support
-SRAM
-savestates
-```
-
-YM2413 / FM audio is not enabled in the 1.1 release.
-
-No commercial ROMs are included.
 
 ---
 
