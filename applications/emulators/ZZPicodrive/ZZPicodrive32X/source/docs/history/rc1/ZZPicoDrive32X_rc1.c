@@ -1,0 +1,2204 @@
+/*
+ * ZZPicoDrive32X - Sega 32X emulator launcher for the MNT ZZ9000 (rc1).
+ *
+ * Base: ZZPicoDriveMD 1.1 launcher (Xanxi 2026) + the ZZVirtuaRacingRIX A1diag
+ * instrumentation.  Same screen / triple-buffer / deferred-PAN / audio / input
+ * model as 1.1.  What rc1 changes, each tagged "32X:" in the code:
+ *   - 100 KiB stack installed by the program itself (exec StackSwap): the 1.1
+ *     "__stack" variable is not honoured by the bebbo/libnix build, the launcher
+ *     ran on the 4 KiB Shell stack and CloseWindow overflowed it at exit
+ *     (every exit crash and the in-race freeze of A1 came from there);
+ *   - frame pacing on the ZZ9000 vblank (register 0x4C) with a software PLL:
+ *     timer.device sleep until ~0.8 ms before the predicted edge, then a short
+ *     poll; the PAN ack is then seen in the same period and one frame is flipped
+ *     per RTG vblank (1.1 slept on the Amiga WaitTOF, out of phase with the
+ *     ZZ9000, and flipped one frame out of two: 29.9 fps measured).  Flag "tof"
+ *     restores the 1.1 WaitTOF pacing for A/B;
+ *   - the blob draws every frame and publishes when a buffer is free (slot 176);
+ *     flag "gate" restores the 1.1 drawing gate for A/B;
+ *   - save buffer 1.5 MiB (a 32X savestate is ~680 KiB);
+ *   - Del = console reset (one-shot command, acknowledged by the blob);
+ *   - keypad 4/5/6/0 = X/Y/Z/MODE (6-button pad);
+ *   - the A1diag instrumentation stays: SNAP at quit, WATCHDOG, EXIT steps, STACK.
+ *   The 32X-specific fields (slots 176-199) are read only when the blob
+ *   identifies itself (slot 180 = 'ZVR1'); the launcher still runs the MD blob.
+ *
+ * Usage:
+ *   ZZPicoDrive32X rom.32x [blob.bin] [region] [flags]
+ *   region: auto | eur | usa | jap          (32X: usa recommended, NTSC)
+ *   flags : kbd cd32 db9 usb port=N silence paula ahi 2p inputlog noosd tof gate
+ *   (no argument = GUI; the blob file zz32x_rc1.bin must be next to the program)
+ *
+ * Build (bebbo m68k-amigaos-gcc, from the directory holding the sources):
+ *   m68k-amigaos-gcc -O2 -noixemul -m68020 -Wno-pointer-sign \
+ *     -o ZZPicoDrive32X ZZPicoDrive32X.c blob_data.c -lamiga
+ *   (blob_data.c = bin2c of zz32x_rc1.bin; blob_data_stub.c = no embedded blob)
+ *
+ * Launcher by Xanxi, 2026.  Emulation core: PicoDrive (notaz, irixxxx).
+ * ASCII-only source.
+ */
+
+#include <proto/Picasso96.h>
+#include <exec/types.h>
+#include <exec/tasks.h>       /* 32X: StackSwapStruct */
+#include <libraries/configvars.h>
+#include <intuition/intuition.h>
+#include <intuition/screens.h>
+#include <graphics/gfx.h>
+#include <graphics/displayinfo.h>
+#include <proto/exec.h>
+#include <proto/expansion.h>
+#include <proto/dos.h>
+#include <proto/intuition.h>
+#include <proto/graphics.h>
+#include <devices/ahi.h>
+#include <devices/inputevent.h>
+#include <dos/dostags.h>
+#include <dos/dosextens.h>
+#include <dos/dos.h>
+#include <exec/ports.h>
+#include <devices/timer.h>
+#include <proto/timer.h>
+#include <proto/lowlevel.h>   /* fournit JPF_* et JP_TYPE_* corrects (ReadJoyPort) */
+#include <proto/gadtools.h>
+#include <proto/asl.h>
+#include <stdarg.h>
+#include <libraries/gadtools.h>
+#include <libraries/asl.h>
+#include <stdio.h>
+#include <string.h>
+#include <devices/audio.h>
+
+/* blob ARM Core1 embarque (blob_data.c) : utilise si aucun fichier blob present */
+extern const unsigned char g_blob_data[];
+extern const unsigned long g_blob_size;
+
+/* IntuitionBase/GfxBase declares par les proto headers */
+unsigned long __stack = 100000UL;   /* 1.1: NOT honoured by the bebbo/libnix build (measured: 4 KiB Shell stack);
+                                       kept for other startups, the real guarantee is the StackSwap in main() */
+#define ZZ32X_STACK_SIZE 100000UL     /* 32X: stack installed by main() */
+struct Library *P96Base = NULL;
+struct Library *GfxBase_ = NULL;
+struct Library *LowLevelBase = NULL;   /* lowlevel.library : ReadJoyPort (mode CD32/DB9) */
+struct Library *GadToolsBase = NULL;   /* GUI de lancement */
+struct Library *AslBase = NULL;        /* requester fichier ROM */
+
+/* sortie debug : active en mode CLI, muette en mode GUI (pas de fenetre console) */
+static int g_quiet = 0;
+static void qprintf(const char *fmt, ...)
+{
+    va_list ap;
+    if(g_quiet) return;
+    va_start(ap, fmt);
+    vprintf(fmt, ap);
+    va_end(ap);
+    fflush(stdout);   /* A1diag: every line reaches the console before the next step runs */
+}
+#define printf qprintf
+struct ExpansionBase *ExpansionBase = NULL;
+
+/* ---- mesure temps haute resolution (timer.device EClock) ----
+ * proto/timer.h declare TimerBase en extern struct Device* mais ne le definit
+ * pas : c'est au programme de fournir la variable (timer.device s'ouvre via
+ * OpenDevice). On la definit donc ici, avec le bon type. */
+struct Device *TimerBase = NULL;
+static struct MsgPort *g_tport = NULL;
+static struct timerequest *g_treq = NULL;
+static int timer_open(void)
+{
+    g_tport=CreateMsgPort(); if(!g_tport) return 0;
+    g_treq=(struct timerequest*)CreateIORequest(g_tport,sizeof(struct timerequest));
+    if(!g_treq){ DeleteMsgPort(g_tport); g_tport=NULL; return 0; }
+    if(OpenDevice("timer.device",UNIT_ECLOCK,(struct IORequest*)g_treq,0)){
+        DeleteIORequest((struct IORequest*)g_treq); DeleteMsgPort(g_tport);
+        g_treq=NULL; g_tport=NULL; return 0; }
+    TimerBase=g_treq->tr_node.io_Device;
+    return 1;
+}
+static void timer_close(void)
+{
+    if(g_treq){ CloseDevice((struct IORequest*)g_treq);
+                DeleteIORequest((struct IORequest*)g_treq); g_treq=NULL; }
+    if(g_tport){ DeleteMsgPort(g_tport); g_tport=NULL; }
+    TimerBase=NULL;
+}
+/* 32X: ZZ9000 vblank PLL statistics */
+static ULONG g_vb_period=0, g_vb_next=0, g_vb_edges=0, g_vb_miss=0, g_vb_late=0, g_vb_pollmax=0, g_vb_pollsum=0;
+static ULONG g_ack_poll_max=0, g_ack_notseen=0;   /* ack polls after the edge: worst case, and vblanks where it never came */
+/* 32X: a second timer.device unit (MICROHZ) to sleep a precise number of
+   microseconds without busy-waiting (the ECLOCK unit above is read-only). */
+static struct MsgPort *g_sport = NULL;
+static struct timerequest *g_sreq = NULL;
+static int sleep_open(void)
+{
+    g_sport=CreateMsgPort(); if(!g_sport) return 0;
+    g_sreq=(struct timerequest*)CreateIORequest(g_sport,sizeof(struct timerequest));
+    if(!g_sreq){ DeleteMsgPort(g_sport); g_sport=NULL; return 0; }
+    if(OpenDevice("timer.device",UNIT_MICROHZ,(struct IORequest*)g_sreq,0)){
+        DeleteIORequest((struct IORequest*)g_sreq); DeleteMsgPort(g_sport);
+        g_sreq=NULL; g_sport=NULL; return 0; }
+    return 1;
+}
+static void sleep_close(void)
+{
+    if(g_sreq){ CloseDevice((struct IORequest*)g_sreq);
+                DeleteIORequest((struct IORequest*)g_sreq); g_sreq=NULL; }
+    if(g_sport){ DeleteMsgPort(g_sport); g_sport=NULL; }
+}
+static void sleep_us(ULONG us)
+{
+    if(!g_sreq || us<100) return;
+    g_sreq->tr_node.io_Command=TR_ADDREQUEST;
+    g_sreq->tr_time.tv_secs=us/1000000UL;
+    g_sreq->tr_time.tv_micro=us%1000000UL;
+    DoIO((struct IORequest*)g_sreq);
+}
+static ULONG eclock_now(ULONG *freq)
+{
+    struct EClockVal ev; ULONG f;
+    if(!TimerBase){ if(freq) *freq=0; return 0; }
+    f=ReadEClock(&ev);
+    if(freq) *freq=f; return ev.ev_lo;
+}
+
+#define ZZ9000_MANUF    0x6D6E
+#define ZZ9000_PROD     0x04
+#define MNT_FB_BASE     0x00010000UL
+#define REG_ARM_RUN_HI  0x0090
+#define REG_ARM_RUN_LO  0x0092
+/* PAN ZZ9000 direct (firmware stock) : scan-out lit a partir de pan_offset.
+   X1/Y1=0 => offset plein-cadre propre (le firmware ajoute rect_x1<<cm +
+   rect_y1*pitch ; a 0 ils n'ajoutent rien). */
+#define REG_ZZ_PAN_HI   0x0A
+#define REG_ZZ_PAN_LO   0x0C
+#define REG_ZZ_X1       0x10
+#define REG_ZZ_Y1       0x12
+#define REG_ZZ_X2       0x14
+#define REG_ZZ_COLORMODE 0x30
+#define ZZ_COLORMODE_32  2
+#define REG_ZZ_USER3    0x44   /* write: 1=arme UN PAN differe, 2=clear+disarm */
+#define REG_ZZ_USER4    0x46   /* read : compteur ACK PAN differe (low16)       */
+/* HW_VBLANK_PACING : firmware renvoie zstate & (1<<21) au registre board+0x4C. */
+#define REG_ZZ_VBLANK_STATUS   0x4C
+#define ZZ_WR(b,o,v)    (*((volatile UWORD*)((UBYTE*)(b)+(o))) = (UWORD)(v))
+#define ZZ_RD(b,o)      (*((volatile UWORD*)((UBYTE*)(b)+(o))))
+
+static void zz_pan(volatile UBYTE *board, ULONG off)
+{
+    ZZ_WR(board, REG_ZZ_X1, 0);
+    ZZ_WR(board, REG_ZZ_Y1, 0);
+    ZZ_WR(board, REG_ZZ_PAN_HI, (UWORD)(off>>16));
+    ZZ_WR(board, REG_ZZ_PAN_LO, (UWORD)(off&0xFFFF));
+}
+/* PAN differe ZZDoom : le firmware applique au vblank rising edge + incremente USER4.
+   Doit etre precede de ZZ_WR(USER3,1) pour armer UN flip. */
+static void zz_deferred_pan_request(volatile UBYTE *board, ULONG byte_offset, ULONG pitch_bytes)
+{
+    ZZ_WR(board, REG_ZZ_X1, 0);
+    ZZ_WR(board, REG_ZZ_Y1, 0);
+    ZZ_WR(board, REG_ZZ_X2, (UWORD)(pitch_bytes >> 2));
+    ZZ_WR(board, REG_ZZ_COLORMODE, ZZ_COLORMODE_32);
+    ZZ_WR(board, REG_ZZ_PAN_HI, (UWORD)(byte_offset >> 16));
+    ZZ_WR(board, REG_ZZ_PAN_LO, (UWORD)(byte_offset & 0xFFFF));
+}
+static ULONG zz_pan_ack(volatile UBYTE *board)
+{
+    return (ULONG)(ZZ_RD(board, REG_ZZ_USER4) & 0xFFFF);
+}
+
+/* prototypes (rd32/wr32 sont definis plus bas, le backend AHI les utilise avant) */
+static ULONG rd32(volatile UBYTE *b, ULONG o);
+static void  wr32(volatile UBYTE *b, ULONG o, ULONG v);
+
+/* ===================== BACKEND AHI (16-bit stereo, double buffer) =====================
+   Joue le ring PCM stereo produit par le blob via AHI. On lit
+   le ring stereo s16 de PicoDrive ((L<<16)|R via rd32, byte-order prouve) et on downmixe en
+   mono. Tout le reste (M16S, ahir_Link, double-buffer event-driven, DEFAULT_UNIT) est IDENTIQUE
+   le ring stereo (L<<16)|R directement. */
+#define SH_PCM_BASE       (30*4)
+#define SH_PCM_SIZE       (31*4)
+#define SH_PCM_WRITE_POS  (32*4)
+#define SH_PCM_READ_POS   (33*4)
+#define SH_PCM_RATE       (34*4)
+#define SH_PCM_ENABLED    (37*4)
+#define SH_PCM_TESTPAT    (169*4)
+#define AHI_BUF_FRAMES 512    /* frames STEREO (23ms/buf, 46ms en vol -> latence mini) */
+static struct MsgPort    *ahi_mp=NULL;
+static struct AHIRequest *ahi_req[2]={NULL,NULL};
+static BYTE   ahi_dev_open=-1;
+static WORD  *ahi_buf[2]={NULL,NULL};
+ULONG zz_ahi_signal=0;
+static volatile UBYTE *au_shared=NULL;
+static volatile UBYTE *au_ringbase=NULL;
+static ULONG au_ring_size=0, au_read_pos=0, au_rate=22050;
+static ULONG ahi_refill_count=0, ahi_underrun=0;
+static int g_audio_on=0, g_test_pat=0;
+static int   g_silence=0;      /* stress-test : silence (aucune lecture ring)   */
+static int   g_sine=0;         /* stress-test : sinus stereo L/R                */
+static ULONG g_au_hz=0;        /* override frequence AHI (0 = SH_PCM_RATE)       */
+static ULONG g_sine_ph=0, g_sine_ph2=0;
+
+static ULONG pcm_rd32(volatile UBYTE *p){          /* = rd32 sur adresse ring */
+    volatile UWORD *w=(volatile UWORD*)p; UWORD w0=w[0],w1=w[1];
+    return ((ULONG)((UWORD)((w1>>8)|(w1<<8)))<<16)|(ULONG)((UWORD)((w0>>8)|(w0<<8)));
+}
+/* SOURCE PCM stereo : ring (L<<16)|R via rd32 -> ecrit L puis R (S16S), pas de downmix.
+   Modes stress-test : g_silence (silence pur, aucune lecture ring) ; g_sine (L=440Hz,
+   R=880Hz sawtooth, pour verifier format/pitch/gauche-droite). */
+static void pull_samples(WORD *buf)
+{
+    int n, k;
+    if(g_silence){                                   /* etape 1 : silence, zero ring */
+        for(k=0;k<AHI_BUF_FRAMES*2;k++) buf[k]=0;
+        ahi_refill_count++; return;
+    }
+    if(g_sine){                                      /* etape 2 : sinus/saw L!=R */
+        ULONG incL=(440UL*65536UL)/au_rate, incR=(880UL*65536UL)/au_rate;
+        for(n=0;n<AHI_BUF_FRAMES;n++){
+            g_sine_ph=(g_sine_ph+incL)&0xFFFF;
+            g_sine_ph2=(g_sine_ph2+incR)&0xFFFF;
+            buf[2*n]  =(WORD)(((LONG)g_sine_ph  - 32768) >> 2);   /* L 440Hz */
+            buf[2*n+1]=(WORD)(((LONG)g_sine_ph2 - 32768) >> 2);   /* R 880Hz */
+        }
+        ahi_refill_count++; return;
+    }
+    { ULONG wr = rd32(au_shared, SH_PCM_WRITE_POS);  /* etape 3 : ring reel */
+      ULONG avail;
+      n=0;
+      for(k=0;k<AHI_BUF_FRAMES*2;k++) buf[k]=0;
+      if(wr >= au_read_pos) avail = wr - au_read_pos;
+      else                  avail = au_ring_size - au_read_pos + wr;
+      while(n < AHI_BUF_FRAMES && avail >= 4){        /* 4 octets = 1 paire stereo */
+          ULONG v = pcm_rd32(au_ringbase + au_read_pos);   /* (L<<16)|R natif */
+          buf[2*n]   = (WORD)(v >> 16);                /* L */
+          buf[2*n+1] = (WORD)(v & 0xFFFF);             /* R */
+          n++;
+          au_read_pos += 4;
+          if(au_read_pos >= au_ring_size) au_read_pos = 0;
+          avail -= 4;
+      }
+      wr32(au_shared, SH_PCM_READ_POS, au_read_pos);
+      if(n < AHI_BUF_FRAMES) ahi_underrun++;
+      ahi_refill_count++;
+    }
+}
+static void prepare_and_send(int idx, struct AHIRequest *link)
+{
+    pull_samples(ahi_buf[idx]);
+    ahi_req[idx]->ahir_Std.io_Flags   = 0;
+    ahi_req[idx]->ahir_Std.io_Command = CMD_WRITE;
+    ahi_req[idx]->ahir_Std.io_Data    = ahi_buf[idx];
+    ahi_req[idx]->ahir_Std.io_Length  = AHI_BUF_FRAMES * 4;
+    ahi_req[idx]->ahir_Std.io_Offset  = 0;
+    ahi_req[idx]->ahir_Frequency      = au_rate;
+    ahi_req[idx]->ahir_Type           = AHIST_S16S;
+    ahi_req[idx]->ahir_Volume         = 0x10000;
+    ahi_req[idx]->ahir_Position       = 0x8000;
+    ahi_req[idx]->ahir_Link           = link;
+    SendIO((struct IORequest*)ahi_req[idx]);
+}
+static int zz_ahi_init(volatile UBYTE *shared, volatile UBYTE *ring_cpu)
+{
+    int i;
+    au_shared=shared; au_ringbase=ring_cpu;
+    au_ring_size=rd32(shared,SH_PCM_SIZE); au_rate=rd32(shared,SH_PCM_RATE);
+    /* rate = production reelle du blob (auto-cadence 50Hz -> 22050/s, PAS liee au FPS RTG) */
+    if(g_au_hz) au_rate=g_au_hz; if(au_rate==0) au_rate=22050;
+    /* demarrer 1024 paires DERRIERE write_pos : petit coussin anti-gigue (46ms), latence mini,
+       pas de backlog -> 0 underrun ET pas de retard */
+    { ULONG wp=rd32(shared,SH_PCM_WRITE_POS), cush=1024UL*4UL;   /* 46ms (etait 70ms) */
+      au_read_pos = (wp>=cush)? (wp-cush) : (wp + au_ring_size - cush); }
+    ahi_mp=(struct MsgPort*)CreateMsgPort();
+    if(!ahi_mp){ printf("AHI: no msgport\n"); return 0; }
+    zz_ahi_signal=1UL<<ahi_mp->mp_SigBit;
+    ahi_req[0]=(struct AHIRequest*)CreateIORequest(ahi_mp,sizeof(struct AHIRequest));
+    if(!ahi_req[0]){ printf("AHI: no ioreq\n"); return 0; }
+    ahi_req[0]->ahir_Version=4;
+    ahi_dev_open=OpenDevice(AHINAME,0,(struct IORequest*)ahi_req[0],0);
+    if(ahi_dev_open){ printf("AHI: OpenDevice failed\n"); return 0; }
+    ahi_req[1]=(struct AHIRequest*)AllocMem(sizeof(struct AHIRequest),MEMF_PUBLIC|MEMF_CLEAR);
+    if(!ahi_req[1]){ printf("AHI: no req[1]\n"); return 0; }
+    *ahi_req[1]=*ahi_req[0];
+    for(i=0;i<2;i++){
+        ahi_buf[i]=(WORD*)AllocMem(AHI_BUF_FRAMES*4,MEMF_PUBLIC|MEMF_CLEAR);
+        if(!ahi_buf[i]){ printf("AHI: no buf[%d]\n",i); return 0; }
+    }
+    printf("AUDIO: src_rate=%lu ahi_rate=%lu ring_size=%lu unit=0 buf=%d\n",
+           rd32(shared,SH_PCM_RATE), au_rate, au_ring_size, AHI_BUF_FRAMES);
+    return 1;
+}
+static void zz_ahi_start(void){
+    prepare_and_send(0, NULL);
+    prepare_and_send(1, ahi_req[0]);
+}
+static void zz_ahi_service(void){
+    struct AHIRequest *done;
+    while((done=(struct AHIRequest*)GetMsg(ahi_mp))){
+        if(done==ahi_req[0]) prepare_and_send(0, ahi_req[1]);
+        else                 prepare_and_send(1, ahi_req[0]);
+    }
+}
+static void zz_ahi_stop(void){
+    int i;
+    printf("AHI: refills=%lu underruns=%lu\n", ahi_refill_count, ahi_underrun);
+    for(i=0;i<2;i++) if(ahi_req[i]){ AbortIO((struct IORequest*)ahi_req[i]);
+                                     WaitIO((struct IORequest*)ahi_req[i]); }
+    if(ahi_dev_open==0){ CloseDevice((struct IORequest*)ahi_req[0]); ahi_dev_open=-1; }
+    if(ahi_req[0]) DeleteIORequest((struct IORequest*)ahi_req[0]);
+    if(ahi_req[1]) FreeMem(ahi_req[1],sizeof(struct AHIRequest));
+    for(i=0;i<2;i++) if(ahi_buf[i]) FreeMem(ahi_buf[i],AHI_BUF_FRAMES*4);
+    if(ahi_mp) DeleteMsgPort(ahi_mp);
+}
+
+/* ---- AUDIO_STEREO dans une TACHE SEPAREE (event-driven sur le signal AHI) ----
+   Isole tout l'audio de la boucle video -> le mixage AHI ne preempte plus le timing
+   du flip -> FPS video preserve. La tache DORT sur le reply port AHI et ne se reveille
+   que quand un buffer est fini (event-driven). */
+static volatile int g_audio_stop=0;
+static struct Task    *g_main_task=NULL;
+static BYTE            g_done_sig=-1;
+static struct Process *g_audio_proc=NULL;
+static volatile UBYTE *g_task_shared=NULL, *g_task_ring=NULL;
+
+static void audio_task(void){
+    if(!zz_ahi_init(g_task_shared, g_task_ring)){ zz_ahi_stop();
+        if(g_main_task) Signal(g_main_task,1UL<<g_done_sig); return; }
+    zz_ahi_start();
+    { ULONG portmask=1UL<<ahi_mp->mp_SigBit;
+      while(!g_audio_stop){
+          ULONG sigs=Wait(portmask | SIGBREAKF_CTRL_C);   /* dort jusqu'a buffer fini */
+          if(sigs & SIGBREAKF_CTRL_C) break;
+          zz_ahi_service();
+      } }
+    zz_ahi_stop();
+    if(g_main_task) Signal(g_main_task,1UL<<g_done_sig);
+}
+
+/* ===================== BACKEND PAULA DMA DIRECT (integre, selectionnable via cfg->audio) =====
+   Option A validee : canaux AUD0+AUD1 reserves via audio.device, Paula pilote EN DIRECT un ring
+   continu Chip RAM. Curseur EClock + guard band (PAL) + rate-match NTSC. Reutilise
+   au_shared/au_ringbase/au_ring_size/au_read_pos/au_rate/pcm_rd32/eclock_now/g_silence/g_au_hz
+   du backend AHI (un seul backend actif a la fois). Remplissage sur WaitTOF (boucle principale). */
+#define PA_DMACON  (0x096/2)
+static volatile UWORD *pa_cust=(volatile UWORD*)0xDFF000;
+static struct MsgPort *pa_mp=NULL;
+static struct IOAudio *pa_alloc=NULL;
+static int    pa_open=0;
+static UBYTE  pa_gotmask=0;
+static BYTE  *pa_ringL=NULL, *pa_ringR=NULL;
+static ULONG pa_spf=505, pa_adv=441, pa_actual_rate=22030;
+static ULONG PA_LEAD_FR=3, PA_RING_FR=24;   /* lead 3 frames ~69ms (etait 5=115ms) */
+static ULONG pa_ring=0, pa_lead=0, pa_period=161;
+static ULONG pa_p_wrote=0, pa_p_play_est=0;
+static ULONG pa_underruns=0, pa_fills=0, pa_resyncs=0;
+static long  pa_fill_min=0x7fffffffL, pa_fill_max=-0x7fffffffL;
+static UWORD pa_regL=0x0A0, pa_regR=0x0B0;
+static ULONG pa_last_eclk=0, pa_efreq=0;
+static int   pa_have_clk=0;
+static unsigned long long pa_eclk_acc=0;
+#define PA_NTSC_HZ  21515u
+static int   pa_ntsc=0;
+static int   g_pa_active=0;      /* 1 = backend Paula en service (rempli sur WaitTOF) */
+
+static void pa_ch_regs(UWORD base, ULONG ptr, ULONG len_words){
+    volatile UWORD *c=pa_cust;
+    c[base/2]      = (UWORD)(ptr>>16);
+    c[base/2 + 1]  = (UWORD)ptr;
+    c[(base+4)/2]  = (UWORD)len_words;
+    c[(base+6)/2]  = (UWORD)pa_period;
+    c[(base+8)/2]  = 0;
+}
+
+static void pa_fill(void){
+    ULONG wr, r; long target, cap;
+    if(!pa_ringL) return;
+    cap    = (long)pa_p_play_est + (long)(pa_ring - pa_spf);
+    target = (long)pa_p_play_est + (long)pa_lead;
+    if(target > cap) target = cap;
+    wr=rd32(au_shared,SH_PCM_WRITE_POS); r=au_read_pos;
+    while((long)(target - (long)pa_p_wrote) > 0){
+        ULONG avail = (wr>=r)? (wr-r) : (au_ring_size - r + wr);
+        ULONG pos;
+        if(avail<4) break;
+        pos = pa_p_wrote % pa_ring;
+        if(g_silence){ pa_ringL[pos]=0; pa_ringR[pos]=0; }
+        else { ULONG v=pcm_rd32(au_ringbase+r);
+               pa_ringL[pos]=(BYTE)((WORD)(v>>16)>>8);
+               pa_ringR[pos]=(BYTE)((WORD)(v&0xFFFF)>>8); }
+        r+=4; if(r>=au_ring_size) r=0;
+        pa_p_wrote++;
+    }
+    au_read_pos=r; wr32(au_shared,SH_PCM_READ_POS,r);
+}
+
+static int pa_init(volatile UBYTE *shared, volatile UBYTE *ring_cpu){
+    static UBYTE map01[]={0x03};
+    au_shared=shared; au_ringbase=ring_cpu;
+    au_ring_size=rd32(shared,SH_PCM_SIZE); au_rate=rd32(shared,SH_PCM_RATE);
+    if(g_au_hz) au_rate=g_au_hz; if(au_rate==0) au_rate=22050;
+    { ULONG prate = au_rate;   /* v1.1 (SMS #4b) : 22050 dans les DEUX modes ; l'audio-slaving
+                                  du blob fait suivre le debit reel de Paula (ring ne deborde plus).
+                                  (etait: pa_ntsc ? PA_NTSC_HZ : au_rate) */
+      pa_period=(UWORD)((3546895UL + prate/2)/prate); }
+    pa_actual_rate = 3546895UL/(ULONG)pa_period;
+    pa_have_clk=0; pa_eclk_acc=0; pa_efreq=0;
+    pa_adv = au_rate/50;
+    pa_spf = au_rate/50 + 64;
+    pa_ring = PA_RING_FR * pa_spf;
+    pa_lead = PA_LEAD_FR * pa_spf;
+    { ULONG wp=rd32(shared,SH_PCM_WRITE_POS), cush=pa_lead*4UL;
+      au_read_pos=(wp>=cush)?(wp-cush):(wp+au_ring_size-cush); }
+    pa_mp=(struct MsgPort*)CreateMsgPort(); if(!pa_mp){ printf("PA: no port\n"); return 0; }
+    pa_alloc=(struct IOAudio*)CreateIORequest(pa_mp,sizeof(struct IOAudio));
+    if(!pa_alloc){ printf("PA: no ioreq\n"); return 0; }
+    pa_alloc->ioa_Request.io_Message.mn_Node.ln_Pri=0;
+    pa_alloc->ioa_Data=map01; pa_alloc->ioa_Length=sizeof(map01);
+    if(OpenDevice("audio.device",0,(struct IORequest*)pa_alloc,0)){ printf("PA: OpenDevice KO\n"); return 0; }
+    pa_open=1;
+    pa_gotmask=(UBYTE)(ULONG)pa_alloc->ioa_Request.io_Unit;
+    if(pa_gotmask!=0x03){ printf("PA: alloc != AUD0+AUD1 (0x%lx) -> ABANDON\n",(ULONG)pa_gotmask); return 0; }
+    pa_regL=0x0A0; pa_regR=0x0B0;
+    pa_ringL=(BYTE*)AllocMem(pa_ring,MEMF_CHIP|MEMF_CLEAR);
+    pa_ringR=(BYTE*)AllocMem(pa_ring,MEMF_CHIP|MEMF_CLEAR);
+    if(!pa_ringL||!pa_ringR){ printf("PA: AllocMem CHIP KO\n"); return 0; }
+    pa_p_wrote=0; pa_p_play_est=0; pa_underruns=0; pa_fills=0; pa_resyncs=0;
+    pa_fill_min=0x7fffffffL; pa_fill_max=-0x7fffffffL;
+    printf("PAULA DMA: %s AUD0/AUD1 rate=%lu per=%lu ring=%lu lead=%lu guard=%s\n",
+           pa_ntsc?"NTSC(rate-match)":"PAL", pa_actual_rate,(ULONG)pa_period,pa_ring,pa_lead,
+           pa_ntsc?"OFF":"ON");
+    return 1;
+}
+
+static void pa_start(void){
+    volatile UWORD *c=pa_cust;
+    pa_fill();
+    CacheClearE(pa_ringL,pa_ring,CACRF_ClearD);
+    CacheClearE(pa_ringR,pa_ring,CACRF_ClearD);
+    Disable();
+    pa_ch_regs(pa_regL,(ULONG)pa_ringL,pa_ring/2);
+    pa_ch_regs(pa_regR,(ULONG)pa_ringR,pa_ring/2);
+    c[pa_regL/2 + 4] = 48;
+    c[pa_regR/2 + 4] = 48;
+    c[PA_DMACON] = 0x8203;
+    Enable();
+    printf("PAULA DMA: start (DMACON=0x8203)\n");
+}
+
+/* appele sur WaitTOF : curseur EClock + resync + fill + guard band + flush */
+static void pa_service(void){
+    long fill;
+    if(!pa_ringL) return;
+    { ULONG now, delta, adv;
+      now = eclock_now(&pa_efreq);
+      if(pa_have_clk){
+          delta = now - pa_last_eclk;
+          if(pa_efreq && delta > pa_efreq/4) delta = pa_efreq/50;
+      } else { delta = pa_efreq ? pa_efreq/50 : 0; pa_have_clk=1; }
+      pa_last_eclk = now;
+      if(pa_efreq){
+          pa_eclk_acc += (unsigned long long)delta * (unsigned long long)pa_actual_rate;
+          adv = (ULONG)(pa_eclk_acc / pa_efreq);
+          pa_eclk_acc %= pa_efreq;
+      } else adv = pa_adv;
+      pa_p_play_est += adv;
+    }
+    if((long)((long)pa_p_play_est - (long)pa_p_wrote) > 0){
+        pa_underruns++;
+        if((long)((long)pa_p_play_est - (long)pa_p_wrote) > (long)pa_lead){
+            memset(pa_ringL,0,pa_ring); memset(pa_ringR,0,pa_ring);
+            pa_p_wrote = pa_p_play_est; pa_resyncs++;
+        }
+    }
+    pa_fill();
+    { ULONG gpos=pa_p_wrote % pa_ring, glen=(pa_ntsc?0u:pa_adv), first;
+      if(glen>pa_ring) glen=pa_ring;
+      if(glen){
+        if(gpos+glen<=pa_ring){ memset(pa_ringL+gpos,0,glen); memset(pa_ringR+gpos,0,glen); }
+        else { first=pa_ring-gpos;
+               memset(pa_ringL+gpos,0,first); memset(pa_ringR+gpos,0,first);
+               memset(pa_ringL,0,glen-first); memset(pa_ringR,0,glen-first); } } }
+    fill = (long)pa_p_wrote - (long)pa_p_play_est;
+    if(fill < pa_fill_min) pa_fill_min=fill;
+    if(fill > pa_fill_max) pa_fill_max=fill;
+    pa_fills++;
+    CacheClearE(pa_ringL,pa_ring,CACRF_ClearD);
+    CacheClearE(pa_ringR,pa_ring,CACRF_ClearD);
+}
+
+static void pa_stop(void){
+    volatile UWORD *c=pa_cust;
+    printf("PAULA DMA: rate=%lu fills=%lu underruns=%lu resyncs=%lu fill_min=%ld fill_max=%ld\n",
+           pa_actual_rate, pa_fills, pa_underruns, pa_resyncs, pa_fill_min, pa_fill_max);
+    Disable();
+    c[pa_regL/2 + 4]=0; c[pa_regR/2 + 4]=0;
+    c[PA_DMACON]=0x000F;
+    Enable();
+    { volatile int i; for(i=0;i<20000;i++){} }
+    if(pa_open){ CloseDevice((struct IORequest*)pa_alloc); pa_open=0; }
+    if(pa_alloc) DeleteIORequest((struct IORequest*)pa_alloc);
+    if(pa_mp) DeleteMsgPort(pa_mp);
+    if(pa_ringL) FreeMem(pa_ringL,pa_ring);
+    if(pa_ringR) FreeMem(pa_ringR,pa_ring);
+    pa_ringL=pa_ringR=NULL;
+}
+
+
+
+/* HW vblank : firmware renvoie zstate & (1<<21) au registre board+0x4C.
+   Lecture LONG (assemble les 2 mots) -> 0 ou 0x00200000. */
+#define ZZ_VBL(b)  ((*(volatile ULONG*)((UBYTE*)(b)+REG_ZZ_VBLANK_STATUS)) & 0x00200000UL)
+
+/* sonde : le bit vblank bat-il a 50-60 Hz ? (compte les transitions ~60 ms) */
+static int probe_vblank(volatile UBYTE *board)
+{
+    ULONG f=0, t0, prev, edges=0, dur;
+    t0=eclock_now(&f); if(f==0) return 0;
+    dur=f/16;                        /* ~62 ms */
+    prev=ZZ_VBL(board);
+    while((eclock_now(NULL)-t0) < dur){
+        ULONG cur=ZZ_VBL(board);
+        if(cur!=prev){ edges++; prev=cur; }
+    }
+    return (edges>=2)?1:0;            /* le bit bouge -> vblank exploitable */
+}
+
+/* attend le front montant (entree en vblank), avec timeout anti-blocage. */
+static void wait_vblank_edge(volatile UBYTE *board, ULONG spins)
+{
+    ULONG prev=ZZ_VBL(board);
+    while(spins--){
+        ULONG cur=ZZ_VBL(board);
+        if(!prev && cur) return;     /* 0 -> non-zero = debut de vblank */
+        prev=cur;
+    }
+}
+
+/* ---- 32X: pacing on the ZZ9000 vblank, software PLL ----
+   The firmware applies a deferred PAN at the rising edge of its vblank and
+   increments the ack counter there.  1.1 woke on the Amiga WaitTOF, out of
+   phase with that edge, and saw the ack one vblank late half of the time (one
+   flip out of two).  Here the loop predicts the next ZZ9000 edge from the
+   measured period, sleeps on timer.device until ~0.8 ms before it, then polls
+   register 0x4C for the edge (a few hundred reads at most), and re-locks the
+   prediction on every observed edge.  Fallback: WaitTOF (flag tof, or no edge). */
+#define VB_MARGIN_US   800UL
+static ULONG g_vb_inpulse=0;   /* woke up inside the vblank pulse: the edge had just passed */
+static ULONG vb_poll_edge(volatile UBYTE *board, ULONG max_ticks, int accept_high)
+{
+    ULONG t0=eclock_now(NULL), prev=ZZ_VBL(board), n=1;
+    if(prev && accept_high){ g_vb_inpulse++; return t0?t0:1UL; }   /* already in vblank: edge just passed */
+    for(;;){
+        ULONG cur=ZZ_VBL(board); n++;
+        if(!prev && cur){ ULONG t=eclock_now(NULL); g_vb_pollsum+=n; if(n>g_vb_pollmax) g_vb_pollmax=n; return t?t:1UL; }
+        prev=cur;
+        if((eclock_now(NULL)-t0) > max_ticks) return 0;
+    }
+}
+/* measure the period over 4 edges; returns 1 when the PLL is usable */
+static int vb_pll_init(volatile UBYTE *board, ULONG efreq)
+{
+    ULONG e0, e1, per, lo, hi;
+    if(!efreq || !g_sreq) return 0;
+    lo=efreq/120; hi=efreq/40;                     /* 8.3 .. 25 ms */
+    e0=vb_poll_edge(board, efreq/20, 0); if(!e0) return 0;
+    e1=vb_poll_edge(board, efreq/20, 0); if(!e1) return 0;
+    e1=vb_poll_edge(board, efreq/20, 0); if(!e1) return 0;
+    e1=vb_poll_edge(board, efreq/20, 0); if(!e1) return 0;
+    per=(e1-e0)/3;
+    if(per<lo || per>hi) return 0;
+    g_vb_period=per; g_vb_next=e1+per; g_vb_edges=4;
+    return 1;
+}
+/* sleep until the predicted edge, catch it, re-lock.  Always returns after at
+   most ~2 periods. */
+static void vb_pll_wait(volatile UBYTE *board, ULONG efreq)
+{
+    ULONG now=eclock_now(NULL), e;
+    LONG ahead=(LONG)(g_vb_next - now);                       /* EClock ticks until the predicted edge */
+    LONG margin=(LONG)((efreq/1000UL)*VB_MARGIN_US/1000UL);  /* 0.8 ms in ticks */
+    if(ahead > margin){
+        ULONG us=(ULONG)(ahead - margin) * 1000UL / (efreq/1000UL);   /* ticks -> us (efreq ~709 kHz) */
+        sleep_us(us);
+    } else if(ahead < -(LONG)(g_vb_period/2)) g_vb_late++;   /* woke after the edge: we will catch the next */
+    e=vb_poll_edge(board, g_vb_period*2UL, 1);
+    if(e){
+        ULONG d=e-(g_vb_next-g_vb_period);   /* observed period (or 2 if one was missed) */
+        if(d > g_vb_period-g_vb_period/10 && d < g_vb_period+g_vb_period/10)
+            g_vb_period=(g_vb_period*15UL+d)/16UL;   /* slow re-lock on drift */
+        g_vb_next=e+g_vb_period; g_vb_edges++;
+    } else { g_vb_next+=g_vb_period; g_vb_miss++; }
+}
+
+#define FB_BLOB         0x04300000UL
+#define FB_SHARED       0x04500000UL
+#define FB_ROM          0x04900000UL
+#define ARM_BLOB        0x04500000UL
+#define ARM_ROM         0x04B00000UL
+
+#define ZZPICO_MAGIC    0x5A504943UL
+#define ROM_PAD         256
+
+/* offsets slots (octet = index*4) */
+#define SH_MAGIC        (0*4)
+#define SH_STATUS       (2*4)
+#define SH_COMMAND      (3*4)
+#define SH_CMD_SEQ      (4*4)
+#define SH_ACK_SEQ      (5*4)
+#define SH_ERROR        (8*4)
+#define SH_ROM_ADDR     (10*4)
+#define SH_ROM_SIZE     (11*4)
+#define SH_ROM_CRC_68K  (12*4)
+#define SH_ROM_CRC_ARM  (13*4)
+#define SH_FRAME_REQ    (24*4)
+#define SH_FRAME_DONE   (25*4)
+#define SH_FRAME_READY  (21*4)   /* ARM: frame rendue  */
+#define SH_FLIP_SEQ     (22*4)   /* 68k: flip confirme par ACK firmware */
+#define SH_P96_ENABLE   (144*4)
+#define SH_P96_BASE     (145*4)
+/* ==== INPUT / CONTROLS ==== */
+#define SH_PAD0         (26*4)     /* bitmask pad joueur 1 (ZP_*) */
+#define SH_PAD1_P2      (27*4)     /* pad joueur 2                */
+#define SH_INPUT_SEQ    (170*4)
+#define SH_EMU_CMD      (171*4)
+#define SH_EMU_ARG      (172*4)
+/* ==== SAUVEGARDES  ==== */
+#define SH_SAVE_CMD     (70*4)
+#define SH_SAVE_SEQ     (71*4)
+#define SH_SAVE_ACK     (72*4)
+#define SH_SAVE_STATUS  (73*4)
+#define SH_SAVE_SLOT    (74*4)
+#define SH_SAVE_SIZE    (75*4)
+#define SH_SAVE_ERR     (77*4)
+#define SAVE_BUF_ARM    0x07E00000UL       /* buffer DDR ; 68k = fb + (ARM - 0x00200000) */
+#define SAVE_CMD_SRAM_SAVE   1
+#define SAVE_CMD_SRAM_LOAD   2
+#define SAVE_CMD_STATE_SAVE  3
+#define SAVE_CMD_STATE_LOAD  4
+#define SAVE_STATUS_OK  2
+#define ZP_UP     (1u<<0)
+#define ZP_DOWN   (1u<<1)
+#define ZP_LEFT   (1u<<2)
+#define ZP_RIGHT  (1u<<3)
+#define ZP_A      (1u<<4)
+#define ZP_B      (1u<<5)
+#define ZP_C      (1u<<6)
+#define ZP_START  (1u<<7)
+#define ZP_X      (1u<<8)
+#define ZP_Y      (1u<<9)
+#define ZP_Z      (1u<<10)
+#define ZP_MODE   (1u<<11)
+#define ZP_SELECT (1u<<12)
+#define ZP_MENU   (1u<<13)
+#define EMU_CMD_NONE  0
+#define EMU_CMD_MENU  1
+#define EMU_CMD_QUIT  2
+#define EMU_CMD_PAUSE 3
+#define EMU_CMD_RESET 4
+/* rawcodes clavier Amiga (a VERIFIER via inputlog - defauts standards) */
+#define RK_UP     0x4C
+#define RK_DOWN   0x4D
+#define RK_LEFT   0x4F
+#define RK_RIGHT  0x4E
+#define RK_NUM1   0x1D
+#define RK_NUM2   0x1E
+#define RK_NUM3   0x1F
+#define RK_NUM4   0x2D   /* A1diag: 6-button X/Y/Z/MODE */
+#define RK_NUM5   0x2E
+#define RK_NUM6   0x2F
+#define RK_NUM0   0x0F
+#define RK_RET    0x44
+#define RK_ENT    0x43
+#define RK_ESC    0x45
+#define RK_DEL    0x46   /* 32X: console reset */
+#define RK_P      0x19
+#define RK_F1     0x50
+#define RK_F2     0x51
+#define RK_F3     0x52
+#define RK_F4     0x53
+#define RK_F5     0x54
+static UWORD *g_blankspr=NULL;   /* sprite pointeur invisible */
+static UBYTE key_down[128];
+/* registres hardware joystick (lecture directe : marche pour les pads que lowlevel ignore) */
+#define HW_JOY0DAT (*(volatile UWORD*)0xDFF00A)
+#define HW_JOY1DAT (*(volatile UWORD*)0xDFF00C)
+#define HW_CIAAPRA (*(volatile UBYTE*)0xBFE001)   /* feu : bit6=port0 bit7=port1 (actif bas) */
+#define HW_POTGO   (*(volatile UWORD*)0xDFF034)    /* config lignes POT (2e/3e bouton) */
+#define HW_POTINP  (*(volatile UWORD*)0xDFF016)    /* lecture : bit10=P0 btn2, bit14=P1 btn2 (actif bas) */
+static ULONG g_padmask=0, g_padmask_prev=0xFFFFFFFF, g_input_seq=0;
+static ULONG g_emu_cmd=EMU_CMD_NONE;
+static int   g_input_log=0, g_input_mode=0;   /* 0=kbd, 1=cd32/db9 */
+static ULONG g_joyport=1;                      /* port ReadJoyPort (1=port jeu par defaut) */
+static int   g_players=1, g_input_mode2=1;     /* joueur 2 */
+static ULONG g_joyport2=0;                     /* joueur 2 : autre port par defaut */
+static ULONG g_padmask2=0, g_padmask2_prev=0xFFFFFFFF;
+#define SH_P96_PITCH    (146*4)
+#define SH_PERF_PICOFRAME (147*4)
+#define SH_PERF_CONVERT   (148*4)
+#define SH_PERF_DCLEAN    (149*4)
+#define SH_PERF_WCYC_P96  (150*4)
+#define SH_PERF_WCYC_FB3B (151*4)
+#define SH_PERF_DESC_P96  (152*4)
+#define SH_PERF_DESC_FB3B (153*4)
+#define SH_PERF_DESC_P96PRE (154*4)
+#define SH_PERF_COPY      (155*4)
+/* NTSC_TIMING_DIAG : slots accumulateurs cote blob */
+#define SH_DIAG_PF_MIN    (156*4)
+#define SH_DIAG_PF_MAX    (157*4)
+#define SH_DIAG_PF_SUM_US (158*4)
+#define SH_DIAG_FRAMES    (160*4)
+#define SH_DIAG_N_GT12    (161*4)
+#define SH_DIAG_N_GT14    (162*4)
+#define SH_DIAG_N_GT1667  (163*4)
+#define SH_DIAG_CONV_MAX  (164*4)
+#define SH_DIAG_CLEAN_MAX (165*4)
+#define SH_DIAG_CONV_MIN  (166*4)
+#define SH_DIAG_CONV_SUM_US (167*4)
+/* VISUAL_TIMING_CLEAN */
+#define SH_REGION_IN      (64*4)   /* 68k->blob : 0=AUTO,4=USA,1=JAPN,8=EUR,2=JAPP */
+#define SH_PAL_OUT        (65*4)   /* blob->68k : 0=NTSC,1=PAL */
+#define SH_ACTIVE_H       (66*4)   /* blob->68k : 224/240 */
+#define SH_Y_OFFSET       (67*4)   /* blob->68k : 0/8 */
+#define SH_REGION_EFF     (68*4)   /* blob->68k : regionOverride pose */
+
+/* region choisie (regionOverride PicoDrive) */
+#define RGN_AUTO   0UL
+#define RGN_JAPN   1UL   /* Japan NTSC */
+#define RGN_JAPP   2UL   /* Japan PAL (debug) */
+#define RGN_USA    4UL   /* USA NTSC   */
+#define RGN_EUR    8UL   /* Europe PAL */
+
+#define ZP_CMD_INIT     1
+#define ZP_CMD_LOAD_ROM 2
+#define ZP_CMD_START    3
+#define ZP_CMD_STOP     4
+
+/* ==== A1diag: 1.1 slots this launcher did not read before ==== */
+#define SH_HEARTBEAT      (6*4)    /* blob: ++ at every main-loop iteration        */
+#define SH_FRAME_COUNTER  (7*4)    /* blob: ++ at every PicoFrame (drawn or not)   */
+#define ST_RUNNING        0x02
+#define ST_STOPPING       0x03
+#define ST_ERROR          0xEE
+#define ST_STOPPED        0xFF
+/* ==== A1diag: ZZVirtuaRacingRIX A1 fields (zzvr_shared.h, slots 180-199) ==== */
+#define SH_ZVR_MAGIC      (180*4)  /* 'ZVR1' = 0x5A565231                           */
+#define ZVR_MAGIC_VAL     0x5A565231UL
+#define SH_ZVR_BUILD      (181*4)  /* 0x0A1A interpreter, 0x0A1B DRC                 */
+#define SH_ZVR_AHW        (182*4)  /* PicoIn.AHW (bit 2 = 32X)                       */
+#define SH_ZVR_X32_REG0   (183*4)  /* 32X sysreg 0: ADEN bit0, nRES bit1, FM bit15   */
+#define SH_ZVR_MSH2_PC    (184*4)
+#define SH_ZVR_SSH2_PC    (185*4)
+#define SH_ZVR_MMAP_USED  (186*4)
+#define SH_ZVR_SBRK_USED  (187*4)
+#define SH_ZVR_PF_W_AVG   (188*4)  /* PicoFrame average over the last 600 frames, us */
+#define SH_ZVR_PF_W_MAX   (189*4)
+#define SH_ZVR_PF_LAST    (190*4)
+#define SH_ZVR_VFP        (191*4)
+#define SH_ZVR_DRC        (192*4)
+#define SH_ZVR_MMAP_FAIL  (193*4)
+#define SH_ZVR_X32_VDP0   (194*4)
+#define SH_ZVR_OSD        (195*4)  /* 68k -> blob: 1 = OSD off                       */
+#define SH_ZVR_W_FRAMES   (196*4)
+#define SH_ZVR_W_DRAWN    (197*4)
+#define SH_ZVR_ENTRY_SP   (198*4)
+#define SH_ZVR_BUILD2     (199*4)
+static int g_noosd=0;              /* flag noosd */
+static int g_force_tof=0;          /* 32X: flag tof  -> 1.1 WaitTOF pacing (A/B) */
+static int g_gate=0;               /* 32X: flag gate -> blob slot 176 = 1, 1.1 drawing gate (A/B) */
+#define SH_ZVR_DRAWMODE   (176*4)  /* 68k -> blob: 0 = draw every frame, 1 = 1.1 gate */
+/* 32X: one-shot emulator command (reset) with a consume handshake: written when
+   the slot reads NONE, considered done when the blob has cleared it again */
+static ULONG g_emu_pending=0; static int g_emu_sent=0;
+
+/* A1diag: main-loop bookkeeping printed by the snapshots / watchdog */
+static ULONG g_wd_iter=0;          /* loop iterations (one per WaitTOF)              */
+static ULONG g_ack_max_ms=0;       /* longest arm -> PAN ack wait seen (ms)          */
+static ULONG g_ack_timeouts=0;     /* PAN ack timeouts (>100 ms)                     */
+static ULONG g_flips=0;            /* frames taken (FLIP_SEQ written)                */
+static int   g_lp_inflight=0, g_lp_front=0, g_lp_pending=-1, g_lp_render=1;
+static ULONG g_lp_last_taken=0;
+
+#define IMG_W           320
+#define IMG_H           240
+
+/* ARM = 0x00200000 + (cpu_addr - fb)  (adresse ARM physique du buffer) */
+#define CPU_TO_ARM(cpu,fb) (0x00200000UL + ((ULONG)(cpu) - (ULONG)(fb)))
+
+/* ---- helpers bus (byteswap ARM<->68k pour les champs partages) ---- */
+static ULONG rd32(volatile UBYTE *b, ULONG o)
+{
+    volatile UWORD *p=(volatile UWORD*)(b+o);
+    UWORD w0=p[0],w1=p[1];
+    return ((ULONG)((UWORD)((w1>>8)|(w1<<8)))<<16)|
+            (ULONG)((UWORD)((w0>>8)|(w0<<8)));
+}
+static void wr32(volatile UBYTE *b, ULONG o, ULONG v)
+{
+    volatile UWORD *p=(volatile UWORD*)(b+o);
+    ULONG s=((v&0xFFUL)<<24)|((v&0xFF00UL)<<8)|((v&0xFF0000UL)>>8)|((v&0xFF000000UL)>>24);
+    p[0]=(UWORD)(s>>16); p[1]=(UWORD)(s&0xFFFF);
+}
+/* ---- lecture d'une manette (joueur 1 ou 2) : lowlevel/hardware + clavier ---- */
+/* bits Competition Pro (layout non standard via ReadJoyPort) */
+#define CP_UP     0x00000008UL
+#define CP_DOWN   0x00000004UL
+#define CP_LEFT   0x00000002UL
+#define CP_RIGHT  0x00000001UL
+#define CP_BLUE   0x00800000UL
+#define CP_RED    0x00400000UL
+#define CP_GREEN  0x00100000UL
+#define CP_YELLOW 0x00200000UL
+#define CP_START  0x00020000UL
+/* touches clavier joueur 2 (WASD + FGH + Tab) */
+#define RK_W 0x11
+#define RK_A 0x20
+#define RK_S 0x21
+#define RK_D 0x22
+#define RK_F 0x23
+#define RK_G 0x24
+#define RK_H 0x25
+#define RK_TAB 0x42
+static ULONG read_pad(int mode, ULONG port, int keyset)
+{
+    ULONG pm=0;
+    if(mode==1 || mode==3){
+        int ll_ok=0;
+        if(mode==1 && LowLevelBase){
+            ULONG jp=ReadJoyPort(port);
+            if((jp&JP_TYPE_MASK)!=JP_TYPE_NOTAVAIL){
+                ll_ok=1;
+                if(jp&CP_UP)    pm|=ZP_UP;
+                if(jp&CP_DOWN)  pm|=ZP_DOWN;
+                if(jp&CP_LEFT)  pm|=ZP_LEFT;
+                if(jp&CP_RIGHT) pm|=ZP_RIGHT;
+                if(jp&CP_BLUE)  pm|=ZP_A;
+                if(jp&CP_RED)   pm|=ZP_B;
+                if(jp&CP_GREEN) pm|=ZP_C;
+                if(jp&CP_YELLOW)pm|=ZP_MODE;
+                if(jp&CP_START) pm|=ZP_START;
+            }
+        }
+        if(!ll_ok){   /* hardware direct (pads que lowlevel ignore) */
+            UWORD jd=(port==0)?HW_JOY0DAT:HW_JOY1DAT;
+            UBYTE pra=HW_CIAAPRA;
+            int right=(jd&0x0002)?1:0, left=(jd&0x0200)?1:0;
+            int down=((jd^(jd>>1))&0x0001)?1:0, up=((jd^(jd>>1))&0x0100)?1:0;
+            int fire=(port==0)?((pra&0x40)?0:1):((pra&0x80)?0:1);
+            if(up)pm|=ZP_UP; if(down)pm|=ZP_DOWN; if(left)pm|=ZP_LEFT; if(right)pm|=ZP_RIGHT;
+            if(fire)pm|=ZP_A;
+        }
+        /* Start clavier de secours (Entree pour P1, Tab pour P2) */
+        if(keyset==0){ if(key_down[RK_RET]||key_down[RK_ENT]) pm|=ZP_START;
+                       /* A1diag: 6-button extras from the keyboard even with a pad */
+                       if(key_down[RK_NUM4]) pm|=ZP_X;
+                       if(key_down[RK_NUM5]) pm|=ZP_Y;
+                       if(key_down[RK_NUM6]) pm|=ZP_Z;
+                       if(key_down[RK_NUM0]) pm|=ZP_MODE; }
+        else         { if(key_down[RK_TAB]) pm|=ZP_START; }
+    } else if(keyset==0){   /* mode 0 : clavier complet, joueur 1 uniquement */
+        if(key_down[RK_UP])    pm|=ZP_UP;
+        if(key_down[RK_DOWN])  pm|=ZP_DOWN;
+        if(key_down[RK_LEFT])  pm|=ZP_LEFT;
+        if(key_down[RK_RIGHT]) pm|=ZP_RIGHT;
+        if(key_down[RK_NUM1])  pm|=ZP_A;
+        if(key_down[RK_NUM2])  pm|=ZP_B;
+        if(key_down[RK_NUM3])  pm|=ZP_C;
+        if(key_down[RK_RET]||key_down[RK_ENT]) pm|=ZP_START;
+        /* A1diag: 6-button pad (32X games use X/Y/Z/MODE): keypad 4/5/6/0 */
+        if(key_down[RK_NUM4])  pm|=ZP_X;
+        if(key_down[RK_NUM5])  pm|=ZP_Y;
+        if(key_down[RK_NUM6])  pm|=ZP_Z;
+        if(key_down[RK_NUM0])  pm|=ZP_MODE;
+    }
+    /* joueur 2 en mode clavier n'existe pas : il doit avoir une manette (Tab = Start secours) */
+    return pm;
+}
+
+/* ---- SAUVEGARDES SRAM (68k) : fichier ROMNAME.srm <-> buffer DDR <-> Core1 ---- */
+#define SAVE_MAX_68K  (1536UL*1024UL)   /* 32X: a 32X savestate is ~680 KiB; zone 0x07E00000..0x08000000 */
+static void make_srm_name(const char *rom, char *out)
+{
+    int i, dot=-1, len=0;
+    for(i=0; rom[i] && i<250; i++){ out[i]=rom[i]; if(rom[i]=='.') dot=i; len=i+1; }
+    if(dot>=0) len=dot;
+    out[len]='.'; out[len+1]='s'; out[len+2]='r'; out[len+3]='m'; out[len+4]=0;
+}
+static void sram_load(volatile UBYTE *shared, volatile UBYTE *fb, const char *romname)
+{
+    char srm[256]; BPTR fh; LONG n; ULONG seq, to;
+    volatile UBYTE *ddr=(volatile UBYTE*)((ULONG)fb + (SAVE_BUF_ARM - 0x00200000UL));
+    make_srm_name(romname, srm);
+    fh=Open((STRPTR)srm, MODE_OLDFILE);
+    if(!fh) return;                                  /* pas de sauvegarde : normal */
+    n=Read(fh, (APTR)ddr, (LONG)SAVE_MAX_68K);
+    Close(fh);
+    if(n<=0) return;
+    CacheClearU();                                   /* committer l'ecriture DDR */
+    wr32(shared, SH_SAVE_SIZE, (ULONG)n);
+    wr32(shared, SH_SAVE_CMD, SAVE_CMD_SRAM_LOAD);
+    seq=rd32(shared, SH_SAVE_SEQ)+1; wr32(shared, SH_SAVE_SEQ, seq);
+    for(to=0; to<2000000UL; to++){ if(rd32(shared,SH_SAVE_ACK)==seq) break; }
+    printf("SRAM: charge %ld octets (%s)\n", n, srm);
+}
+static void sram_save(volatile UBYTE *shared, volatile UBYTE *fb, const char *romname)
+{
+    char srm[256]; BPTR fh; ULONG seq, to, sz, st;
+    volatile UBYTE *ddr=(volatile UBYTE*)((ULONG)fb + (SAVE_BUF_ARM - 0x00200000UL));
+    wr32(shared, SH_SAVE_CMD, SAVE_CMD_SRAM_SAVE);
+    seq=rd32(shared, SH_SAVE_SEQ)+1; wr32(shared, SH_SAVE_SEQ, seq);
+    for(to=0; to<2000000UL; to++){ if(rd32(shared,SH_SAVE_ACK)==seq) break; }
+    st=rd32(shared, SH_SAVE_STATUS); sz=rd32(shared, SH_SAVE_SIZE);
+    if(st!=SAVE_STATUS_OK || sz==0 || sz>SAVE_MAX_68K) return;   /* jeu sans SRAM */
+    CacheClearU();                                   /* voir l'ecriture ARM du DDR */
+    make_srm_name(romname, srm);
+    fh=Open((STRPTR)srm, MODE_NEWFILE);
+    if(!fh){ printf("SRAM: ecriture %s impossible\n", srm); return; }
+    Write(fh, (APTR)ddr, (LONG)sz);
+    Close(fh);
+    printf("SRAM: sauve %lu octets -> %s\n", sz, srm);
+}
+/* nom ROMNAME.stN (slot 0..9) */
+static void make_st_name(const char *rom, int slot, char *out)
+{
+    int i, dot=-1, len=0;
+    for(i=0; rom[i] && i<248; i++){ out[i]=rom[i]; if(rom[i]=='.') dot=i; len=i+1; }
+    if(dot>=0) len=dot;
+    out[len]='.'; out[len+1]='s'; out[len+2]='t'; out[len+3]=(char)('0'+(slot%10)); out[len+4]=0;
+}
+/* SAVESTATE : Core1 serialise -> DDR -> ecrit ROMNAME.stN */
+static void state_save(volatile UBYTE *shared, volatile UBYTE *fb, const char *romname, int slot)
+{
+    char st[256]; BPTR fh; ULONG seq, to, sz, status;
+    volatile UBYTE *ddr=(volatile UBYTE*)((ULONG)fb + (SAVE_BUF_ARM - 0x00200000UL));
+    wr32(shared, SH_SAVE_SLOT, (ULONG)slot);
+    wr32(shared, SH_SAVE_CMD, SAVE_CMD_STATE_SAVE);
+    seq=rd32(shared, SH_SAVE_SEQ)+1; wr32(shared, SH_SAVE_SEQ, seq);
+    for(to=0; to<8000000UL; to++){ if(rd32(shared,SH_SAVE_ACK)==seq) break; }
+    status=rd32(shared, SH_SAVE_STATUS); sz=rd32(shared, SH_SAVE_SIZE);
+    if(status!=SAVE_STATUS_OK || sz==0 || sz>SAVE_MAX_68K){
+        printf("STATE: save slot %d echoue (err=%lu)\n", slot, rd32(shared,SH_SAVE_ERR)); return; }
+    CacheClearU();
+    make_st_name(romname, slot, st);
+    fh=Open((STRPTR)st, MODE_NEWFILE);
+    if(!fh){ printf("STATE: ecriture %s impossible\n", st); return; }
+    Write(fh, (APTR)ddr, (LONG)sz);
+    Close(fh);
+    printf("STATE: sauve slot %d (%lu octets) -> %s\n", slot, sz, st);
+}
+/* SAVESTATE : lit ROMNAME.stN -> DDR -> Core1 deserialise */
+static void state_load(volatile UBYTE *shared, volatile UBYTE *fb, const char *romname, int slot)
+{
+    char st[256]; BPTR fh; LONG n; ULONG seq, to, status;
+    volatile UBYTE *ddr=(volatile UBYTE*)((ULONG)fb + (SAVE_BUF_ARM - 0x00200000UL));
+    make_st_name(romname, slot, st);
+    fh=Open((STRPTR)st, MODE_OLDFILE);
+    if(!fh){ printf("STATE: pas de save slot %d (%s)\n", slot, st); return; }
+    n=Read(fh, (APTR)ddr, (LONG)SAVE_MAX_68K);
+    Close(fh);
+    if(n<=0) return;
+    CacheClearU();
+    wr32(shared, SH_SAVE_SIZE, (ULONG)n);
+    wr32(shared, SH_SAVE_SLOT, (ULONG)slot);
+    wr32(shared, SH_SAVE_CMD, SAVE_CMD_STATE_LOAD);
+    seq=rd32(shared, SH_SAVE_SEQ)+1; wr32(shared, SH_SAVE_SEQ, seq);
+    for(to=0; to<8000000UL; to++){ if(rd32(shared,SH_SAVE_ACK)==seq) break; }
+    status=rd32(shared, SH_SAVE_STATUS);
+    printf("STATE: charge slot %d (%ld octets) status=%lu\n", slot, n, status);
+}
+static void copy_uword(volatile UBYTE *d, const UBYTE *s, LONG sz)
+{
+    volatile UWORD *dw=(volatile UWORD*)d; const UWORD *sw=(const UWORD*)s;
+    LONG i; for(i=0;i<(sz+1)/2;i++) dw[i]=sw[i];
+}
+static ULONG g_crctab[256]; static int g_crctab_done=0;
+static void crc32_init(void){ ULONG i,j,c;
+    for(i=0;i<256;i++){ c=i; for(j=0;j<8;j++) c=(c&1)?(0xEDB88320UL^(c>>1)):(c>>1); g_crctab[i]=c; }
+    g_crctab_done=1; }
+static ULONG crc32_buf(const UBYTE *p, ULONG n){ ULONG c=0xFFFFFFFFUL,i;
+    if(!g_crctab_done) crc32_init();
+    for(i=0;i<n;i++) c=g_crctab[(c^p[i])&0xFF]^(c>>8); return c^0xFFFFFFFFUL; }
+
+static int send_cmd(volatile UBYTE *shared, ULONG cmd, LONG to)
+{
+    ULONG seq=rd32(shared,SH_CMD_SEQ)+1;
+    wr32(shared,SH_COMMAND,cmd); wr32(shared,SH_CMD_SEQ,seq);
+    while(to-->0){ if(rd32(shared,SH_ACK_SEQ)==seq) return 1; Delay(1); }
+    return 0;
+}
+/* pilote une frame ; le blob rend dans le backbuffer P96 publie au prealable.
+   Busy-poll de FRAME_DONE sur le bus Zorro (PAS de Delay(1)=20ms qui plafonnait
+   la cadence) : le 68k detecte la fin de frame en microsecondes. ERROR verifie
+   periodiquement pour bailler vite sur un fault. */
+static int drive_one_frame(volatile UBYTE *shared)
+{
+    ULONG req=rd32(shared,SH_FRAME_REQ)+1;
+    ULONG spins=4000000UL;
+    wr32(shared,SH_FRAME_REQ,req);
+    while(spins--){
+        if(rd32(shared,SH_FRAME_DONE)==req) return 1;
+        if((spins & 0xFFFF)==0 && rd32(shared,SH_ERROR)!=0) return 0;
+    }
+    return (rd32(shared,SH_FRAME_DONE)==req)?1:0;
+}
+
+/* argv[3] optionnel -> regionOverride PicoDrive. Defaut AUTO. */
+static ULONG parse_region(const char *s, const char **label)
+{
+    if(!s){ *label="AUTO"; return RGN_AUTO; }
+    if(!strcmp(s,"auto")||!strcmp(s,"AUTO")){ *label="AUTO"; return RGN_AUTO; }
+    if(!strcmp(s,"usa") ||!strcmp(s,"USA") ||!strcmp(s,"ntsc")||!strcmp(s,"NTSC")){ *label="USA_NTSC"; return RGN_USA; }
+    if(!strcmp(s,"jap") ||!strcmp(s,"JAP") ||!strcmp(s,"japan")||!strcmp(s,"JAPAN")){ *label="JAPAN_NTSC"; return RGN_JAPN; }
+    if(!strcmp(s,"eur") ||!strcmp(s,"EUR") ||!strcmp(s,"pal") ||!strcmp(s,"PAL")||!strcmp(s,"europe")){ *label="EUROPE_PAL"; return RGN_EUR; }
+    if(!strcmp(s,"jappal")||!strcmp(s,"JAPPAL")){ *label="JAPAN_PAL(dbg)"; return RGN_JAPP; }
+    *label="AUTO(unknown-arg)"; return RGN_AUTO;
+}
+
+/* ================= CONFIG UNIQUE (CLI et GUI remplissent la meme struct) ================= */
+typedef enum { ZP_REGION_AUTO=0, ZP_REGION_EUR_PAL, ZP_REGION_USA_NTSC, ZP_REGION_JAPAN_NTSC } ZP_Region;
+typedef enum { ZP_AUDIO_AHI=0, ZP_AUDIO_PAULA, ZP_AUDIO_NONE } ZP_Audio;
+typedef enum { ZP_INPUT_KBD=0, ZP_INPUT_CD32_LOWLEVEL, ZP_INPUT_HW_DB9, ZP_INPUT_USB_HID } ZP_Input;
+typedef struct {
+    char rom_path[256];
+    char blob_path[256];
+    int  region;     /* ZP_Region */
+    int  audio;      /* ZP_Audio  */
+    int  input;      /* ZP_Input joueur 1 */
+    int  port;       /* port joueur 1 (0 ou 1) */
+    int  players;    /* 1 ou 2 */
+    int  input2;     /* ZP_Input joueur 2 */
+    int  port2;      /* port joueur 2 (0 ou 1) */
+    int  show_fps;
+} ZP_Config;
+
+/* mappe ZP_Region -> regionOverride PicoDrive (memes valeurs que parse_region) */
+static ULONG region_from_cfg(int r, const char **label)
+{
+    switch(r){
+        case ZP_REGION_EUR_PAL:    return parse_region("eur", label);
+        case ZP_REGION_USA_NTSC:   return parse_region("usa", label);
+        case ZP_REGION_JAPAN_NTSC: return parse_region("jap", label);
+        default:                   return parse_region(NULL,  label);   /* AUTO */
+    }
+}
+
+/* ===================== A1diag helpers ===================== */
+/* 68k stack of this task: SP now, bounds from the Task structure (valid after
+   the libnix __stack swap). */
+static void stack_report(const char *tag)
+{
+    struct Task *t=FindTask(NULL); ULONG sp;
+    __asm__ volatile("move.l %%sp,%0" : "=r"(sp));
+    printf("STACK [%s]: sp=0x%08lx lower=0x%08lx upper=0x%08lx used=%lu free=%lu\n",
+           tag, sp, (ULONG)t->tc_SPLower, (ULONG)t->tc_SPUpper,
+           (ULONG)t->tc_SPUpper - sp, sp - (ULONG)t->tc_SPLower);
+}
+static void exit_step(const char *what)
+{
+    printf("EXIT %s\n", what);
+}
+static int zvr_blob(volatile UBYTE *shared)
+{
+    return (shared && rd32(shared,SH_ZVR_MAGIC)==ZVR_MAGIC_VAL) ? 1 : 0;
+}
+/* One snapshot of the blob + launcher state.  Reading:
+   - frames/hb advancing between A and B : the blob runs (PicoFrame + main loop);
+   - ready == flip : the blob has nothing pending, it draws when it wants;
+   - ready == flip+1 for a long time : a frame was published and never taken (68k side);
+   - msh2/ssh2 identical in A and B while frames advance : SH-2s stuck (poll/sleep or
+     recompiler), the MD side (music) keeps running - the "frozen image, sound on" case. */
+static void diag_snapshot(volatile UBYTE *shared, volatile UBYTE *board, const char *tag)
+{
+    if(!shared) return;
+    printf("SNAP %s: status=0x%02lx err=%lu cmd/ack=%lu/%lu hb=%lu frames=%lu ready=%lu flip=%lu pcm w/r=%lu/%lu\n",
+           tag, rd32(shared,SH_STATUS), rd32(shared,SH_ERROR),
+           rd32(shared,SH_CMD_SEQ), rd32(shared,SH_ACK_SEQ),
+           rd32(shared,SH_HEARTBEAT), rd32(shared,SH_FRAME_COUNTER),
+           rd32(shared,SH_FRAME_READY), rd32(shared,SH_FLIP_SEQ),
+           rd32(shared,SH_PCM_WRITE_POS), rd32(shared,SH_PCM_READ_POS));
+    printf("     68k: iter=%lu flips=%lu inflight=%d front/pending/render=%d/%d/%d last_taken=%lu panack=%lu ackmax=%lums acktimeouts=%lu vbl=%lu\n",
+           g_wd_iter, g_flips, g_lp_inflight, g_lp_front, g_lp_pending, g_lp_render,
+           g_lp_last_taken, board?zz_pan_ack(board):0UL, g_ack_max_ms, g_ack_timeouts,
+           board?(ZZ_VBL(board)?1UL:0UL):0UL);
+    if(zvr_blob(shared))
+        printf("     32X: msh2=0x%08lx ssh2=0x%08lx reg0=0x%04lx vdp0=0x%04lx pf last/avg/max=%lu/%lu/%lu us win=%lu/%lu mmapfail=%lu\n",
+               rd32(shared,SH_ZVR_MSH2_PC), rd32(shared,SH_ZVR_SSH2_PC),
+               rd32(shared,SH_ZVR_X32_REG0)&0xFFFF, rd32(shared,SH_ZVR_X32_VDP0)&0xFFFF,
+               rd32(shared,SH_ZVR_PF_LAST), rd32(shared,SH_ZVR_PF_W_AVG), rd32(shared,SH_ZVR_PF_W_MAX),
+               rd32(shared,SH_ZVR_W_FRAMES), rd32(shared,SH_ZVR_W_DRAWN), rd32(shared,SH_ZVR_MMAP_FAIL));
+}
+static void diag_a1_report(volatile UBYTE *shared)
+{
+    if(!zvr_blob(shared)){ printf("(not a ZZVirtuaRacing blob: no A1 fields)\n"); return; }
+    printf("=== ZZVR A1 DIAG === build=0x%04lx sub=%lu drc=%lu vfp=%lu ahw=0x%lx reg0=0x%04lx entry_sp=0x%08lx\n",
+           rd32(shared,SH_ZVR_BUILD), rd32(shared,SH_ZVR_BUILD2), rd32(shared,SH_ZVR_DRC),
+           rd32(shared,SH_ZVR_VFP), rd32(shared,SH_ZVR_AHW), rd32(shared,SH_ZVR_X32_REG0)&0xFFFF,
+           rd32(shared,SH_ZVR_ENTRY_SP));
+    printf("  pools: mmap=%lu KiB (fail=%lu) sbrk=%lu KiB\n",
+           rd32(shared,SH_ZVR_MMAP_USED)>>10, rd32(shared,SH_ZVR_MMAP_FAIL), rd32(shared,SH_ZVR_SBRK_USED)>>10);
+    printf("  PicoFrame window (last %lu frames, %lu drawn): avg=%lu us max=%lu us last=%lu us\n",
+           rd32(shared,SH_ZVR_W_FRAMES), rd32(shared,SH_ZVR_W_DRAWN),
+           rd32(shared,SH_ZVR_PF_W_AVG), rd32(shared,SH_ZVR_PF_W_MAX), rd32(shared,SH_ZVR_PF_LAST));
+    printf("  last msh2=0x%08lx ssh2=0x%08lx\n", rd32(shared,SH_ZVR_MSH2_PC), rd32(shared,SH_ZVR_SSH2_PC));
+}
+/* STOP with ack, then wait for the terminal state (STATUS=0xFF, blob in wfe). */
+static void stop_blob(volatile UBYTE *shared)
+{
+    ULONG t0=eclock_now(NULL), f=0, t1; int ok; LONG w;
+    eclock_now(&f);
+    ok=send_cmd(shared, ZP_CMD_STOP, 250);
+    t1=eclock_now(NULL);
+    printf("  STOP ack=%s after %lu ms (status=0x%02lx)\n", ok?"yes":"TIMEOUT",
+           f?((t1-t0)/(f/1000UL)):0UL, rd32(shared,SH_STATUS));
+    for(w=0; w<150; w++){ if(rd32(shared,SH_STATUS)==ST_STOPPED) break; Delay(1); }
+    printf("  STATUS=0x%02lx after %ld more ticks (%s)\n", rd32(shared,SH_STATUS), w,
+           rd32(shared,SH_STATUS)==ST_STOPPED?"STOPPED, wfe":"NOT STOPPED: blob still running");
+}
+
+static int controllers_conflict(const ZP_Config *cfg);   /* defini plus bas, utilise ici */
+static int run_picodrive(const ZP_Config *cfg)
+{
+    struct ConfigDev *cd;
+    volatile UBYTE *board=NULL,*fb=NULL,*shared=NULL;
+    int blob_stopped=0;   /* v1.1 : le blob a-t-il deja ete arrete (evite double STOP) */
+    BPTR fh=0; UBYTE *rombuf=NULL,*blobbuf=NULL; int blob_alloced=0;
+    LONG rom_size=0,blob_size=0; ULONG crc_68k=0; int rc=0,i;
+
+    struct Screen *my_scr=NULL; struct Window *win=NULL;
+    struct ScreenBuffer *sb[3]={NULL,NULL,NULL};
+    struct BitMap *man_bm[3]={NULL,NULL,NULL};   /* backbuffers VRAM manuels (fallback) */
+    struct MsgPort *dbuf_port=NULL;
+    ULONG buf_arm[3]={0,0,0}, buf_mem[3]={0,0,0}, buf_off[3]={0,0,0}, pitch=0, dbuf_sig=0, modeid, pan_orig=0;
+    ULONG g_fps10=0, g_rend10=0, g_flip10=0, g_frames=0, g_el_ms=0;
+    /* NTSC_TIMING_DIAG : stats launcher (ticks EClock) */
+    ULONG g_rmin=0, g_rmax=0, g_r12=0, g_r14=0, g_r67=0;   /* render r1-r0 */
+    ULONG g_fmin=0, g_fmax=0, g_missed=0;                   /* PAN-to-PAN */
+    ULONG g_vbmax=0, g_vbsum=0, g_efreq=0;                  /* vblanks/PAN */
+    int have_timer=0;
+    /* VISUAL_TIMING_CLEAN */
+    ULONG region_in; const char *region_label="AUTO";
+    ULONG pal_out=0, target_hz=60, active_h=224, y_off=8;
+    int uncapped=0; const char *pacing_mode="TIMER"; int vbl_ok=0;
+    int g_pace_zz=0; ULONG efreq_main=0;   /* 32X: 1 = PLL on the ZZ9000 vblank, 0 = WaitTOF */
+
+    printf("ZZPicoDrive32X rc1 - Sega 32X on the ZZ9000 Core1 (base ZZPicoDriveMD 1.1)\n");
+    stack_report("start");
+    region_in=region_from_cfg(cfg->region,&region_label);
+    switch(cfg->input){
+        case ZP_INPUT_KBD:     g_input_mode=0; break;
+        case ZP_INPUT_USB_HID: g_input_mode=2; break;
+        case ZP_INPUT_HW_DB9:  g_input_mode=3; break;   /* hardware pur (ignore lowlevel) */
+        default:               g_input_mode=1; break;   /* CD32_LOWLEVEL / HW_DB9 : lowlevel + repli hardware */
+    }
+    g_joyport=(ULONG)cfg->port;
+    /* joueur 2 */
+    g_players = (cfg->players==2)?2:1;
+    switch(cfg->input2){
+        case ZP_INPUT_KBD:     g_input_mode2=0; break;
+        case ZP_INPUT_USB_HID: g_input_mode2=2; break;
+        case ZP_INPUT_HW_DB9:  g_input_mode2=3; break;
+        default:               g_input_mode2=1; break;
+    }
+    if(g_players==2 && g_input_mode2==0) g_input_mode2=1;   /* P2 clavier interdit -> manette */
+    g_joyport2=(ULONG)cfg->port2;
+    if(controllers_conflict(cfg)){
+        printf("ATTENTION: J1 et J2 sur le meme port -> J2 desactive. Utilise des ports differents.\n");
+        g_players=1;
+    }
+    if(cfg->audio==ZP_AUDIO_NONE) g_silence=1;
+
+    ExpansionBase=(struct ExpansionBase*)OpenLibrary("expansion.library",0L);
+    if(!ExpansionBase){ printf("expansion.library?\n"); return 20; }
+    cd=FindConfigDev(NULL,ZZ9000_MANUF,ZZ9000_PROD);
+    if(!cd) cd=FindConfigDev(NULL,ZZ9000_MANUF,0x0A);
+    CloseLibrary((struct Library*)ExpansionBase); ExpansionBase=NULL;
+    if(!cd){ printf("ZZ9000 not found\n"); return 10; }
+    board=(volatile UBYTE*)cd->cd_BoardAddr; fb=board+MNT_FB_BASE; shared=fb+FB_SHARED;
+    printf("board=0x%08lX fb=0x%08lX shared=0x%08lX\n",(ULONG)board,(ULONG)fb,(ULONG)shared);
+
+    /* ROM */
+    fh=Open((STRPTR)cfg->rom_path,MODE_OLDFILE);
+    if(!fh){ printf("Cannot open ROM\n"); rc=10; goto done; }
+    Seek(fh,0,OFFSET_END); rom_size=(LONG)Seek(fh,0,OFFSET_END); Seek(fh,0,OFFSET_BEGINNING);
+    if(rom_size<=0){ Close(fh); rc=10; goto done; }
+    rombuf=(UBYTE*)AllocMem((ULONG)rom_size+ROM_PAD,MEMF_PUBLIC|MEMF_CLEAR);
+    if(!rombuf||Read(fh,rombuf,rom_size)!=rom_size){ printf("ROM read fail\n"); Close(fh); rc=10; goto done; }
+    Close(fh); fh=0; printf("ROM: %ld bytes\n",rom_size);
+
+    /* blob : fichier si present (override dev), sinon blob embarque dans l'executable (release) */
+    fh=Open((STRPTR)cfg->blob_path,MODE_OLDFILE);
+    if(fh){
+        Seek(fh,0,OFFSET_END); blob_size=(LONG)Seek(fh,0,OFFSET_END); Seek(fh,0,OFFSET_BEGINNING);
+        if(blob_size<=0){ Close(fh); rc=10; goto done; }
+        blobbuf=(UBYTE*)AllocMem((ULONG)blob_size,MEMF_PUBLIC);
+        if(!blobbuf||Read(fh,blobbuf,blob_size)!=blob_size){ printf("blob read fail\n"); Close(fh); rc=10; goto done; }
+        Close(fh); fh=0; blob_alloced=1;
+        printf("Blob: %ld bytes (fichier %s)\n",blob_size,cfg->blob_path);
+    } else {
+        blobbuf=(UBYTE*)g_blob_data; blob_size=(LONG)g_blob_size; blob_alloced=0;
+        printf("Blob: %ld bytes (embarque dans l'executable)\n",blob_size);
+        /* A1diag: built with blob_data_stub.c there is no embedded blob */
+        if(blob_size<4096){ printf("No usable embedded blob: give the blob file (%s not found)\n", cfg->blob_path); rc=10; goto done; }
+    }
+
+    crc_68k=crc32_buf(rombuf,(ULONG)rom_size);
+    copy_uword(fb+FB_ROM,rombuf,rom_size);
+    { volatile UWORD *pad=(volatile UWORD*)(fb+FB_ROM+(ULONG)rom_size);
+      for(i=0;i<(int)(ROM_PAD/2);i++) pad[i]=0; }
+    copy_uword(fb+FB_BLOB,blobbuf,blob_size);
+
+    /* A1diag: also clear slots 160..199 (A1 fields incl. the 'ZVR1' magic) so a
+       previous run cannot leave a stale identification (1.1 cleared 0..159) */
+    { volatile UWORD *p=(volatile UWORD*)shared; for(i=0;i<400;i++) p[i]=0; }
+    ZZ_WR(board,REG_ARM_RUN_HI,(UWORD)(ARM_BLOB>>16));
+    ZZ_WR(board,REG_ARM_RUN_LO,(UWORD)(ARM_BLOB&0xFFFF));
+
+    { LONG t=250; while(t-->0 && rd32(shared,SH_MAGIC)!=ZZPICO_MAGIC) Delay(1); }
+    if(rd32(shared,SH_MAGIC)!=ZZPICO_MAGIC){ printf("No MAGIC\n"); rc=10; goto done; }
+    printf("Core1 READY.\n");
+
+    if(!send_cmd(shared,ZP_CMD_INIT,250)){ printf("INIT timeout\n"); rc=12; goto stop; }
+    wr32(shared,SH_ROM_ADDR,ARM_ROM); wr32(shared,SH_ROM_SIZE,(ULONG)rom_size);
+    wr32(shared,SH_ROM_CRC_68K,crc_68k);
+    if(!send_cmd(shared,ZP_CMD_LOAD_ROM,250)){ printf("LOAD_ROM timeout\n"); rc=13; goto stop; }
+    if(rd32(shared,SH_ERROR)!=0){ printf("LOAD_ROM err=%lu\n",rd32(shared,SH_ERROR)); rc=14; goto stop; }
+    printf("ROM loaded (CRC_ARM=0x%08lX)\n",rd32(shared,SH_ROM_CRC_ARM));
+    /* A1diag: identify the blob, OSD flag */
+    if(zvr_blob(shared)){
+        printf("Blob is ZZVirtuaRacing build=0x%04lx sub=%lu drc=%lu vfp=%lu entry_sp=0x%08lx\n",
+               rd32(shared,SH_ZVR_BUILD), rd32(shared,SH_ZVR_BUILD2), rd32(shared,SH_ZVR_DRC),
+               rd32(shared,SH_ZVR_VFP), rd32(shared,SH_ZVR_ENTRY_SP));
+        wr32(shared,SH_ZVR_OSD, g_noosd?1UL:0UL);
+        wr32(shared,SH_ZVR_DRAWMODE, g_gate?1UL:0UL);   /* 32X: 0 = draw every frame (rc1), 1 = 1.1 gate */
+        printf("Draw mode: %s\n", g_gate?"1.1 gate (draw when the previous frame was taken)":"every frame, publish when a buffer is free");
+    } else printf("Blob is not a ZZVirtuaRacing blob (A1 fields not read)\n");
+    /* VTC : region posee AVANT cmd_start (le blob l'applique avant PicoReset) */
+    wr32(shared,SH_REGION_IN,region_in);
+    if(!send_cmd(shared,ZP_CMD_START,250)){ printf("START timeout\n"); rc=15; goto stop; }
+    sram_load(shared, fb, cfg->rom_path);   /* charge ROMNAME.srm si present */
+    if(rd32(shared,SH_STATUS)!=0x02){ printf("Not RUNNING\n"); rc=16; goto stop; }
+    /* pal effectif resolu par PicoDrive -> pacing 50/60 */
+    pal_out=rd32(shared,SH_PAL_OUT); target_hz=pal_out?50UL:60UL;
+    printf("region=%s->%s  target=%luHz  regionOverride=%lu\n",
+           region_label, pal_out?"PAL":"NTSC", target_hz, rd32(shared,SH_REGION_EFF));
+    printf("RUNNING. Opening 32-bit screen + double buffer...\n");
+
+    have_timer=timer_open();
+    if(!have_timer) printf("(timer.device indisponible : pas de mesure FPS)\n");
+    /* HW_VBLANK_PACING : sonde le registre vblank. Si le bit bat -> VBLANK_HW
+       (tear-free), sinon repli TIMER. Jamais bloquant. uncapped -> ni l'un ni
+       l'autre (benchmark libre). */
+    vbl_ok = (!uncapped && have_timer) ? probe_vblank(board) : 0;
+    /* 32X: lock the PLL on the ZZ9000 vblank unless flag tof or no usable signal */
+    eclock_now(&efreq_main);
+    if(vbl_ok && !g_force_tof && sleep_open() && vb_pll_init(board, efreq_main)) g_pace_zz=1;
+    pacing_mode = uncapped ? "UNCAPPED" : (g_pace_zz ? "ZZ9000_VBLANK_PLL" : "WAITTOF");
+    printf("pacing_mode=%s (vblank probe=%s, period=%lu us)\n",
+           pacing_mode, vbl_ok?"OK":(uncapped?"skip":"no-signal"),
+           (g_pace_zz && efreq_main)? (g_vb_period*1000UL)/(efreq_main/1000UL) : 0UL);
+
+    P96Base      =OpenLibrary("Picasso96API.library",2L);   /* intuition/gfx : ouverts par main */
+    if(g_input_mode==2){
+        /* INPUT_USB_HID : squelette. Lecture HID USB (Poseidon/input.device) pas encore
+           implementee -> repli clavier. Si le pad USB est expose en game controller par
+           Poseidon, le mode 'cd32' (lowlevel) peut deja le lire. */
+        printf("INPUT USB HID : squelette non implemente -> repli clavier.\n");
+        printf("  (si ton pad USB passe par Poseidon en game controller, essaie 'cd32')\n");
+        g_input_mode=0;
+    }
+    /* lowlevel : ouvert si le joueur 1 OU le joueur 2 utilise le mode manette detectee */
+    if(g_input_mode==1 || (g_players==2 && g_input_mode2==1)){
+        LowLevelBase=OpenLibrary("lowlevel.library",39L);
+        if(LowLevelBase){
+            if(g_input_mode==1)  SetJoyPortAttrs(g_joyport,  SJA_Type,SJA_TYPE_AUTOSENSE,TAG_END);
+            if(g_players==2 && g_input_mode2==1) SetJoyPortAttrs(g_joyport2, SJA_Type,SJA_TYPE_AUTOSENSE,TAG_END);
+            printf("INPUT lowlevel actif\n");
+        } else printf("INPUT lowlevel absente -> hardware direct\n");
+    }
+    if(g_input_mode==3) printf("INPUT J1 DB9 hardware pur, port %lu\n", g_joyport);
+    if(g_players==2) printf("INPUT 2 joueurs : J1 port %lu, J2 port %lu\n", g_joyport, g_joyport2);
+    if(!IntuitionBase||!GfxBase_||!P96Base){ printf("libs missing (P96?)\n"); rc=17; goto stop; }
+
+    modeid=p96BestModeIDTags(P96BIDTAG_NominalWidth,(ULONG)IMG_W,
+        P96BIDTAG_NominalHeight,(ULONG)IMG_H,P96BIDTAG_Depth,32,TAG_DONE);
+    if(modeid==(ULONG)INVALID_ID){ printf("No 32-bit RTG mode\n"); rc=18; goto stop; }
+    /* v1.01 : ouverture ecran robuste. On essaie D'ABORD l'ouverture stricte
+       (comportement V1.0 valide, qui marche sur la plupart des configs). Seulement
+       si elle ECHOUE (certaines AmigaOS 3.2 + Picasso96/iComp recentes la refusent
+       alors que le mode est valide), on bascule sur une ouverture permissive
+       (methode C, puis D). La validation du framebuffer reste faite plus bas sur
+       les bitmaps des ScreenBuffers (chemin eprouve V1.0), pas ici. */
+    printf("P96 modeid=0x%08lX\n", modeid);
+    my_scr=OpenScreenTags(NULL,SA_DisplayID,modeid,SA_Width,(ULONG)IMG_W,
+        SA_Height,(ULONG)IMG_H,SA_Depth,32,SA_Quiet,TRUE,SA_ShowTitle,FALSE,
+        SA_Type,CUSTOMSCREEN,TAG_DONE);
+    if(my_scr) printf("OpenScreen strict: OK\n");
+    else {
+        printf("OpenScreen strict: FAIL -> methode C permissive\n");
+        my_scr=OpenScreenTags(NULL,SA_DisplayID,modeid,
+            SA_Type,CUSTOMSCREEN,SA_Quiet,TRUE,TAG_DONE);
+        if(my_scr) printf("OpenScreen method C: OK\n");
+        else {
+            my_scr=OpenScreenTags(NULL,SA_DisplayID,modeid,
+                SA_Type,CUSTOMSCREEN,TAG_DONE);
+            if(my_scr) printf("OpenScreen method D: OK\n");
+        }
+    }
+    if(!my_scr){
+        printf("OpenScreen failed for P96 modeid=0x%08lX\n", modeid);
+        printf("Run ZZP96Check and post the output.\n");
+        rc=18; goto stop;
+    }
+    win=(struct Window*)OpenWindowTags(NULL,WA_Left,0,WA_Top,0,WA_Width,(ULONG)IMG_W,
+        WA_Height,(ULONG)IMG_H,WA_Flags,WFLG_BACKDROP|WFLG_BORDERLESS|WFLG_RMBTRAP|WFLG_ACTIVATE,
+        WA_IDCMP,IDCMP_RAWKEY|IDCMP_MOUSEBUTTONS,WA_CustomScreen,(ULONG)my_scr,TAG_DONE);
+    if(!win){ printf("OpenWindow failed\n"); rc=18; goto closescr; }
+
+    /* cacher le pointeur souris sur l'ecran PicoDrive (sprite blank en Chip RAM) */
+    g_blankspr=(UWORD*)AllocMem(12L, MEMF_CHIP|MEMF_CLEAR);   /* 6 words a 0 = invisible */
+    if(g_blankspr) SetPointer(win, g_blankspr, 1, 16, 0, 0);
+
+    /* TRIPLE BUFFER. buf[0]=bitmap ecran (toujours en VRAM). buf[1]/buf[2]=backbuffers.
+       On tente d'abord AllocScreenBuffer (chemin V1.0, marche sur configs normales).
+       Sur AmigaOS 3.2 + P96/iComp recent, l'ecran s'ouvre (methode C/D) mais
+       AllocScreenBuffer ne fournit PAS de backbuffers VRAM secondaires (mem=0). Dans ce
+       cas on alloue les backbuffers MANUELLEMENT en VRAM via p96AllocBitMap avec le
+       bitmap ecran 32 bits comme friend -> memes offsets VRAM -> deferred-PAN inchange.
+       Lecture des attributs NON-LOCKEE (p96LockBitMap gele certaines P96 recentes). */
+    dbuf_port=(struct MsgPort*)CreateMsgPort();
+    { struct BitMap *friend=my_scr->RastPort.BitMap;
+      ULONG rgbf=p96GetBitMapAttr(friend,P96BMA_RGBFORMAT);
+      struct BitMap *rbm[3]={NULL,NULL,NULL};
+      int k, bad=0, sb_ok;
+
+      sb[0]=AllocScreenBuffer(my_scr,NULL,SB_SCREEN_BITMAP);
+      if(!sb[0]){ printf("AllocScreenBuffer(screen) failed\n"); rc=19; goto freebuf; }
+      rbm[0]=sb[0]->sb_BitMap;
+
+      sb[1]=AllocScreenBuffer(my_scr,NULL,0);
+      sb[2]=AllocScreenBuffer(my_scr,NULL,0);
+      sb_ok=(sb[1]&&sb[2]);
+      if(sb_ok){
+          ULONG m1=p96GetBitMapAttr(sb[1]->sb_BitMap,P96BMA_MEMORY);
+          ULONG m2=p96GetBitMapAttr(sb[2]->sb_BitMap,P96BMA_MEMORY);
+          if(m1==0UL||m2==0UL||m1<(ULONG)fb||m2<(ULONG)fb) sb_ok=0;
+      }
+      if(sb_ok){
+          rbm[1]=sb[1]->sb_BitMap; rbm[2]=sb[2]->sb_BitMap;
+          printf("backbuffers: AllocScreenBuffer VRAM OK\n");
+      } else {
+          /* fallback : liberer les ScreenBuffers secondaires, allouer en VRAM manuel */
+          printf("backbuffers: AllocScreenBuffer not VRAM -> p96AllocBitMap (friend=screen)\n");
+          if(sb[1]){ FreeScreenBuffer(my_scr,sb[1]); sb[1]=NULL; }
+          if(sb[2]){ FreeScreenBuffer(my_scr,sb[2]); sb[2]=NULL; }
+          man_bm[1]=p96AllocBitMap((ULONG)IMG_W,(ULONG)IMG_H,32UL,BMF_DISPLAYABLE|BMF_CLEAR,friend,rgbf);
+          man_bm[2]=p96AllocBitMap((ULONG)IMG_W,(ULONG)IMG_H,32UL,BMF_DISPLAYABLE|BMF_CLEAR,friend,rgbf);
+          rbm[1]=man_bm[1]; rbm[2]=man_bm[2];
+          if(!rbm[1]||!rbm[2]){
+              printf("ERROR: manual p96AllocBitMap backbuffers failed\n"); rc=19; goto freebuf; }
+      }
+
+      /* validation non-lockee des 3 bitmaps de rendu */
+      for(k=0;k<3;k++){
+          ULONG bpr=p96GetBitMapAttr(rbm[k],P96BMA_BYTESPERROW);
+          ULONG mem=p96GetBitMapAttr(rbm[k],P96BMA_MEMORY);
+          printf("buf[%d] mem=0x%08lX bpr=%lu\n",k,mem,bpr);
+          if(mem==0UL||bpr==0UL){ printf("ERROR: buf[%d] not VRAM (mem/bpr=0)\n",k); bad=1; }
+          else if(mem<(ULONG)fb){ printf("ERROR: buf[%d] outside ZZ9000 VRAM (mem<fb)\n",k); bad=1; }
+          else if(bpr<(ULONG)IMG_W*4UL){ printf("ERROR: buf[%d] pitch %lu < %lu\n",k,bpr,(ULONG)IMG_W*4UL); bad=1; }
+          else { pitch=bpr; buf_mem[k]=mem; buf_arm[k]=CPU_TO_ARM(mem,fb); buf_off[k]=(ULONG)mem-(ULONG)fb; }
+      }
+      if(bad){
+          printf("ERROR: no usable 32-bit VRAM backbuffers on this setup.\n");
+          printf("Run ZZP96Test and post the output.\n");
+          rc=19; goto freebuf; }
+    }
+    if(buf_mem[0]==buf_mem[1]||buf_mem[0]==buf_mem[2]||buf_mem[1]==buf_mem[2]){
+        printf("ERROR: identical buffer addresses\n"); rc=19; goto freebuf; }
+    pan_orig = buf_off[0];
+
+    if(dbuf_port){
+        dbuf_sig=1UL<<dbuf_port->mp_SigBit;
+        if(sb[0] && sb[0]->sb_DBufInfo) sb[0]->sb_DBufInfo->dbi_SafeMessage.mn_ReplyPort=dbuf_port;
+        if(sb[1] && sb[1]->sb_DBufInfo) sb[1]->sb_DBufInfo->dbi_SafeMessage.mn_ReplyPort=dbuf_port;
+        if(sb[2] && sb[2]->sb_DBufInfo) sb[2]->sb_DBufInfo->dbi_SafeMessage.mn_ReplyPort=dbuf_port;
+    }
+
+    /* active le rendu direct P96 cote blob */
+    wr32(shared,SH_P96_PITCH,pitch);
+    wr32(shared,SH_P96_ENABLE,1);
+
+    /* clear noir des 3 buffers AVANT tout PAN (pas de garbage au demarrage) */
+    {
+        ULONG nw=(((ULONG)IMG_H*pitch)>>2), i; int k;
+        for(k=0;k<3;k++){ volatile ULONG *b=(volatile ULONG*)buf_mem[k];
+                          for(i=0;i<nw;i++) b[i]=0UL; }
+    }
+    zz_pan(board, pan_orig);   /* afficher buffer 0 (noir) */
+
+    /* ---- AUDIO_STEREO_22050_AHI dans une TACHE SEPAREE : isole l'audio du timing video
+       -> le mixage AHI ne preempte plus le flip -> FPS preserve + underruns ~0. ---- */
+    if(rd32(shared,SH_PCM_ENABLED)==1){
+        ULONG pcm_arm=rd32(shared,SH_PCM_BASE);
+        g_task_shared=shared;
+        g_task_ring=(volatile UBYTE*)((ULONG)fb + (pcm_arm - 0x00200000UL));
+        wr32(shared,SH_PCM_READ_POS,0);
+        wr32(shared,SH_PCM_TESTPAT,0);   /* 0 = Sonic (pas le tone de test) */
+        g_main_task=FindTask(NULL);
+        if(cfg->audio==ZP_AUDIO_PAULA){
+            /* backend Paula DMA direct : init/start dans le thread principal, fill sur WaitTOF */
+            pa_ntsc = (region_in==RGN_USA || region_in==RGN_JAPN) ? 1 : 0;
+            if(pa_init(g_task_shared, g_task_ring)){ pa_start(); g_pa_active=1; g_audio_on=1;
+                printf("AUDIO: backend Paula DMA direct\n"); }
+            else { pa_stop(); printf("AUDIO: init Paula KO -> pas de son\n"); }
+        } else {
+            /* backend AHI (defaut) ou None (silence) : tache separee */
+            g_done_sig=AllocSignal(-1L);
+            if(g_done_sig>=0){
+                g_audio_proc=(struct Process*)CreateNewProcTags(
+                    NP_Entry,(ULONG)audio_task, NP_Name,(ULONG)"ZZPicoAudio",
+                    NP_Priority,5L, NP_StackSize,16384UL, TAG_DONE);
+            }
+            if(g_audio_proc){ g_audio_on=1; printf("AUDIO: backend AHI (tache separee)\n"); }
+            else { printf("AUDIO: CreateNewProc echoue -> pas de son\n");
+                   if(g_done_sig>=0){ FreeSignal(g_done_sig); g_done_sig=-1; } }
+        }
+    }
+    printf("Direct P96 render ON. screen=%dx%d modeid=0x%08lX pacing=%s target=%luHz\n",
+           IMG_W, IMG_H, modeid, pacing_mode, target_hz);
+    printf("Press any key to STOP.\n");
+
+    /* boucle : rendre dans back -> flip -> swap, jusqu'a touche.
+       front=0 affiche au depart ; on rend dans back=1 puis on flippe. */
+    /* ---- Boucle principale : Core1 rend en autonome et publie FRAME_READY.
+       Le 68k DORT sur WaitTOF() (vblank Amiga ~50Hz) puis flippe via PAN differe
+       firmware (applique au vblank ZZ9000, ACK sur USER4). Plus de drive_one_frame,
+       plus de busy-poll FRAME_DONE, plus de busy-wait vblank -> fin du 99% CPU. ---- */
+    /* ---- Boucle triple-buffer ----
+       Core1 s'auto-cadence a 50/60Hz et rend EN AVANCE dans un buffer LIBRE.
+       Le 68k dort sur WaitTOF() (vblank RTG) puis, dans la MEME iteration :
+         (1) confirme le flip precedent (ACK firmware) ;
+         (2) si une nouvelle frame est prete -> arme son PAN differe + donne a Core1
+             un buffer libre + ecrit FLIP_SEQ (="pris, rends la suivante").
+       3 buffers : front_idx (affiche), pending_idx (PAN arme, ACK attendu), render_idx
+       (Core1 y rend). La cadence des flips = celle de Core1 (50Hz PAL), pas le RTG. */
+    { int front_idx=0, render_idx=1, pending_idx=-1;   /* buffer 2 = libre au depart */
+      int running=1, flip_inflight=0;
+      ULONG last_taken=0, flip_ready=0, flip_ack_before=0;
+      ULONG frames=0, efreq=0, t_start, t_flip=0;
+      /* A1diag: watchdog state (all reads are 3-5 rd32 per vblank, negligible) */
+      int   quit_count=0;                      /* >0: quit requested, B snapshot pending */
+      ULONG wd_fc=0, wd_fc_iter=0, wd_rd=0, wd_rd_iter=0, wd_pc=0, wd_pc_iter=0;
+      ULONG wd_next_stall=0, wd_next_noframe=0, wd_next_sh2=0;
+      int   is_zvr=zvr_blob(shared);
+      t_start=eclock_now(&efreq);
+      wr32(shared, SH_FLIP_SEQ, 0);
+      wr32(shared, SH_P96_BASE, buf_arm[render_idx]);   /* Core1 rend dans render_idx */
+      while(running){
+          if(g_pace_zz) vb_pll_wait(board, efreq);   /* 32X: ZZ9000 vblank edge (PLL) */
+          else WaitTOF();                            /* 1.1: Amiga vblank */
+          if(g_pa_active) pa_service();   /* backend Paula : remplit le ring Chip (per iteration, EClock based) */
+          /* AUDIO : rien ici, l'AudioTask separee gere AHI -> pas de preemption du flip */
+          g_wd_iter++;
+
+          /* (1) confirmer le flip en vol.  32X: right after the edge the firmware may
+             still be inside its loop iteration: give the ack up to ~400 register reads
+             (well under a millisecond) before concluding it is not there yet. */
+          if(flip_inflight){
+              ULONG ack=zz_pan_ack(board), ap=0;
+              if(g_pace_zz){ while(ack==flip_ack_before && ap<400UL){ ap++; ack=zz_pan_ack(board); }
+                             if(ap>g_ack_poll_max) g_ack_poll_max=ap; if(ack==flip_ack_before) g_ack_notseen++; }
+              if(ack != flip_ack_before){
+                  ULONG now=eclock_now(NULL);
+                  if(efreq){ ULONG ms=(now - t_flip)/(efreq/1000UL); if(ms>g_ack_max_ms) g_ack_max_ms=ms; }
+                  front_idx = pending_idx;          /* buffer flippe -> affiche */
+                  pending_idx = -1; flip_inflight = 0; frames++;
+              } else {
+                  ULONG now=eclock_now(NULL);
+                  if(efreq && (now - t_flip) > efreq/10UL){
+                      g_ack_timeouts++;
+                      printf("PAN ACK timeout (ready=%lu iter=%lu ack=%lu before=%lu)\n",
+                             flip_ready, g_wd_iter, zz_pan_ack(board), flip_ack_before);
+                      ZZ_WR(board, REG_ZZ_USER3, 2); running=0; rc=21;
+                  }
+              }
+          }
+          /* (2) prendre la derniere frame prete + armer son PAN */
+          if(!flip_inflight){
+              ULONG ready = rd32(shared, SH_FRAME_READY);
+              if(ready != last_taken){
+                  flip_ack_before = zz_pan_ack(board);
+                  ZZ_WR(board, REG_ZZ_USER3, 1);                    /* arme UN PAN */
+                  zz_deferred_pan_request(board, buf_off[render_idx], pitch);
+                  pending_idx = render_idx;                         /* ce buffer sera affiche */
+                  render_idx  = 3 - front_idx - pending_idx;        /* le 3e = libre -> Core1 */
+                  wr32(shared, SH_P96_BASE, buf_arm[render_idx]);
+                  wr32(shared, SH_FLIP_SEQ, ready);                 /* "pris, rends la suivante" */
+                  flip_ready = ready; last_taken = ready; t_flip=eclock_now(NULL); flip_inflight=1;
+                  g_flips++;
+              }
+          }
+          /* A1diag: publish the loop state for the snapshots */
+          g_lp_inflight=flip_inflight; g_lp_front=front_idx; g_lp_pending=pending_idx;
+          g_lp_render=render_idx; g_lp_last_taken=last_taken;
+          /* ---- INPUT clavier (mode 0) : non bloquant, cout quasi nul ---- */
+          { struct IntuiMessage *m;
+            while((m=(struct IntuiMessage*)GetMsg(win->UserPort))){
+                ULONG cl=m->Class, code=m->Code, qual=m->Qualifier;
+                ReplyMsg((struct Message*)m);
+                if(cl==IDCMP_MOUSEBUTTONS){   /* clic = quit (secours) */
+                    if(!quit_count){ printf("QUIT (mouse) at iter=%lu\n", g_wd_iter);
+                                     diag_snapshot(shared, board, "A (quit)"); quit_count=30; }
+                    continue; }
+                if(cl!=IDCMP_RAWKEY) continue;
+                { int up=(code&0x80)?1:0, raw=(int)(code&0x7F);
+                  if(g_input_log)
+                      printf("RAWKEY code=0x%02lx base=0x%02lx %s qual=0x%04lx\n",
+                             (ULONG)code,(ULONG)raw,up?"UP":"DOWN",(ULONG)qual);
+                  if(raw<128) key_down[raw]=up?0:1;
+                  if(!up){   /* commandes emulateur sur DOWN */
+                      if(raw==RK_ESC){
+                          if(qual&(IEQUALIFIER_LSHIFT|IEQUALIFIER_RSHIFT)){
+                              /* A1diag: snapshot A now, keep servicing audio/flips for 30
+                                 vblanks, snapshot B, then leave (1.1 left at once) */
+                              if(!quit_count){ printf("QUIT (Shift+Esc) at iter=%lu\n", g_wd_iter);
+                                               diag_snapshot(shared, board, "A (quit)"); quit_count=30; }
+                          }
+                          else g_emu_cmd=EMU_CMD_MENU;   /* menu emulateur (pas encore d'UI) */
+                      } else if(raw==RK_DEL){ if(!g_emu_pending){ g_emu_pending=EMU_CMD_RESET; g_emu_sent=0; printf("RESET requested\n"); } }
+                      else if(raw==RK_P) g_emu_cmd=EMU_CMD_PAUSE;
+                      else if(raw>=RK_F1 && raw<=RK_F5){
+                          int slot=(raw-RK_F1)+1;   /* slots 1..5 */
+                          if(qual&(IEQUALIFIER_LSHIFT|IEQUALIFIER_RSHIFT))
+                              state_save(shared, fb, cfg->rom_path, slot);
+                          else
+                              state_load(shared, fb, cfg->rom_path, slot);
+                      }
+                  }
+                }
+            } }
+          /* recompose les bitmasks pad via read_pad (P1 toujours, P2 si active) */
+          g_padmask  = read_pad(g_input_mode,  g_joyport,  0);
+          g_padmask2 = (g_players==2) ? read_pad(g_input_mode2, g_joyport2, 1) : 0;
+          /* ecrit les pads dans la shared (Core1 les lit chaque frame) ; seq++ si change */
+          if(g_padmask!=g_padmask_prev || g_padmask2!=g_padmask2_prev){
+              g_input_seq++; g_padmask_prev=g_padmask; g_padmask2_prev=g_padmask2; }
+          wr32(shared, SH_PAD0, g_padmask);
+          wr32(shared, SH_PAD1_P2, g_padmask2);
+          /* 32X: one-shot emulator command (reset).  1.1 rewrote g_emu_cmd every
+             vblank, which would have re-fired a RESET at every frame. */
+          if(g_emu_pending){
+              ULONG cur=rd32(shared, SH_EMU_CMD);
+              if(cur==EMU_CMD_NONE){
+                  if(!g_emu_sent){ wr32(shared, SH_EMU_CMD, g_emu_pending); g_emu_sent=1; }
+                  else { printf("RESET done (iter=%lu)\n", g_wd_iter); g_emu_pending=0; g_emu_sent=0; }
+              }
+          }
+          wr32(shared, SH_INPUT_SEQ, g_input_seq);
+
+          /* ---- A1diag WATCHDOG : one line when something stops moving for ~2 s ----
+             (120 vblanks = 2.0 s NTSC / 2.4 s PAL; repeated every 600 vblanks while it lasts) */
+          { ULONG fc=rd32(shared,SH_FRAME_COUNTER), rd=rd32(shared,SH_FRAME_READY);
+            if(fc!=wd_fc){ wd_fc=fc; wd_fc_iter=g_wd_iter; }
+            if(rd!=wd_rd){ wd_rd=rd; wd_rd_iter=g_wd_iter; }
+            if(is_zvr){ ULONG pc=rd32(shared,SH_ZVR_MSH2_PC) ^ (rd32(shared,SH_ZVR_SSH2_PC)<<1);
+                        if(pc!=wd_pc){ wd_pc=pc; wd_pc_iter=g_wd_iter; } }
+            if(g_wd_iter - wd_fc_iter >= 120 && g_wd_iter >= wd_next_stall){
+                wd_next_stall = g_wd_iter + 600;
+                printf("WATCHDOG iter=%lu: BLOB STALL, no PicoFrame for %lu vblanks (frames=%lu)\n",
+                       g_wd_iter, g_wd_iter - wd_fc_iter, fc);
+                diag_snapshot(shared, board, "stall");
+            } else if(g_wd_iter - wd_rd_iter >= 120 && g_wd_iter - wd_fc_iter < 120 && g_wd_iter >= wd_next_noframe){
+                wd_next_noframe = g_wd_iter + 600;
+                printf("WATCHDOG iter=%lu: NO NEW FRAME for %lu vblanks while the blob runs (ready=%lu flip=%lu inflight=%d)\n",
+                       g_wd_iter, g_wd_iter - wd_rd_iter, rd, rd32(shared,SH_FLIP_SEQ), flip_inflight);
+                diag_snapshot(shared, board, "noframe");
+            } else if(is_zvr && g_wd_iter - wd_pc_iter >= 120 && g_wd_iter - wd_fc_iter < 120 && g_wd_iter >= wd_next_sh2){
+                wd_next_sh2 = g_wd_iter + 600;
+                printf("WATCHDOG iter=%lu: SH-2 PCS FROZEN for %lu vblanks while PicoFrame runs (msh2=0x%08lx ssh2=0x%08lx)\n",
+                       g_wd_iter, g_wd_iter - wd_pc_iter, rd32(shared,SH_ZVR_MSH2_PC), rd32(shared,SH_ZVR_SSH2_PC));
+                diag_snapshot(shared, board, "sh2");
+            }
+          }
+          /* A1diag: deferred quit -> snapshot B with audio/flips still serviced */
+          if(quit_count){ if(--quit_count==0){ diag_snapshot(shared, board, "B (+30 vblanks)"); running=0; } }
+      }
+      { ULONG total=eclock_now(NULL)-t_start;
+        g_frames=frames; g_efreq=efreq;
+        if(efreq>1000 && frames>0){
+            ULONG efk=efreq/1000, el_ms=total/efk;
+            g_fps10 = el_ms? (frames*10000UL)/el_ms : 0; g_el_ms=el_ms;
+        } }
+      g_rend10=0; g_flip10=0; g_rmin=0; g_rmax=0; g_r12=0; g_r14=0; g_r67=0;
+      g_fmin=0; g_fmax=0; g_missed=0; g_vbmax=0; g_vbsum=0;
+    }
+    /* ================= A1diag : instrumented exit path =================
+       Same resources, same order as 1.1 except: (3) the deferred PAN in flight is
+       cancelled before anything is freed, (5) the SRAM save runs while the blob
+       still services save commands (after STOP the blob sits in wfe and the 1.1
+       sram_save could only time out), (6) STOP waits for STATUS=STOPPED. */
+    stack_report("exit begin");
+    exit_step("1 audio stop");
+    /* arret propre audio : Paula DMA direct (pa_stop) ou tache AHI selon le backend actif */
+    if(g_pa_active){ pa_stop(); g_pa_active=0; g_audio_on=0; }
+    else if(g_audio_on){
+        g_audio_stop=1;
+        if(g_audio_proc) Signal(&g_audio_proc->pr_Task, SIGBREAKF_CTRL_C);
+        if(g_done_sig>=0){ Wait(1UL<<g_done_sig); FreeSignal(g_done_sig); g_done_sig=-1; }
+        g_audio_on=0;
+    }
+    exit_step("2 P96_ENABLE=0 (blob stops writing the P96 buffers)");
+    /* desactive le rendu direct avant de liberer les buffers */
+    wr32(shared,SH_P96_ENABLE,0);
+    exit_step("3 cancel deferred PAN in flight (USER3=2), 2 vblanks");
+    if(board){ ULONG a0=zz_pan_ack(board);
+               ZZ_WR(board, REG_ZZ_USER3, 2); WaitTOF(); WaitTOF();
+               printf("  panack before=%lu after=%lu inflight_was=%d\n", a0, zz_pan_ack(board), g_lp_inflight); }
+    exit_step("4 PAN back to the screen bitmap (immediate)");
+    /* IMPORTANT : restaurer le PAN d'origine (bitmap ecran sb[0]) AVANT de
+       liberer. Intuition n'a jamais ete bascule (on a pane le firmware, pas
+       ChangeScreenBuffer) : sa vue reste sb[0], on remet le scan-out dessus. */
+    if(board){ zz_pan(board, pan_orig); WaitTOF(); }
+
+    if(shared){
+        exit_step("5 SRAM save (blob still running, services the command)");
+        sram_save(shared, fb, cfg->rom_path);
+        exit_step("6 STOP command + wait STOPPED");
+        /* FIX SORTIE (comme SMS) : ARRETER LE BLOB (avec ack) AVANT de liberer la moindre
+           ressource qu'il touche (framebuffers, ring, shared). */
+        stop_blob(shared);
+        blob_stopped=1;
+        printf("Core1 stopped.\n");
+        diag_a1_report(shared);
+        diag_snapshot(shared, board, "C (after STOP)");
+    }
+
+freebuf:
+    exit_step("7 FreeScreenBuffer x3 / p96FreeBitMap / DeleteMsgPort");
+    if(sb[0]) FreeScreenBuffer(my_scr,sb[0]);
+    if(sb[1]) FreeScreenBuffer(my_scr,sb[1]);
+    if(sb[2]) FreeScreenBuffer(my_scr,sb[2]);
+    if(man_bm[1]) p96FreeBitMap(man_bm[1]);
+    if(man_bm[2]) p96FreeBitMap(man_bm[2]);
+    if(dbuf_port){ DeleteMsgPort(dbuf_port); dbuf_port=NULL; }
+closewin:
+    exit_step("8 ClearPointer / CloseWindow");
+    if(win && g_blankspr) ClearPointer(win);
+    if(g_blankspr){ FreeMem(g_blankspr,12L); g_blankspr=NULL; }
+    if(win){ CloseWindow(win); win=NULL; }
+closescr:
+    exit_step("9 CloseScreen");
+    if(my_scr){ CloseScreen(my_scr); my_scr=NULL; }
+stop:
+    /* chemins d'erreur (goto stop avant la game loop) : le blob n'a pas encore ete
+       arrete ci-dessus -> on le fait ici. En sortie normale, blob_stopped=1 -> on saute
+       (pas de double STOP qui timeouterait). */
+    if(shared && !blob_stopped){ exit_step("6' STOP (error path)");
+                sram_save(shared, fb, cfg->rom_path);
+                wr32(shared,SH_P96_ENABLE,0); stop_blob(shared);
+                printf("Core1 stopped.\n"); }
+done:
+    exit_step("10 statistics");
+    if(g_frames>0){
+        printf("\n=== TIMING VTC ===\n");
+        if(shared){ active_h=rd32(shared,SH_ACTIVE_H); y_off=rd32(shared,SH_Y_OFFSET); }
+        printf("region=%s->%s target=%luHz pacing=%s  active_h=%lu y_offset=%lu screen=%dx%d\n",
+               region_label, pal_out?"PAL":"NTSC", target_hz, pacing_mode,
+               active_h, y_off, IMG_W, IMG_H);
+        printf("frames=%lu  duree=%lu.%lus  FPS=%lu.%lu\n",
+               g_frames, g_el_ms/1000, (g_el_ms/100)%10, g_fps10/10, g_fps10%10);
+        printf("rendu ARM moyen=%lu.%lu ms/frame   flip moyen=%lu.%lu ms/frame\n",
+               g_rend10/10, g_rend10%10, g_flip10/10, g_flip10%10);
+        /* 32X: pacing report */
+        if(g_pace_zz)
+            printf("PLL ZZ9000: period=%lu us edges=%lu missed=%lu late=%lu inpulse=%lu polls/edge max=%lu avg=%lu  ack polls max=%lu notseen=%lu\n",
+                   efreq_main?(g_vb_period*1000UL)/(efreq_main/1000UL):0UL, g_vb_edges, g_vb_miss, g_vb_late, g_vb_inpulse,
+                   g_vb_pollmax, g_vb_edges?g_vb_pollsum/g_vb_edges:0UL, g_ack_poll_max, g_ack_notseen);
+        if(shared) printf("flips=%lu  PicoFrames=%lu  (60 fps displayed = both equal)\n", g_flips, rd32(shared,SH_FRAME_COUNTER));
+        if(shared){
+            ULONG pf=rd32(shared,SH_PERF_PICOFRAME);
+            ULONG cv=rd32(shared,SH_PERF_CONVERT);
+            ULONG dc=rd32(shared,SH_PERF_DCLEAN);
+            ULONG tot=pf+cv+dc; if(!tot) tot=1;
+            printf("--- decoupe rendu (dernier frame, cycles CCNT @~666MHz) ---\n");
+            printf("PicoFrame = %lu cyc (%lu.%lu ms, %lu%%)\n",
+                   pf, pf/666667, (pf/66667)%10, (pf*100)/tot);
+            printf("conversion= %lu cyc (%lu.%lu ms, %lu%%)\n",
+                   cv, cv/666667, (cv/66667)%10, (cv*100)/tot);
+            {
+                ULONG cp=rd32(shared,SH_PERF_COPY);
+                printf("copie P96 = %lu cyc (%lu.%lu ms)\n",
+                       cp, cp/666667, (cp/66667)%10);
+            }
+            printf("dcache_cln= %lu cyc (%lu.%lu ms, %lu%%)\n",
+                   dc, dc/666667, (dc/66667)%10, (dc*100)/tot);
+            {
+                ULONG wp=rd32(shared,SH_PERF_WCYC_P96);
+                ULONG wf=rd32(shared,SH_PERF_WCYC_FB3B);
+                ULONG dp=rd32(shared,SH_PERF_DESC_P96);
+                ULONG df=rd32(shared,SH_PERF_DESC_FB3B);
+                ULONG dpre=rd32(shared,SH_PERF_DESC_P96PRE);
+                printf("--- benchmark ecriture 76800 mots (frame 1) ---\n");
+                printf("vers P96  = %lu cyc (%lu.%lu ms)  desc=0x%08lx\n",
+                       wp, wp/666667, (wp/66667)%10, dp);
+                printf("vers FB3B = %lu cyc (%lu.%lu ms)  desc=0x%08lx (ref cachee)\n",
+                       wf, wf/666667, (wf/66667)%10, df);
+                printf("desc P96 AVANT remap=0x%08lx  APRES=0x%08lx\n", dpre, dp);
+                printf("(desc: TEX[14:12] C[3] B[2] ; WB/WA=TEX001 C1 B1)\n");
+            }
+        }
+        printf("\n=== NTSC_TIMING_DIAG (session) ===\n");
+        if(shared){
+            ULONG pmin=rd32(shared,SH_DIAG_PF_MIN), pmax=rd32(shared,SH_DIAG_PF_MAX);
+            ULONG sus=rd32(shared,SH_DIAG_PF_SUM_US), dfrm=rd32(shared,SH_DIAG_FRAMES);
+            ULONG g12=rd32(shared,SH_DIAG_N_GT12), g14=rd32(shared,SH_DIAG_N_GT14);
+            ULONG g67=rd32(shared,SH_DIAG_N_GT1667);
+            ULONG cvmax=rd32(shared,SH_DIAG_CONV_MAX), clmax=rd32(shared,SH_DIAG_CLEAN_MAX);
+            ULONG cvmin=rd32(shared,SH_DIAG_CONV_MIN), cvsus=rd32(shared,SH_DIAG_CONV_SUM_US);
+            ULONG avgus=dfrm?sus/dfrm:0;
+            ULONG cvavg=dfrm?cvsus/dfrm:0;
+            printf("PicoFrame blob (%lu frames)  min=%lu.%lu  moy=%lu.%lu  max=%lu.%lu ms\n",
+                   dfrm, pmin/666667,(pmin/66667)%10, avgus/1000,(avgus/100)%10,
+                   pmax/666667,(pmax/66667)%10);
+            printf("  frames  >12ms=%lu   >14ms=%lu   >16.67ms=%lu\n", g12, g14, g67);
+            printf("  convert min=%lu.%lu  moy=%lu.%lu  max=%lu.%lu ms   dclean max=%lu.%lu ms\n",
+                   cvmin/666667,(cvmin/66667)%10, cvavg/1000,(cvavg/100)%10,
+                   cvmax/666667,(cvmax/66667)%10, clmax/666667,(clmax/66667)%10);
+        }
+        if(g_efreq>1000){
+            ULONG efk=g_efreq/1000;
+            printf("render 68k (r1-r0)  min=%lu.%lu  max=%lu.%lu ms   [>12=%lu >14=%lu >16.67=%lu]\n",
+                   g_rmin/efk,((g_rmin*10UL)/efk)%10, g_rmax/efk,((g_rmax*10UL)/efk)%10,
+                   g_r12, g_r14, g_r67);
+            printf("frame PAN-to-PAN    min=%lu.%lu  max=%lu.%lu ms   missed_vblank=%lu\n",
+                   g_fmin/efk,((g_fmin*10UL)/efk)%10, g_fmax/efk,((g_fmax*10UL)/efk)%10,
+                   g_missed);
+            { ULONG vb10=g_frames?(g_vbsum*10UL)/g_frames:0;
+              printf("vblanks attendus/PAN  moy=%lu.%lu  max=%lu\n", vb10/10, vb10%10, g_vbmax); }
+            printf("--- lecture : missed_vblank~0 => NTSC verrouille. Comparer convert moy/max\n");
+            printf("    avec/sans asm_memory pour voir le gain sur les pics.\n");
+        }
+    }
+    exit_step("11 timer / libraries / ROM and blob buffers");
+    if(have_timer) timer_close();
+    sleep_close();   /* 32X */
+    if(fh) Close(fh);
+    if(P96Base) CloseLibrary(P96Base);
+    if(LowLevelBase) CloseLibrary(LowLevelBase);
+    if(rombuf) FreeMem(rombuf,(ULONG)rom_size+ROM_PAD);
+    if(blob_alloced && blobbuf) FreeMem(blobbuf,(ULONG)blob_size);   /* pas de free si blob embarque */
+    stack_report("exit end");
+    printf("Done (rc=%d).\n",rc);
+    return rc;
+}
+
+/* ===================== parse CLI -> ZP_Config (backward compatible) ===================== */
+static int parse_cli(int argc, char **argv, ZP_Config *cfg)
+{
+    int ai;
+    if(argc<3){
+        printf("Usage: %s <rom.32x> <blob.bin> [region] [flags]\n", argv[0]);
+        printf("  region : auto|usa|jap|eur|jappal   (32X: usa, NTSC)\n");
+        printf("  flags  : kbd cd32 db9 usb port=N inputlog silence paula ahi 2p noosd tof gate\n");
+        printf("  kbd    : arrows, keypad 1/2/3 = A/B/C, keypad 4/5/6 = X/Y/Z, keypad 0 = MODE, Enter = Start\n");
+        printf("  Del    : console reset    Shift+Esc : quit    F1-F5 : load state, Shift+F1-F5 : save\n");
+        printf("  tof    : 1.1 pacing on the Amiga vblank (A/B)    gate : 1.1 drawing gate in the blob (A/B)\n");
+        printf("  (sans argument = interface graphique)\n");
+        return 0;
+    }
+    strncpy(cfg->rom_path,  argv[1], 255); cfg->rom_path[255]=0;
+    strncpy(cfg->blob_path, argv[2], 255); cfg->blob_path[255]=0;
+    if(argc>=4){
+        const char *r=argv[3];
+        if(!strcmp(r,"eur")||!strcmp(r,"jappal")) cfg->region=ZP_REGION_EUR_PAL;
+        else if(!strcmp(r,"usa")) cfg->region=ZP_REGION_USA_NTSC;
+        else if(!strcmp(r,"jap")) cfg->region=ZP_REGION_JAPAN_NTSC;
+        else cfg->region=ZP_REGION_AUTO;
+    }
+    for(ai=4; ai<argc; ai++){
+        if(!strcmp(argv[ai],"inputlog")) g_input_log=1;
+        else if(!strcmp(argv[ai],"kbd")) cfg->input=ZP_INPUT_KBD;
+        else if(!strcmp(argv[ai],"cd32")||!strcmp(argv[ai],"joy")) cfg->input=ZP_INPUT_CD32_LOWLEVEL;
+        else if(!strcmp(argv[ai],"db9")) cfg->input=ZP_INPUT_HW_DB9;
+        else if(!strcmp(argv[ai],"usb")) cfg->input=ZP_INPUT_USB_HID;
+        else if(!strncmp(argv[ai],"port=",5)) cfg->port=(argv[ai][5]=='0')?0:1;
+        else if(!strcmp(argv[ai],"silence")) cfg->audio=ZP_AUDIO_NONE;
+        else if(!strcmp(argv[ai],"paula")) cfg->audio=ZP_AUDIO_PAULA;
+        else if(!strcmp(argv[ai],"ahi")) cfg->audio=ZP_AUDIO_AHI;
+        else if(!strcmp(argv[ai],"2p")||!strcmp(argv[ai],"players2")) cfg->players=2;
+        else if(!strcmp(argv[ai],"cd32-2")||!strcmp(argv[ai],"joy2")) cfg->input2=ZP_INPUT_CD32_LOWLEVEL;
+        else if(!strcmp(argv[ai],"db9-2")) cfg->input2=ZP_INPUT_HW_DB9;
+        else if(!strncmp(argv[ai],"port2=",6)) cfg->port2=(argv[ai][6]=='1')?1:0;
+        else if(!strcmp(argv[ai],"sine")||!strcmp(argv[ai],"sinus")) g_sine=1;
+        else if(!strcmp(argv[ai],"hq44")) g_au_hz=44100;
+        else if(!strcmp(argv[ai],"hz22")) g_au_hz=22050;
+        else if(!strcmp(argv[ai],"noosd")) g_noosd=1;          /* blob OSD line off */
+        else if(!strcmp(argv[ai],"tof")) g_force_tof=1;         /* 32X: 1.1 WaitTOF pacing */
+        else if(!strcmp(argv[ai],"gate")) g_gate=1;             /* 32X: 1.1 drawing gate in the blob */
+        else printf("(unknown flag '%s' ignored)\n", argv[ai]);
+    }
+    return 1;
+}
+
+/* ===================== config par defaut + PROGDIR:ZZPicoDrive.cfg ===================== */
+static void zp_config_defaults(ZP_Config *cfg)
+{
+    cfg->rom_path[0]=0;
+    strcpy(cfg->blob_path, "zz32x_rc1.bin");   /* 32X */
+    cfg->region=ZP_REGION_AUTO;
+    cfg->audio =ZP_AUDIO_AHI;
+    cfg->input =ZP_INPUT_CD32_LOWLEVEL;
+    cfg->port  =1;
+    cfg->players=1;
+    cfg->input2=ZP_INPUT_CD32_LOWLEVEL;
+    cfg->port2 =0;                       /* joueur 2 sur l'autre port par defaut */
+    cfg->show_fps=0;
+}
+static int cfg_app(char *b, int p, const char *s){ while(*s) b[p++]=*s++; return p; }
+static void zp_config_save(const ZP_Config *cfg, const char *path)
+{
+    BPTR fh; char b[700]; int p=0;
+    fh=Open((STRPTR)path, MODE_NEWFILE); if(!fh) return;
+    p=cfg_app(b,p,"rom=");  p=cfg_app(b,p,cfg->rom_path);  b[p++]='\n';
+    p=cfg_app(b,p,"region=");b[p++]=(char)('0'+cfg->region);  b[p++]='\n';
+    p=cfg_app(b,p,"audio="); b[p++]=(char)('0'+cfg->audio);   b[p++]='\n';
+    p=cfg_app(b,p,"input="); b[p++]=(char)('0'+cfg->input);   b[p++]='\n';
+    p=cfg_app(b,p,"port=");  b[p++]=(char)('0'+cfg->port);    b[p++]='\n';
+    p=cfg_app(b,p,"players=");b[p++]=(char)('0'+cfg->players); b[p++]='\n';
+    p=cfg_app(b,p,"input2="); b[p++]=(char)('0'+cfg->input2);  b[p++]='\n';
+    p=cfg_app(b,p,"port2=");  b[p++]=(char)('0'+cfg->port2);   b[p++]='\n';
+    p=cfg_app(b,p,"fps=");   b[p++]=(char)('0'+cfg->show_fps);b[p++]='\n';
+    Write(fh, b, (LONG)p); Close(fh);
+}
+static void zp_config_load(ZP_Config *cfg, const char *path)
+{
+    BPTR fh; char buf[1200]; LONG n, i, ls;
+    fh=Open((STRPTR)path, MODE_OLDFILE); if(!fh) return;
+    n=Read(fh, buf, sizeof(buf)-1); Close(fh);
+    if(n<=0) return; buf[n]=0; ls=0;
+    for(i=0;i<=n;i++){
+        if(buf[i]=='\n' || buf[i]==0){
+            char *line=buf+ls, *eq=0, *k, *v; int j;
+            buf[i]=0;
+            for(j=0;line[j];j++) if(line[j]=='='){ eq=line+j; break; }
+            if(eq){ *eq=0; k=line; v=eq+1;
+                if(!strcmp(k,"rom")){ strncpy(cfg->rom_path,v,255); cfg->rom_path[255]=0; }
+                /* blob : NON charge depuis config (toujours le defaut, evite un chemin obsolete) */
+                else if(!strcmp(k,"region")){ int x=v[0]-'0'; cfg->region=(x>=0&&x<=3)?x:0; }
+                else if(!strcmp(k,"audio")) { int x=v[0]-'0'; cfg->audio =(x>=0&&x<=2)?x:0; }
+                else if(!strcmp(k,"input")) { int x=v[0]-'0'; cfg->input =(x>=0&&x<=3)?x:1; }
+                else if(!strcmp(k,"port"))    cfg->port  =(v[0]=='0')?0:1;
+                else if(!strcmp(k,"players")) cfg->players=(v[0]=='2')?2:1;
+                else if(!strcmp(k,"input2")){ int x=v[0]-'0'; cfg->input2=(x>=0&&x<=3)?x:1; }
+                else if(!strcmp(k,"port2"))   cfg->port2 =(v[0]=='1')?1:0;
+                else if(!strcmp(k,"fps"))    cfg->show_fps=(v[0]=='1')?1:0;
+            }
+            ls=i+1;
+        }
+    }
+}
+
+/* ===================== GUI de lancement (Intuition + GadTools + ASL) ===================== */
+static const char *gui_region[] = {"Auto","Europe PAL 50Hz","USA NTSC 60Hz","Japan NTSC 60Hz",NULL};
+static const char *gui_audio[]  = {"AHI stereo","Paula DMA","None",NULL};
+static const char *gui_input[]  = {"Keyboard","CD32 / Lowlevel","DB9 hardware",NULL};
+static const char *gui_port[]   = {"Port 0 (mouse)","Port 1 (joystick)",NULL};
+static const char *gui_players[]= {"1 Player","2 Players",NULL};
+/* choix combine par joueur : mode + port en une seule liste */
+static const char *gui_p1[] = {"Keyboard","Joystick DB9 port 0","Joystick DB9 port 1",
+                               "Pad CD32/USB port 0","Pad CD32/USB port 1",NULL};
+static const char *gui_p2[] = {"None (1 player)","Joystick DB9 port 0","Joystick DB9 port 1",
+                               "Pad CD32/USB port 0","Pad CD32/USB port 1",NULL};
+/* choix P1 (0..4) -> (input,port) et retour */
+static int p1_to_sel(int input, int port){
+    if(input==ZP_INPUT_KBD) return 0;
+    if(input==ZP_INPUT_HW_DB9) return (port==0)?1:2;
+    return (port==0)?3:4;   /* CD32/lowlevel */
+}
+static void sel_to_p1(int sel, int *input, int *port){
+    switch(sel){
+        case 0: *input=ZP_INPUT_KBD; break;
+        case 1: *input=ZP_INPUT_HW_DB9;        *port=0; break;
+        case 2: *input=ZP_INPUT_HW_DB9;        *port=1; break;
+        case 3: *input=ZP_INPUT_CD32_LOWLEVEL; *port=0; break;
+        case 4: *input=ZP_INPUT_CD32_LOWLEVEL; *port=1; break;
+    }
+}
+/* choix P2 (0=None..5) -> (players,input2,port2) et retour */
+static int p2_to_sel(int players, int input2, int port2){
+    if(players!=2) return 0;                 /* None */
+    if(input2==ZP_INPUT_HW_DB9) return (port2==0)?1:2;
+    return (port2==0)?3:4;                    /* CD32/lowlevel (clavier force en manette) */
+}
+static void sel_to_p2(int sel, int *players, int *input2, int *port2){
+    if(sel==0){ *players=1; return; }
+    *players=2;
+    switch(sel){
+        case 1: *input2=ZP_INPUT_HW_DB9;        *port2=0; break;
+        case 2: *input2=ZP_INPUT_HW_DB9;        *port2=1; break;
+        case 3: *input2=ZP_INPUT_CD32_LOWLEVEL; *port2=0; break;
+        case 4: *input2=ZP_INPUT_CD32_LOWLEVEL; *port2=1; break;
+    }
+}
+/* conflit : 2 manettes (non-clavier) sur le meme port physique -> interdit.
+   2 claviers = OK (touches differentes). Clavier + manette = OK. */
+static int controllers_conflict(const ZP_Config *cfg){
+    if(cfg->players!=2) return 0;
+    if(cfg->input==ZP_INPUT_KBD || cfg->input2==ZP_INPUT_KBD) return 0;
+    return (cfg->port==cfg->port2);
+}
+
+/* ---- barre de menu GUI (clic droit) : About + Help ---- */
+static void gui_req(struct Window *w, const char *title, const char *text){
+    struct EasyStruct es;
+    es.es_StructSize=sizeof(struct EasyStruct); es.es_Flags=0;
+    es.es_Title=(STRPTR)title;
+    es.es_TextFormat=(STRPTR)text;
+    es.es_GadgetFormat=(STRPTR)"OK";
+    EasyRequest(w,&es,NULL,0);
+}
+static const char *TXT_ABOUT =
+    "ZZPicoDrive32X brings Sega 32X emulation to classic Amigas\n"
+    "equipped with an MNT ZZ9000. Both SH-2 are recompiled to ARM\n"
+    "on the ZZ9000's coprocessor; the 68k only flips the frames\n"
+    "and feeds the audio.\n\n"
+    "Release candidate 1.   Port by Xanxi, 2026.\n"
+    "Emulation core: PicoDrive (notaz, irixxxx).";
+static const char *TXT_CONTROLS =
+    "CONTROLS\n\n"
+    "Player 1: keyboard OR a controller on a chosen port.\n"
+    "Player 2: a controller only, on a different port.\n\n"
+    "Keyboard (Player 1):\n"
+    "  Arrows = D-pad    Numpad 1/2/3 = A/B/C    Enter = Start\n"
+    "  Numpad 4/5/6 = X/Y/Z   Numpad 0 = Mode   Del = Reset\n\n"
+    "Controller types:\n"
+    "  DB9 hardware = joystick/pad on the real port (2 buttons)\n"
+    "  CD32 / USB   = CD32 pad, or USB pad via Poseidon\n\n"
+    "Start fallback (for a pad with no Start button):\n"
+    "  Player 1 = Enter     Player 2 = Tab\n"
+    "These keys always work, even with a controller.";
+static const char *TXT_OPTIONS =
+    "OPTIONS\n\n"
+    "Region:  Auto / Europe PAL / USA NTSC / Japan NTSC\n\n"
+    "Audio:\n"
+    "  AHI = works on any audio hardware (recommended).\n"
+    "  Paula DMA = plays directly on Paula, zero CPU mixing.\n"
+    "    Great on games that keep full speed; if a heavy game\n"
+    "    crackles, switch back to AHI.\n"
+    "  None = silent.\n\n"
+    "Players: set Player 2 to a controller for 2-player games\n"
+    "(each player on a different port).";
+static const char *TXT_HOTKEYS =
+    "IN-GAME HOTKEYS\n\n"
+    "Shift + Esc        quit\n"
+    "F1 - F5            load savestate (slots 1-5)\n"
+    "Shift + F1 - F5    save savestate (slots 1-5)\n"
+    "Enter              Start (Player 1)\n"
+    "Tab                Start (Player 2)";
+static struct NewMenu gui_menu[] = {
+    { NM_TITLE, (STRPTR)"Project",     NULL, 0, 0L, NULL },
+    { NM_ITEM,  (STRPTR)"About...",    NULL, 0, 0L, (APTR)1L },
+    { NM_ITEM,  (STRPTR)NM_BARLABEL,   NULL, 0, 0L, NULL },
+    { NM_ITEM,  (STRPTR)"Quit",        NULL, 0, 0L, (APTR)2L },
+    { NM_TITLE, (STRPTR)"Help",        NULL, 0, 0L, NULL },
+    { NM_ITEM,  (STRPTR)"Controls...", NULL, 0, 0L, (APTR)3L },
+    { NM_ITEM,  (STRPTR)"Options...",  NULL, 0, 0L, (APTR)4L },
+    { NM_ITEM,  (STRPTR)"Hotkeys...",  NULL, 0, 0L, (APTR)5L },
+    { NM_END,   NULL,                  NULL, 0, 0L, NULL },
+};
+
+static int gui_get_config(ZP_Config *cfg)
+{
+    struct Screen *pub=NULL; struct Window *win=NULL; struct Gadget *glist=NULL, *gc;
+    struct Menu *menu=NULL;
+    APTR vi=NULL; struct NewGadget ng; struct TextAttr ta;
+    struct Gadget *g_rom=NULL,*g_region=NULL,*g_audio=NULL,*g_input=NULL;
+    struct Gadget *g_input2=NULL;
+    int done=0, result=0;
+    ta.ta_Name=(STRPTR)"topaz.font"; ta.ta_YSize=8; ta.ta_Style=0; ta.ta_Flags=0;
+
+    GadToolsBase =OpenLibrary("gadtools.library",39L);
+    AslBase      =OpenLibrary("asl.library",38L);
+    if(!GadToolsBase||!AslBase){
+        if(AslBase)CloseLibrary(AslBase); if(GadToolsBase)CloseLibrary(GadToolsBase);
+        GadToolsBase=NULL;AslBase=NULL;
+        printf("GUI indisponible -> utilise la CLI\n"); return -1;
+    }
+    pub=LockPubScreen(NULL);
+    if(!pub){ result=-1; goto guiclean; }
+    vi=GetVisualInfo(pub, TAG_END);
+    if(!vi){ result=-1; goto guiclean; }
+    gc=CreateContext(&glist);
+    if(!gc){ result=-1; goto guiclean; }
+
+    { int top = (int)pub->WBorTop + (pub->Font ? (int)pub->Font->ta_YSize : 8) + 3;  /* sous la barre de titre */
+      int L=96;   /* colonne des gadgets (labels dessines a gauche) */
+      ng.ng_TextAttr=&ta; ng.ng_VisualInfo=vi; ng.ng_Flags=0;
+      /* ROM (texte affiche) */
+      ng.ng_LeftEdge=L; ng.ng_TopEdge=top+6;  ng.ng_Width=300; ng.ng_Height=14;
+      ng.ng_GadgetText=(STRPTR)"ROM:"; ng.ng_GadgetID=1;
+      g_rom=CreateGadget(TEXT_KIND, gc, &ng, GTTX_Text,(ULONG)(cfg->rom_path[0]?cfg->rom_path:"(aucune)"),
+                         GTTX_Border,TRUE, TAG_END); gc=g_rom;
+      /* Browse */
+      ng.ng_LeftEdge=L; ng.ng_TopEdge=top+24; ng.ng_Width=100; ng.ng_Height=14;
+      ng.ng_GadgetText=(STRPTR)"Browse..."; ng.ng_GadgetID=2;
+      gc=CreateGadget(BUTTON_KIND, gc, &ng, TAG_END);
+      /* Region */
+      ng.ng_LeftEdge=L; ng.ng_TopEdge=top+46; ng.ng_Width=210; ng.ng_Height=14;
+      ng.ng_GadgetText=(STRPTR)"Region:"; ng.ng_GadgetID=3;
+      g_region=CreateGadget(CYCLE_KIND, gc, &ng, GTCY_Labels,(ULONG)gui_region, GTCY_Active,cfg->region, TAG_END); gc=g_region;
+      /* Audio */
+      ng.ng_TopEdge=top+64; ng.ng_GadgetText=(STRPTR)"Audio:"; ng.ng_GadgetID=4;
+      g_audio=CreateGadget(CYCLE_KIND, gc, &ng, GTCY_Labels,(ULONG)gui_audio, GTCY_Active,cfg->audio, TAG_END); gc=g_audio;
+      /* Player 1 (mode + port combines) */
+      ng.ng_TopEdge=top+82; ng.ng_GadgetText=(STRPTR)"Player 1:"; ng.ng_GadgetID=5;
+      g_input=CreateGadget(CYCLE_KIND, gc, &ng, GTCY_Labels,(ULONG)gui_p1,
+                           GTCY_Active,p1_to_sel(cfg->input,cfg->port), TAG_END); gc=g_input;
+      /* Player 2 (None = 1 joueur) */
+      ng.ng_TopEdge=top+100; ng.ng_GadgetText=(STRPTR)"Player 2:"; ng.ng_GadgetID=6;
+      g_input2=CreateGadget(CYCLE_KIND, gc, &ng, GTCY_Labels,(ULONG)gui_p2,
+                            GTCY_Active,p2_to_sel(cfg->players,cfg->input2,cfg->port2), TAG_END); gc=g_input2;
+      /* Start / Quit */
+      ng.ng_LeftEdge=L; ng.ng_TopEdge=top+126; ng.ng_Width=100; ng.ng_Height=16;
+      ng.ng_GadgetText=(STRPTR)"Start"; ng.ng_GadgetID=7;
+      gc=CreateGadget(BUTTON_KIND, gc, &ng, TAG_END);
+      ng.ng_LeftEdge=L+120; ng.ng_GadgetText=(STRPTR)"Quit"; ng.ng_GadgetID=8;
+      gc=CreateGadget(BUTTON_KIND, gc, &ng, TAG_END);
+      if(!gc){ result=-1; goto guiclean; }
+
+      win=(struct Window*)OpenWindowTags(NULL,
+        WA_Title,(ULONG)"ZZPicoDrive32X rc1 - Sega 32X edition",
+        WA_Left,60, WA_Top,40, WA_Width,460, WA_Height,top+154,
+        WA_Gadgets,(ULONG)glist, WA_DragBar,TRUE, WA_DepthGadget,TRUE,
+        WA_CloseGadget,TRUE, WA_Activate,TRUE, WA_SimpleRefresh,TRUE,
+        WA_IDCMP,IDCMP_CLOSEWINDOW|BUTTONIDCMP|CYCLEIDCMP|IDCMP_REFRESHWINDOW|IDCMP_MENUPICK,
+        WA_PubScreen,(ULONG)pub, TAG_END);
+    }
+    if(!win){ result=-1; goto guiclean; }
+    { struct Menu *m=CreateMenus(gui_menu, TAG_END);   /* barre de menu About/Help */
+      if(m){ if(LayoutMenus(m, vi, TAG_END)){ SetMenuStrip(win, m); menu=m; } else FreeMenus(m); } }
+    GT_RefreshWindow(win, NULL);
+
+    while(!done){
+        struct IntuiMessage *msg;
+        WaitPort(win->UserPort);
+        while((msg=GT_GetIMsg(win->UserPort))){
+            ULONG cl=msg->Class, code=msg->Code; APTR ia=msg->IAddress;
+            GT_ReplyIMsg(msg);
+            if(cl==IDCMP_CLOSEWINDOW){ done=1; result=0; }
+            else if(cl==IDCMP_REFRESHWINDOW){ GT_BeginRefresh(win); GT_EndRefresh(win,TRUE); }
+            else if(cl==IDCMP_GADGETUP){
+                struct Gadget *g=(struct Gadget*)ia;
+                switch(g->GadgetID){
+                    case 3: cfg->region=(int)code; break;
+                    case 4: cfg->audio =(int)code; break;
+                    case 5: sel_to_p1((int)code, &cfg->input, &cfg->port); break;
+                    case 6: sel_to_p2((int)code, &cfg->players, &cfg->input2, &cfg->port2); break;
+                    case 2: {   /* Browse ROM via ASL */
+                        struct FileRequester *fr=(struct FileRequester*)AllocAslRequest(ASL_FileRequest, NULL);
+                        if(fr){
+                            if(AslRequestTags(fr, ASLFR_TitleText,(ULONG)"Choisir une ROM Mega Drive",
+                                              ASLFR_Window,(ULONG)win, TAG_END)){
+                                strncpy(cfg->rom_path, fr->fr_Drawer, 255); cfg->rom_path[255]=0;
+                                AddPart((STRPTR)cfg->rom_path,(STRPTR)fr->fr_File, 256);
+                                GT_SetGadgetAttrs(g_rom, win, NULL, GTTX_Text,(ULONG)cfg->rom_path, TAG_END);
+                            }
+                            FreeAslRequest(fr);
+                        }
+                    } break;
+                    case 7:   /* Start */
+                        if(!cfg->rom_path[0]){ DisplayBeep(pub); break; }
+                        if(controllers_conflict(cfg)){
+                            struct EasyStruct es;
+                            es.es_StructSize=sizeof(struct EasyStruct); es.es_Flags=0;
+                            es.es_Title=(STRPTR)"ZZPicoDrive32X";
+                            es.es_TextFormat=(STRPTR)"Players 1 and 2 use the same port.\nUse different ports for two controllers\n(or set one player to Keyboard).";
+                            es.es_GadgetFormat=(STRPTR)"OK";
+                            EasyRequest(win,&es,NULL,0); DisplayBeep(pub); break;
+                        }
+                        done=1; result=1;
+                        break;
+                    case 8: done=1; result=0; break;   /* Quit */
+                }
+            }
+            else if(cl==IDCMP_MENUPICK){
+                UWORD mn=(UWORD)code;
+                while(menu && mn!=MENUNULL){
+                    struct MenuItem *it=ItemAddress(menu, mn);
+                    if(!it) break;
+                    { ULONG ud=(ULONG)GTMENUITEM_USERDATA(it);
+                      if(ud==1L)       gui_req(win,"About ZZPicoDrive32X",TXT_ABOUT);
+                      else if(ud==2L){ done=1; result=0; }
+                      else if(ud==3L)  gui_req(win,"Controls",TXT_CONTROLS);
+                      else if(ud==4L)  gui_req(win,"Options",TXT_OPTIONS);
+                      else if(ud==5L)  gui_req(win,"Hotkeys",TXT_HOTKEYS); }
+                    mn=it->NextSelect;
+                }
+            }
+        }
+    }
+
+guiclean:
+    if(win && menu) ClearMenuStrip(win);
+    if(menu) FreeMenus(menu);
+    if(win) CloseWindow(win);
+    if(glist) FreeGadgets(glist);
+    if(vi) FreeVisualInfo(vi);
+    if(pub) UnlockPubScreen(NULL, pub);
+    if(AslBase){ CloseLibrary(AslBase); AslBase=NULL; }
+    if(GadToolsBase){ CloseLibrary(GadToolsBase); GadToolsBase=NULL; }
+    return result;
+}
+
+/* ===================== main : CLI ou GUI -> run_picodrive ===================== */
+/* 32X: run the program on its own 100 KiB stack.  exec StackSwap() (V37+) moves
+   the task to the new stack and updates tc_SPLower/Upper; main_body() runs there
+   and the original stack is restored before returning to the startup code. */
+static int main_body(int argc, char **argv);
+static int    g_argc; static char **g_argv; static int g_main_rc;
+static struct StackSwapStruct g_sss;
+int main(int argc, char **argv)
+{
+    APTR stk;
+    g_argc=argc; g_argv=argv; g_main_rc=20;
+    stk=AllocMem(ZZ32X_STACK_SIZE, MEMF_PUBLIC);
+    if(!stk) return main_body(argc, argv);        /* no memory: run on the Shell stack as 1.1 did */
+    g_sss.stk_Lower=stk;
+    g_sss.stk_Upper=(ULONG)stk+ZZ32X_STACK_SIZE;
+    g_sss.stk_Pointer=(APTR)g_sss.stk_Upper;
+    StackSwap(&g_sss);
+    g_main_rc=main_body(g_argc, g_argv);
+    StackSwap(&g_sss);
+    FreeMem(stk, ZZ32X_STACK_SIZE);
+    return g_main_rc;
+}
+static int main_body(int argc, char **argv)
+{
+    ZP_Config cfg;
+    int rc;
+    zp_config_defaults(&cfg);
+    zp_config_load(&cfg, "PROGDIR:ZZPicoDrive32X.cfg");
+    /* intuition/graphics ouverts UNE seule fois ici (ni la GUI ni run_picodrive ne les ferment) */
+    IntuitionBase=(struct IntuitionBase*)OpenLibrary("intuition.library",39L);
+    GfxBase_     =OpenLibrary("graphics.library",39L);
+    if(!IntuitionBase||!GfxBase_){
+        if(GfxBase_) CloseLibrary(GfxBase_);
+        if(IntuitionBase) CloseLibrary((struct Library*)IntuitionBase);
+        return 20;
+    }
+    if(argc>1){
+        g_quiet=0;                       /* CLI : sortie debug active */
+        if(!parse_cli(argc, argv, &cfg)){ rc=20; goto mainclean; }
+    } else {
+        int g;
+        g_quiet=1;                       /* GUI : aucune sortie console */
+        g=gui_get_config(&cfg);
+        if(g<=0){ rc=0; goto mainclean; }   /* Quit, fermeture, ou GUI indisponible */
+    }
+    zp_config_save(&cfg, "PROGDIR:ZZPicoDrive32X.cfg");
+    rc=run_picodrive(&cfg);
+mainclean:
+    printf("MAIN: closing graphics/intuition\n");
+    if(GfxBase_){ CloseLibrary(GfxBase_); GfxBase_=NULL; }
+    if(IntuitionBase){ CloseLibrary((struct Library*)IntuitionBase); IntuitionBase=NULL; }
+    printf("MAIN: return %d (libnix exit follows)\n", rc);
+    return rc;
+}

@@ -1,0 +1,135 @@
+ZZPicoDrive32X - CHANGELOG  (lineage: ZZVirtuaRacingRIX A1, below)
+====================================================================
+
+rc1 (25.10.2026, 17h30) - after the A1 GO (8.5 ms/frame in race, 13 min, 60/s)
+---------------------------------------------------------------------------
+Blob zz32x_rc1.bin (= A1b3 + two changes, emulation untouched):
+- zzvr_core1.c: every frame is drawn in FB3A (PicoIn.skipFrame = 0) and only
+  the conversion to the P96 buffer + FRAME_READY wait for a free buffer, the
+  decision being taken at the END of PicoFrame.  With 1.1 the DRAWING itself
+  waited for the 68k to take the previous frame; the emulation (audio clock)
+  and the RTG vblank have a free phase and the gate fell to one drawn frame
+  out of two (29.9 fps displayed, A1 session).  Shared slot 176 = 1 restores
+  the 1.1 gate (launcher flag "gate", A/B).  Window statistics count the
+  published frames.
+- zzvr_shared.h: ZZPICO_SAVE_MAX 512 KiB -> 1536 KiB (a 32X savestate is
+  ~680 KiB: SDRAM 256 KiB + DRAM 256 KiB + MD state; zone 0x07E00000..
+  0x08000000 = XACP_ARM_HIGH_SAVE_BASE .. XACP_ARM_CORE0_HEAP_BASE, 512 KiB
+  kept free).  Both sides (launcher SAVE_MAX_68K idem).
+- OSD tag 32XD (DRC) / 32XI (interpreter), ZZVR_SH_BUILD2 = 4.  The A1b3/A1a3
+  blobs are kept in bin/previous_A1b3/.
+Launcher amiga/ZZPicoDrive32X.c (= ZZPicoDriveMD 1.1 + A1diag + 32X changes):
+- 100 KiB stack installed by main() with exec StackSwap: the 1.1 "__stack"
+  variable is not honoured by the bebbo/libnix build (measured: 4096-byte
+  Shell stack, 2132 used before main); CloseWindow overflowed it at exit and
+  corrupted memory below it: every exit Guru/freeze of A1 and the in-race
+  freeze came from there (same binary, "stack 100000" in the Shell: 13 min
+  clean).
+- pacing on the ZZ9000 vblank with a software PLL (timer.device MICROHZ sleep
+  until 0.8 ms before the predicted edge of register 0x4C, short poll, re-lock
+  on every edge) and a short ack poll after the edge: one flip per RTG
+  vblank.  Flag "tof" = 1.1 WaitTOF pacing (A/B).  Fallback WaitTOF when the
+  probe finds no vblank signal.
+- Del = console reset, one-shot command with a consume handshake (1.1 rewrote
+  the command slot every vblank).
+- keypad 4/5/6/0 = X/Y/Z/MODE; flag "noosd"; own config PROGDIR:ZZPicoDrive32X.cfg;
+  default blob zz32x_rc1.bin; GUI/about strings; A1diag instrumentation kept
+  (SNAP at quit, WATCHDOG, EXIT steps, STACK, A1 fields).
+Not changed: firmware, bitstream, XACP ABI, PicoDrive sources (still the
+single guarded far-call change in cpu/drc/emit_arm.c).
+
+ZZVirtuaRacingRIX - CHANGELOG
+=============================
+
+A1b3 / A1a3 (25.10.2026, 12h30) - after the first A1b2 numbers
+--------------------------------------------------------------
+A1b2 on the A4000 (session of 15467 frames, logo/menus/demo/race mixed):
+PicoFrame min 1.2 / avg 6.3 / max 35.7 ms; > 12 ms 14.6 %, > 14 ms 8.6 %,
+> 16.67 ms 1 frame.  Sound present.  The 68k launcher still freezes after its
+own "Done (rc=0)." (also after a Guru on the A1a exit): not explained yet.
+Two changes on the blob, exit path and diagnostics only (emulation untouched):
+- zzvr_core1.c: both frame-pacing loops (audio-slaved ring wait, CCNT/FLIP
+  fallback) leave at once when a command is pending (SH_CMD_SEQ != SH_ACK_SEQ):
+  at exit the launcher stops its AHI task before sending STOP, the ring is no
+  longer drained and the 1.1 loop burnt its 60-million-iteration guard of NC
+  reads (seconds) before STOP could be acknowledged.
+- zzvr_core1.c: the convert / dclean statistics (SH_PERF_CONVERT, SH_PERF_COPY,
+  SH_PERF_DCLEAN, NTSC diag convert min/avg/max) are taken only for frames that
+  were drawn; 1.1 subtracted pc2a = 0 on skipped frames ("convert moy=145.9 ms").
+- OSD tag A1B3 / A1A3, ZZVR_SH_BUILD2 = 3.  Blobs zzvr_a1b3.bin / zzvr_a1a3.bin;
+  the A1a2/A1b2 blobs are kept in bin/previous_A1a2/.
+
+
+A1a2 / A1b2 (25.10.2026, 12h) - after the first A4000 run of A1a
+-----------------------------------------------------------------
+First hardware result (A1a, 11h30): the 32X starts (Core1 READY, ROM CRC
+7896B62E, RUNNING, SEGA logo reached) but runs extremely slowly, and the 1.1
+launcher crashed on exit (68k Line 1111 at $FFFFFFD2, after "Core1 stopped.").
+One change on the blob:
+- zzvr_mmu.c: section 0x05F (0x05F00000..0x05FFFFFF) mapped Normal WB/WA.
+  The firmware launches the blob with SP = 0x06000000 (core2.c), so the whole
+  Core1 stack lives in that section; 1.1 (and A1a) left it Strongly Ordered,
+  i.e. every push/pop went uncached to DDR.  Cyclone hardly uses the stack;
+  the C-only SH-2 interpreter and the DRC handlers do, on every call.  The
+  ZZQuake release blob maps the same section WB/WA for the same reason
+  (zzquake_mmu.c: "every push/pop crawls").
+- Diagnostics: ZZVR_SH_ENTRY_SP (198) = SP read at core1_entry (expected
+  0x05FFFFxx), ZZVR_SH_BUILD2 (199) = 2; OSD tag A1A2 / A1B2.
+- Blobs renamed zzvr_a1a2.bin / zzvr_a1b2.bin; the A1a/A1b blobs are kept in
+  bin/previous_A1a/.  Nothing else changed.
+
+
+A1a / A1b r2 (25.10.2026, 11h) - same blobs, build convenience only
+------------------------------------------------------------------
+- Cyclone.s shipped pre-generated (deterministic, md5 ff097962906336cf7879c22ff42bcc18):
+  no native C/C++ compiler nor make needed any more.
+- build_arm.sh: uses "/c/ArmGNUToolchain/13.2 Rel1/bin" automatically on
+  Windows/MSYS2 when present (TOOLCHAIN_BIN still overrides).
+- README: Windows/MSYS2 build steps.  Blob checksums unchanged.
+
+A1a / A1b (25.10.2026) - first build, not yet run on a ZZ9000
+-------------------------------------------------------------
+Base: ZZPicoDriveMD 1.1 Core1 sources (public) + the PicoDrive tree of
+VirtuaRacingDeluxeEnhanced 1.2.0 (irixxxx 8b5e91bc with the "VRDE:" hooks) +
+Cyclone 68000 (irixxxx 3ac7cf1b, archive of ZZPicoDriveMD 1.1).
+
+PicoDrive tree (third_party/picodrive)
+- Replaces notaz 26ecb2b6 (ZZPicoDriveMD 1.1): the 32X emulation the VRDE HLE
+  was validated against.  Identical files for the Cyclone glue (sek.c,
+  m68kif_cyclone.s, cyclone_config.h), CZ80, the asm renderers and ym2612_arm.S.
+- One modification, guarded by ZZVR_FAR_CALLS (A1b builds only):
+  cpu/drc/emit_arm.c emith_xbranch(): indirect branch through a literal when the
+  target is beyond +-32 MiB of the code cache (the Symbian sequence, with the
+  condition applied to add lr and an unconditional filler).
+- tools/mkoffsets.sh added from upstream (public domain) to generate
+  pico/pico_int_offs.h for the asm files.
+
+Core1/ (ZZ layer, renamed zzvr_*)
+- zzvr.ld: .bss moved from 0x22000000 (v1.6 private pool) to the XACP v1.7
+  Core1 arena 0x30000000 (16 MiB region, ASSERTs).  Blob window unchanged.
+- zzvr_mem.h (new): arena map BSS / sbrk / mmap / DRC with compile-time checks.
+- zzvr_mmu.c: the 0x220-0x223 / 0x228-0x22F sections are no longer mapped; the
+  arena 0x300-0x3F7 is mapped Normal WB/WA; cache_flush_d_inval_i() added
+  (DCCMVAU, ICIMVAU, BPIALL) for the recompiler.  Everything else as 1.1.
+- zzvr_platform.c: real plat_mmap/plat_mremap/plat_munmap (bump allocator in the
+  arena mmap pool, 4 KiB aligned, zero-filled, bounded), _sbrk in the arena sbrk
+  region (bounded), memcpy/memset/memmove by 32-bit words (1.1 was byte-wise),
+  plat_mem_get_for_drc / plat_mem_set_exec, allocation counters for the diag.
+- zzvr_stubs.c: all 32X stubs removed (the 32X is compiled in); stubs added for
+  the symbols this PicoDrive tree references and that the build leaves out:
+  MCD (s68k_read8_map, pcd_sync_s68k, pcd_prepare_frame, pcd_run_cpus,
+  PicoRead/Write8/16_mcd_io), ogg_update, vgm_reset/vgm_frame, SSF2 mapper state
+  (carthw_ssf2_active = 0, identity banks, write8/16 no-ops).
+- zzvr_shared.h: indexes 0..175 identical to 1.1; ZZVR_SH_* 180..197 added
+  (read-only diagnostics); the 1.1 private-pool constants removed.
+- zzvr_core1.c: VFP enabled in core1_entry; cmd_init sets POPT_EN_32X |
+  POPT_EN_PWM | POPT_ACC_SPRITES | POPT_DIS_32C_BORDER (+ POPT_EN_DRC in A1b),
+  autoRgnOrder 0x184, 6-button pad on port 1; emu_32x_startup() callback;
+  PicoFrame window statistics (600 frames), SH-2 pcs and pool counters
+  published; one-line OSD in the top border of the P96 picture.
+- build_arm.sh: from build_cyc_audioreal.sh; -DNO_32X removed; pico/32x/*.c,
+  cpu/sh2/sh2.c, cpu/sh2/mame/sh2pico.c, cpu/drc/cmn.c added; ZZVR_DRC=1 adds
+  -DDRC_SH2 -DZZVR_DRC -DZZVR_FAR_CALLS and cpu/sh2/compiler.c; paths relative
+  to the script folder; md5/sha256 written next to the blobs.
+
+Not in A1: HLE (A2), RasterIX (A3), Emu68-A9, savestates > 512 KiB.

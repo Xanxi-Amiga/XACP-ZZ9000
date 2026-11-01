@@ -1,0 +1,29 @@
+--- a/ZZVirtuaRacingRIX_A1b3/build_arm.sh	2026-10-25 12:02:47.805193271 +0100
++++ build_arm.sh	2026-10-25 17:21:38.847596951 +0100
+@@ -1,5 +1,5 @@
+ #!/bin/bash
+-# build_arm.sh - ZZVirtuaRacingRIX A1 Core1 blob (Sega 32X on the ZZ9000 Core1)
++# build_arm.sh - ZZPicoDrive32X Core1 blob (Sega 32X on the ZZ9000 Core1; lineage ZZVirtuaRacingRIX A1)
+ #
+ # Everything is relative to the folder of this script.  Toolchain: arm-none-eabi
+ # GCC 13.2.1 (Arm GNU Toolchain 13.2.Rel1 or xPack 13.2.1-1.1).  Windows/MSYS2:
+@@ -7,8 +7,8 @@
+ # otherwise set TOOLCHAIN_BIN to the bin/ folder, or have it in PATH.
+ # Cyclone.s is shipped pre-generated: no native compiler needed.
+ #
+-#   ./build_arm.sh            -> bin/zzvr_a1a3.bin  (A1a3: 32X, SH-2 interpreter)
+-#   ZZVR_DRC=1 ./build_arm.sh -> bin/zzvr_a1b3.bin  (A1b3: 32X, SH-2 recompiler)
++#   ./build_arm.sh            -> bin/zz32x_rc1_interp.bin  (SH-2 interpreter, reference only)
++#   ZZVR_DRC=1 ./build_arm.sh -> bin/zz32x_rc1.bin  (SH-2 recompiler: the ZZPicoDrive32X blob)
+ #
+ # Lineage: ZZPicoDriveMD 1.1 build_cyc_audioreal.sh (same CPU flags, same object
+ # list for the Mega Drive part, Cyclone + asm renderers + asm YM2612), with:
+@@ -34,7 +34,7 @@
+ PICO=third_party/picodrive
+ C1=Core1
+ BUILD=build
+-if [ "${ZZVR_DRC:-0}" = "1" ]; then OUT=zzvr_a1b3; DRCFLAGS="-DDRC_SH2 -DZZVR_DRC -DZZVR_FAR_CALLS"; else OUT=zzvr_a1a3; DRCFLAGS=""; fi
++if [ "${ZZVR_DRC:-0}" = "1" ]; then OUT=zz32x_rc1; DRCFLAGS="-DDRC_SH2 -DZZVR_DRC -DZZVR_FAR_CALLS"; else OUT=zz32x_rc1_interp; DRCFLAGS=""; fi
+ mkdir -p "$BUILD" bin
+ 
+ command -v $CC >/dev/null 2>&1 || { echo "ERROR: $CC not found (set TOOLCHAIN_BIN)"; exit 1; }

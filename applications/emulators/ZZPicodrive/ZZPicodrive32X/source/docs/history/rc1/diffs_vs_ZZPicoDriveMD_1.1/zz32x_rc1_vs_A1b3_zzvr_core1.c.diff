@@ -1,0 +1,59 @@
+--- a/ZZVirtuaRacingRIX_A1b3/Core1/zzvr_core1.c	2026-10-25 12:02:47.804898553 +0100
++++ Core1/zzvr_core1.c	2026-10-25 17:21:33.972673758 +0100
+@@ -678,9 +678,9 @@
+     char line[48]; char *d=line; u32 aden;
+     if(shared[ZZVR_SH_OSD]) return;
+ #ifdef ZZVR_DRC
+-    d[0]='A';d[1]='1';d[2]='B';d[3]='3'; d+=4;
++    d[0]='3';d[1]='2';d[2]='X';d[3]='D'; d+=4;   /* ZZPicoDrive32X rc1, DRC */
+ #else
+-    d[0]='A';d[1]='1';d[2]='A';d[3]='3'; d+=4;
++    d[0]='3';d[1]='2';d[2]='X';d[3]='I'; d+=4;   /* ZZPicoDrive32X rc1, interpreter */
+ #endif
+     *d++=' '; d=osd_ms(d,g_pf_last_us); *d++=' '; d=osd_ms(d,g_pf_avg_us); *d++=' '; d=osd_ms(d,g_pf_max_us);
+     aden=(PicoIn.AHW&PAHW_32X)?1u:0u;
+@@ -730,7 +730,7 @@
+ #endif
+     shared[ZZVR_SH_VFP]=(fpexc&(1u<<30))?1u:0u;
+     shared[ZZVR_SH_ENTRY_SP]=entry_sp;
+-    shared[ZZVR_SH_BUILD2]=3u;
++    shared[ZZVR_SH_BUILD2]=4u;                   /* ZZPicoDrive32X rc1 */
+     shared[ZZPICO_SH_ERROR]=ZZPICO_ERR_NONE;
+     shared[ZZPICO_SH_HEARTBEAT]=0;
+     shared[ZZPICO_SH_ACK_SEQ]=shared[ZZPICO_SH_CMD_SEQ];
+@@ -788,8 +788,20 @@
+                    68k a pris la frame precedente (FLIP_SEQ rattrape g_frame_seq).
+                    L'emulation + l'audio tournent a CHAQUE iteration (PicoFrame toujours
+                    appele ; pace sur le drainage du ring plus bas). skip = DESSIN seul. */
+-                g_do_render = (shared[ZZPICO_SH_FLIP_SEQ] == g_frame_seq) ? 1 : 0;
+-                PicoIn.skipFrame = g_do_render ? 0 : 1;
++                /* ZZPicoDrive32X rc1: the 1.1 gate made the DRAWING wait for the 68k to take
++                   the previous frame; with the 68k taking one frame per RTG vblank, the
++                   emulation (audio clock) and the vblank have a free phase and the gate fell
++                   to one drawn frame out of two (29.9 fps measured, A1 session of 13 min).
++                   Now every frame is drawn in FB3A (skipFrame = 0) and only the conversion
++                   to the P96 buffer + FRAME_READY wait for a free buffer: the decision is
++                   taken at the END of PicoFrame, one edge later, so a frame is published
++                   every PicoFrame whatever the phase.  Slot 176 = 1 restores the 1.1 gate. */
++                if(shared[ZZVR_SH_DRAWMODE]==1u){
++                    g_do_render = (shared[ZZPICO_SH_FLIP_SEQ] == g_frame_seq) ? 1 : 0;
++                    PicoIn.skipFrame = g_do_render ? 0 : 1;
++                } else {
++                    g_do_render = 1; PicoIn.skipFrame = 0;
++                }
+ #endif
+                 bt_frame_now = g_frames;  /* DIAG : etiqueter le ring */
+                 /* INPUT : SH_PAD0/SH_PAD1 (bitmask ZP_*, 1=presse) -> PicoIn.pad[0]/[1]
+@@ -834,6 +846,12 @@
+                 pc1=pmu_cyc();
+                 ++g_frames;
+                 shared[ZZPICO_SH_FRAME_COUNTER]=g_frames;
++                /* ZZPicoDrive32X rc1: convert + publish only when the 68k took the previous
++                   frame (free P96 buffer); the frame itself was drawn in FB3A in any case.
++                   Decided here, at the end of PicoFrame, so the window statistics count
++                   the published frames. */
++                if(g_do_render && shared[ZZVR_SH_DRAWMODE]!=1u)
++                    g_do_render = (shared[ZZPICO_SH_FLIP_SEQ] == g_frame_seq) ? 1 : 0;
+                 pf_window_add(pc1-pc0, g_do_render); /* A1: PicoFrame window statistics (us) */
+                 zzvr_publish_diag();             /* A1: 32X state, SH-2 pcs, pools */
+                 if(g_frames==1)
