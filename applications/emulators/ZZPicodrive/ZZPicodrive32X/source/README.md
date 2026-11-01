@@ -27,8 +27,8 @@ first release.
 ## Requirements
 
 - Amiga with MNT ZZ9000 and a 68020 or better; validated on A4000/060.
-- **XACP firmware XX19d-RIX** or a later compatible update, with its matching
-  `zz9000.card`. Earlier XACP firmware is not supported for this edition.
+- **XACP firmware XX19c or later**, with its matching `zz9000.card`.
+  **XX19d-RIX or a later compatible firmware update is recommended.**
 - Picasso96 with a ZZ9000 **320x240, 32-bit** screen mode.
 - A monitor that accepts **640x480 at 50 Hz (PAL)** and
   **59.98 Hz (NTSC)**.

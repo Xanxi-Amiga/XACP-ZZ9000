@@ -2,9 +2,9 @@
 
 ## Firmware and Picasso96
 
-ZZPicoDrive32X requires **XACP XX19d-RIX** (or a later compatible update)
-and its matching `zz9000.card`; the firmware and driver are not bundled.
-It does not support earlier XACP firmware generations.
+ZZPicoDrive32X supports **XACP XX19c** or a later compatible firmware,
+with its matching `zz9000.card`. **XX19d-RIX or a later compatible update is
+recommended.** The firmware and driver are not bundled.
 
 The ZZ9000 must provide a **320x240, 32-bit Picasso96 screen mode**.
 The display should support 640x480 at 50 Hz for PAL games and 59.98 Hz

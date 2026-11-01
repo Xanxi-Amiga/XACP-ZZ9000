@@ -21,8 +21,8 @@ adding PicoDrive's Sega 32X emulation and dual-SH-2 recompiler.
 ## Compatibility
 
 - Amiga with MNT ZZ9000 and Picasso96 (tested on A4000/68060).
-- **XX19d-RIX**, or a later compatible XACP firmware update, and its
-  corresponding `zz9000.card`.
+- **XACP XX19c or later** and its matching `zz9000.card`.
+  **XX19d-RIX or a later compatible update is recommended.**
 - Sega 32X cartridge images in **`.32x` and `.bin`** format.
 - AHI optional; direct Paula audio is available without AHI.
 
