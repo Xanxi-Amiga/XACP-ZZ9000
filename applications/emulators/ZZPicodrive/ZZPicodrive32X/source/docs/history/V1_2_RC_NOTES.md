@@ -13,3 +13,11 @@ recompiler (libretro forum "PicoDrive Issues", 2024-2025; workaround: disable
 the recompiler); the PC project VirtuaRacingDeluxeEnhanced runs the SH-2
 interpreter.  Disabling only the loop optimisations keeps the recompiler's
 speed on the Cortex-A9.
+
+# v1.2.1 (1 November 2026)
+
+Launcher only, from ZZPicoDriveVR v1.2 (validated there on the A4000): CD32 /
+USB pad shoulders and yellow = X / Y / Z (reported by a tester: the 6 buttons
+worked on the keyboard only, Virtua Racing Deluxe views unreachable from the
+pad); checked Core1 start with one more load, GUI log in T:ZZPicoDrive32X.log,
+requester on failure; SH-2 watchdog line only with the 32X running.

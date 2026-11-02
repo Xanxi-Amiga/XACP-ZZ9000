@@ -1,5 +1,3 @@
-> File paths cited below are relative to the matching `source/` folder.
-
 # Third-party notices
 
 ZZPicoDrive32X is a modified binary distribution of PicoDrive. The complete
@@ -27,7 +25,8 @@ Modifications in this package:
 
 - `cpu/drc/emit_arm.c`, `emith_xbranch()`: a far-call sequence under
   `#if defined(ZZVR_FAR_CALLS)` (the recompiler's code cache is beyond the
-  +-32 MiB branch range of the program); see the corresponding `cpu/drc/emit_arm.c` source and its `ZZVR_FAR_CALLS` guard.
+  +-32 MiB branch range of the program); see
+  `docs/history/rc1/diffs_vs_ZZPicoDriveMD_1.1/picodrive_emit_arm.c.diff`.
 - `cpu/sh2/compiler.c`: `LOOP_DETECTION` and `LOOP_OPTIMIZER` wrapped in
   `#ifndef` so that the build can set them; this package builds with both at 0.
 - `tools/mkoffsets.sh` added from upstream PicoDrive (Kai-Uwe Bloem, public

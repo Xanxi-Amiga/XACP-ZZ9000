@@ -1,0 +1,466 @@
+--- a/ZZVirtuaRacingRIX_A1diag/ZZVirtuaRacing_A1diag.c	2026-10-25 14:50:40.075736850 +0100
++++ amiga/ZZPicoDrive32X.c	2026-10-25 17:27:01.700679344 +0100
+@@ -1,45 +1,46 @@
+ /*
+- * ZZVirtuaRacing_A1diag - diagnostic 68k launcher for ZZVirtuaRacingRIX A1.
++ * ZZPicoDrive32X - Sega 32X emulator launcher for the MNT ZZ9000 (rc1).
+  *
+- * Base: ZZPicoDriveMD 1.1 launcher (ZZPicoDriveMD_v1.1.c, Xanxi 2026), unchanged
+- * in its screen / triple-buffer / deferred-PAN / audio / input model.  Every
+- * addition is tagged "A1diag:" and serves one purpose: say WHERE a freeze or a
+- * crash happens, on the 68k side or on the Core1 side, without a photo.
+- *
+- * A1diag additions (none changes the blob protocol):
+- *   - every exit step is printed and flushed before it runs (EXIT n: ...);
+- *   - two snapshots of the blob state at quit (A) and 30 vblanks later (B)
+- *     with audio still serviced: frame counter, heartbeat, FRAME_READY,
+- *     FLIP_SEQ, PCM ring, SH-2 pcs, PAN ack -> tells a blob stall from a
+- *     68k flip stall from stuck SH-2s;
+- *   - an in-loop watchdog printing one line when the blob stops counting
+- *     frames, when no new frame has been published for ~2 s although the
+- *     blob runs, or when both SH-2 pcs stay frozen for ~2 s;
+- *   - the deferred PAN in flight is cancelled (USER3=2) before the buffers
+- *     are freed, SRAM is saved while the blob still services commands, the
+- *     STOP waits for STATUS=STOPPED (0xFF) and not only for the ack;
+- *   - 68k stack usage printed at the start and the end of the exit path;
+- *   - keyboard X/Y/Z/MODE on keypad 4/5/6/0 (6-button pad), flag "noosd".
+- *   The A1 fields (slots 180-199) are only read when the blob identifies
+- *   itself as a ZZVirtuaRacing blob (slot 180 = 'ZVR1'), so this launcher also
+- *   runs the ZZPicoDriveMD 1.1 blob for an A/B comparison of the exit path.
++ * Base: ZZPicoDriveMD 1.1 launcher (Xanxi 2026) + the ZZVirtuaRacingRIX A1diag
++ * instrumentation.  Same screen / triple-buffer / deferred-PAN / audio / input
++ * model as 1.1.  What rc1 changes, each tagged "32X:" in the code:
++ *   - 100 KiB stack installed by the program itself (exec StackSwap): the 1.1
++ *     "__stack" variable is not honoured by the bebbo/libnix build, the launcher
++ *     ran on the 4 KiB Shell stack and CloseWindow overflowed it at exit
++ *     (every exit crash and the in-race freeze of A1 came from there);
++ *   - frame pacing on the ZZ9000 vblank (register 0x4C) with a software PLL:
++ *     timer.device sleep until ~0.8 ms before the predicted edge, then a short
++ *     poll; the PAN ack is then seen in the same period and one frame is flipped
++ *     per RTG vblank (1.1 slept on the Amiga WaitTOF, out of phase with the
++ *     ZZ9000, and flipped one frame out of two: 29.9 fps measured).  Flag "tof"
++ *     restores the 1.1 WaitTOF pacing for A/B;
++ *   - the blob draws every frame and publishes when a buffer is free (slot 176);
++ *     flag "gate" restores the 1.1 drawing gate for A/B;
++ *   - save buffer 1.5 MiB (a 32X savestate is ~680 KiB);
++ *   - Del = console reset (one-shot command, acknowledged by the blob);
++ *   - keypad 4/5/6/0 = X/Y/Z/MODE (6-button pad);
++ *   - the A1diag instrumentation stays: SNAP at quit, WATCHDOG, EXIT steps, STACK.
++ *   The 32X-specific fields (slots 176-199) are read only when the blob
++ *   identifies itself (slot 180 = 'ZVR1'); the launcher still runs the MD blob.
+  *
+  * Usage:
+- *   ZZVirtuaRacing_A1diag rom.32x blob.bin [region] [flags]
+- *   region: auto | eur | usa | jap
+- *   flags : kbd cd32 db9 usb port=N silence paula ahi 2p inputlog noosd
+- *   (no argument = the 1.1 GUI, unchanged, not the test path)
++ *   ZZPicoDrive32X rom.32x [blob.bin] [region] [flags]
++ *   region: auto | eur | usa | jap          (32X: usa recommended, NTSC)
++ *   flags : kbd cd32 db9 usb port=N silence paula ahi 2p inputlog noosd tof gate
++ *   (no argument = GUI; the blob file zz32x_rc1.bin must be next to the program)
+  *
+  * Build (bebbo m68k-amigaos-gcc, from the directory holding the sources):
+  *   m68k-amigaos-gcc -O2 -noixemul -m68020 -Wno-pointer-sign \
+- *     -o ZZVirtuaRacing_A1diag ZZVirtuaRacing_A1diag.c blob_data.c -lamiga
+- *   (blob_data.c: any blob, it is only used when no blob file is given)
++ *     -o ZZPicoDrive32X ZZPicoDrive32X.c blob_data.c -lamiga
++ *   (blob_data.c = bin2c of zz32x_rc1.bin; blob_data_stub.c = no embedded blob)
+  *
+- * Launcher by Xanxi, 2026.  Emulation core: PicoDrive (notaz).  ASCII-only source.
++ * Launcher by Xanxi, 2026.  Emulation core: PicoDrive (notaz, irixxxx).
++ * ASCII-only source.
+  */
+ 
+ #include <proto/Picasso96.h>
+ #include <exec/types.h>
++#include <exec/tasks.h>       /* 32X: StackSwapStruct */
+ #include <libraries/configvars.h>
+ #include <intuition/intuition.h>
+ #include <intuition/screens.h>
+@@ -73,7 +74,9 @@
+ extern const unsigned long g_blob_size;
+ 
+ /* IntuitionBase/GfxBase declares par les proto headers */
+-unsigned long __stack = 100000UL;   /* pile garantie 100Ko (shell ET Workbench) : evite le reset par debordement */
++unsigned long __stack = 100000UL;   /* 1.1: NOT honoured by the bebbo/libnix build (measured: 4 KiB Shell stack);
++                                       kept for other startups, the real guarantee is the StackSwap in main() */
++#define ZZ32X_STACK_SIZE 100000UL     /* 32X: stack installed by main() */
+ struct Library *P96Base = NULL;
+ struct Library *GfxBase_ = NULL;
+ struct Library *LowLevelBase = NULL;   /* lowlevel.library : ReadJoyPort (mode CD32/DB9) */
+@@ -119,6 +122,37 @@
+     if(g_tport){ DeleteMsgPort(g_tport); g_tport=NULL; }
+     TimerBase=NULL;
+ }
++/* 32X: ZZ9000 vblank PLL statistics */
++static ULONG g_vb_period=0, g_vb_next=0, g_vb_edges=0, g_vb_miss=0, g_vb_late=0, g_vb_pollmax=0, g_vb_pollsum=0;
++static ULONG g_ack_poll_max=0, g_ack_notseen=0;   /* ack polls after the edge: worst case, and vblanks where it never came */
++/* 32X: a second timer.device unit (MICROHZ) to sleep a precise number of
++   microseconds without busy-waiting (the ECLOCK unit above is read-only). */
++static struct MsgPort *g_sport = NULL;
++static struct timerequest *g_sreq = NULL;
++static int sleep_open(void)
++{
++    g_sport=CreateMsgPort(); if(!g_sport) return 0;
++    g_sreq=(struct timerequest*)CreateIORequest(g_sport,sizeof(struct timerequest));
++    if(!g_sreq){ DeleteMsgPort(g_sport); g_sport=NULL; return 0; }
++    if(OpenDevice("timer.device",UNIT_MICROHZ,(struct IORequest*)g_sreq,0)){
++        DeleteIORequest((struct IORequest*)g_sreq); DeleteMsgPort(g_sport);
++        g_sreq=NULL; g_sport=NULL; return 0; }
++    return 1;
++}
++static void sleep_close(void)
++{
++    if(g_sreq){ CloseDevice((struct IORequest*)g_sreq);
++                DeleteIORequest((struct IORequest*)g_sreq); g_sreq=NULL; }
++    if(g_sport){ DeleteMsgPort(g_sport); g_sport=NULL; }
++}
++static void sleep_us(ULONG us)
++{
++    if(!g_sreq || us<100) return;
++    g_sreq->tr_node.io_Command=TR_ADDREQUEST;
++    g_sreq->tr_time.tv_secs=us/1000000UL;
++    g_sreq->tr_time.tv_micro=us%1000000UL;
++    DoIO((struct IORequest*)g_sreq);
++}
+ static ULONG eclock_now(ULONG *freq)
+ {
+     struct EClockVal ev; ULONG f;
+@@ -539,6 +573,62 @@
+     }
+ }
+ 
++/* ---- 32X: pacing on the ZZ9000 vblank, software PLL ----
++   The firmware applies a deferred PAN at the rising edge of its vblank and
++   increments the ack counter there.  1.1 woke on the Amiga WaitTOF, out of
++   phase with that edge, and saw the ack one vblank late half of the time (one
++   flip out of two).  Here the loop predicts the next ZZ9000 edge from the
++   measured period, sleeps on timer.device until ~0.8 ms before it, then polls
++   register 0x4C for the edge (a few hundred reads at most), and re-locks the
++   prediction on every observed edge.  Fallback: WaitTOF (flag tof, or no edge). */
++#define VB_MARGIN_US   800UL
++static ULONG g_vb_inpulse=0;   /* woke up inside the vblank pulse: the edge had just passed */
++static ULONG vb_poll_edge(volatile UBYTE *board, ULONG max_ticks, int accept_high)
++{
++    ULONG t0=eclock_now(NULL), prev=ZZ_VBL(board), n=1;
++    if(prev && accept_high){ g_vb_inpulse++; return t0?t0:1UL; }   /* already in vblank: edge just passed */
++    for(;;){
++        ULONG cur=ZZ_VBL(board); n++;
++        if(!prev && cur){ ULONG t=eclock_now(NULL); g_vb_pollsum+=n; if(n>g_vb_pollmax) g_vb_pollmax=n; return t?t:1UL; }
++        prev=cur;
++        if((eclock_now(NULL)-t0) > max_ticks) return 0;
++    }
++}
++/* measure the period over 4 edges; returns 1 when the PLL is usable */
++static int vb_pll_init(volatile UBYTE *board, ULONG efreq)
++{
++    ULONG e0, e1, per, lo, hi;
++    if(!efreq || !g_sreq) return 0;
++    lo=efreq/120; hi=efreq/40;                     /* 8.3 .. 25 ms */
++    e0=vb_poll_edge(board, efreq/20, 0); if(!e0) return 0;
++    e1=vb_poll_edge(board, efreq/20, 0); if(!e1) return 0;
++    e1=vb_poll_edge(board, efreq/20, 0); if(!e1) return 0;
++    e1=vb_poll_edge(board, efreq/20, 0); if(!e1) return 0;
++    per=(e1-e0)/3;
++    if(per<lo || per>hi) return 0;
++    g_vb_period=per; g_vb_next=e1+per; g_vb_edges=4;
++    return 1;
++}
++/* sleep until the predicted edge, catch it, re-lock.  Always returns after at
++   most ~2 periods. */
++static void vb_pll_wait(volatile UBYTE *board, ULONG efreq)
++{
++    ULONG now=eclock_now(NULL), e;
++    LONG ahead=(LONG)(g_vb_next - now);                       /* EClock ticks until the predicted edge */
++    LONG margin=(LONG)((efreq/1000UL)*VB_MARGIN_US/1000UL);  /* 0.8 ms in ticks */
++    if(ahead > margin){
++        ULONG us=(ULONG)(ahead - margin) * 1000UL / (efreq/1000UL);   /* ticks -> us (efreq ~709 kHz) */
++        sleep_us(us);
++    } else if(ahead < -(LONG)(g_vb_period/2)) g_vb_late++;   /* woke after the edge: we will catch the next */
++    e=vb_poll_edge(board, g_vb_period*2UL, 1);
++    if(e){
++        ULONG d=e-(g_vb_next-g_vb_period);   /* observed period (or 2 if one was missed) */
++        if(d > g_vb_period-g_vb_period/10 && d < g_vb_period+g_vb_period/10)
++            g_vb_period=(g_vb_period*15UL+d)/16UL;   /* slow re-lock on drift */
++        g_vb_next=e+g_vb_period; g_vb_edges++;
++    } else { g_vb_next+=g_vb_period; g_vb_miss++; }
++}
++
+ #define FB_BLOB         0x04300000UL
+ #define FB_SHARED       0x04500000UL
+ #define FB_ROM          0x04900000UL
+@@ -619,6 +709,7 @@
+ #define RK_RET    0x44
+ #define RK_ENT    0x43
+ #define RK_ESC    0x45
++#define RK_DEL    0x46   /* 32X: console reset */
+ #define RK_P      0x19
+ #define RK_F1     0x50
+ #define RK_F2     0x51
+@@ -711,6 +802,13 @@
+ #define SH_ZVR_ENTRY_SP   (198*4)
+ #define SH_ZVR_BUILD2     (199*4)
+ static int g_noosd=0;              /* flag noosd */
++static int g_force_tof=0;          /* 32X: flag tof  -> 1.1 WaitTOF pacing (A/B) */
++static int g_gate=0;               /* 32X: flag gate -> blob slot 176 = 1, 1.1 drawing gate (A/B) */
++#define SH_ZVR_DRAWMODE   (176*4)  /* 68k -> blob: 0 = draw every frame, 1 = 1.1 gate */
++/* 32X: one-shot emulator command (reset) with a consume handshake: written when
++   the slot reads NONE, considered done when the blob has cleared it again */
++static ULONG g_emu_pending=0; static int g_emu_sent=0;
++
+ /* A1diag: main-loop bookkeeping printed by the snapshots / watchdog */
+ static ULONG g_wd_iter=0;          /* loop iterations (one per WaitTOF)              */
+ static ULONG g_ack_max_ms=0;       /* longest arm -> PAN ack wait seen (ms)          */
+@@ -816,7 +914,7 @@
+ }
+ 
+ /* ---- SAUVEGARDES SRAM (68k) : fichier ROMNAME.srm <-> buffer DDR <-> Core1 ---- */
+-#define SAVE_MAX_68K  (512UL*1024UL)
++#define SAVE_MAX_68K  (1536UL*1024UL)   /* 32X: a 32X savestate is ~680 KiB; zone 0x07E00000..0x08000000 */
+ static void make_srm_name(const char *rom, char *out)
+ {
+     int i, dot=-1, len=0;
+@@ -1079,8 +1177,9 @@
+     ULONG region_in; const char *region_label="AUTO";
+     ULONG pal_out=0, target_hz=60, active_h=224, y_off=8;
+     int uncapped=0; const char *pacing_mode="TIMER"; int vbl_ok=0;
++    int g_pace_zz=0; ULONG efreq_main=0;   /* 32X: 1 = PLL on the ZZ9000 vblank, 0 = WaitTOF */
+ 
+-    printf("ZZVirtuaRacing_A1diag - diagnostic launcher (base ZZPicoDriveMD 1.1)\n");
++    printf("ZZPicoDrive32X rc1 - Sega 32X on the ZZ9000 Core1 (base ZZPicoDriveMD 1.1)\n");
+     stack_report("start");
+     region_in=region_from_cfg(cfg->region,&region_label);
+     switch(cfg->input){
+@@ -1168,6 +1267,8 @@
+                rd32(shared,SH_ZVR_BUILD), rd32(shared,SH_ZVR_BUILD2), rd32(shared,SH_ZVR_DRC),
+                rd32(shared,SH_ZVR_VFP), rd32(shared,SH_ZVR_ENTRY_SP));
+         wr32(shared,SH_ZVR_OSD, g_noosd?1UL:0UL);
++        wr32(shared,SH_ZVR_DRAWMODE, g_gate?1UL:0UL);   /* 32X: 0 = draw every frame (rc1), 1 = 1.1 gate */
++        printf("Draw mode: %s\n", g_gate?"1.1 gate (draw when the previous frame was taken)":"every frame, publish when a buffer is free");
+     } else printf("Blob is not a ZZVirtuaRacing blob (A1 fields not read)\n");
+     /* VTC : region posee AVANT cmd_start (le blob l'applique avant PicoReset) */
+     wr32(shared,SH_REGION_IN,region_in);
+@@ -1186,9 +1287,13 @@
+        (tear-free), sinon repli TIMER. Jamais bloquant. uncapped -> ni l'un ni
+        l'autre (benchmark libre). */
+     vbl_ok = (!uncapped && have_timer) ? probe_vblank(board) : 0;
+-    pacing_mode = uncapped ? "UNCAPPED" : (vbl_ok ? "VBLANK_HW" : "TIMER");
+-    printf("pacing_mode=%s (vblank probe=%s)\n",
+-           pacing_mode, vbl_ok?"OK":(uncapped?"skip":"no-signal->TIMER"));
++    /* 32X: lock the PLL on the ZZ9000 vblank unless flag tof or no usable signal */
++    eclock_now(&efreq_main);
++    if(vbl_ok && !g_force_tof && sleep_open() && vb_pll_init(board, efreq_main)) g_pace_zz=1;
++    pacing_mode = uncapped ? "UNCAPPED" : (g_pace_zz ? "ZZ9000_VBLANK_PLL" : "WAITTOF");
++    printf("pacing_mode=%s (vblank probe=%s, period=%lu us)\n",
++           pacing_mode, vbl_ok?"OK":(uncapped?"skip":"no-signal"),
++           (g_pace_zz && efreq_main)? (g_vb_period*1000UL)/(efreq_main/1000UL) : 0UL);
+ 
+     P96Base      =OpenLibrary("Picasso96API.library",2L);   /* intuition/gfx : ouverts par main */
+     if(g_input_mode==2){
+@@ -1388,14 +1493,20 @@
+       wr32(shared, SH_FLIP_SEQ, 0);
+       wr32(shared, SH_P96_BASE, buf_arm[render_idx]);   /* Core1 rend dans render_idx */
+       while(running){
+-          WaitTOF();   /* dort jusqu'au vblank RTG : ZERO busy-wait, CPU rendu au systeme */
+-          if(g_pa_active) pa_service();   /* backend Paula : remplit le ring Chip sur WaitTOF */
++          if(g_pace_zz) vb_pll_wait(board, efreq);   /* 32X: ZZ9000 vblank edge (PLL) */
++          else WaitTOF();                            /* 1.1: Amiga vblank */
++          if(g_pa_active) pa_service();   /* backend Paula : remplit le ring Chip (per iteration, EClock based) */
+           /* AUDIO : rien ici, l'AudioTask separee gere AHI -> pas de preemption du flip */
+           g_wd_iter++;
+ 
+-          /* (1) confirmer le flip en vol */
++          /* (1) confirmer le flip en vol.  32X: right after the edge the firmware may
++             still be inside its loop iteration: give the ack up to ~400 register reads
++             (well under a millisecond) before concluding it is not there yet. */
+           if(flip_inflight){
+-              if(zz_pan_ack(board) != flip_ack_before){
++              ULONG ack=zz_pan_ack(board), ap=0;
++              if(g_pace_zz){ while(ack==flip_ack_before && ap<400UL){ ap++; ack=zz_pan_ack(board); }
++                             if(ap>g_ack_poll_max) g_ack_poll_max=ap; if(ack==flip_ack_before) g_ack_notseen++; }
++              if(ack != flip_ack_before){
+                   ULONG now=eclock_now(NULL);
+                   if(efreq){ ULONG ms=(now - t_flip)/(efreq/1000UL); if(ms>g_ack_max_ms) g_ack_max_ms=ms; }
+                   front_idx = pending_idx;          /* buffer flippe -> affiche */
+@@ -1452,7 +1563,8 @@
+                                                diag_snapshot(shared, board, "A (quit)"); quit_count=30; }
+                           }
+                           else g_emu_cmd=EMU_CMD_MENU;   /* menu emulateur (pas encore d'UI) */
+-                      } else if(raw==RK_P) g_emu_cmd=EMU_CMD_PAUSE;
++                      } else if(raw==RK_DEL){ if(!g_emu_pending){ g_emu_pending=EMU_CMD_RESET; g_emu_sent=0; printf("RESET requested\n"); } }
++                      else if(raw==RK_P) g_emu_cmd=EMU_CMD_PAUSE;
+                       else if(raw>=RK_F1 && raw<=RK_F5){
+                           int slot=(raw-RK_F1)+1;   /* slots 1..5 */
+                           if(qual&(IEQUALIFIER_LSHIFT|IEQUALIFIER_RSHIFT))
+@@ -1471,7 +1583,15 @@
+               g_input_seq++; g_padmask_prev=g_padmask; g_padmask2_prev=g_padmask2; }
+           wr32(shared, SH_PAD0, g_padmask);
+           wr32(shared, SH_PAD1_P2, g_padmask2);
+-          wr32(shared, SH_EMU_CMD, g_emu_cmd);
++          /* 32X: one-shot emulator command (reset).  1.1 rewrote g_emu_cmd every
++             vblank, which would have re-fired a RESET at every frame. */
++          if(g_emu_pending){
++              ULONG cur=rd32(shared, SH_EMU_CMD);
++              if(cur==EMU_CMD_NONE){
++                  if(!g_emu_sent){ wr32(shared, SH_EMU_CMD, g_emu_pending); g_emu_sent=1; }
++                  else { printf("RESET done (iter=%lu)\n", g_wd_iter); g_emu_pending=0; g_emu_sent=0; }
++              }
++          }
+           wr32(shared, SH_INPUT_SEQ, g_input_seq);
+ 
+           /* ---- A1diag WATCHDOG : one line when something stops moving for ~2 s ----
+@@ -1587,6 +1707,12 @@
+                g_frames, g_el_ms/1000, (g_el_ms/100)%10, g_fps10/10, g_fps10%10);
+         printf("rendu ARM moyen=%lu.%lu ms/frame   flip moyen=%lu.%lu ms/frame\n",
+                g_rend10/10, g_rend10%10, g_flip10/10, g_flip10%10);
++        /* 32X: pacing report */
++        if(g_pace_zz)
++            printf("PLL ZZ9000: period=%lu us edges=%lu missed=%lu late=%lu inpulse=%lu polls/edge max=%lu avg=%lu  ack polls max=%lu notseen=%lu\n",
++                   efreq_main?(g_vb_period*1000UL)/(efreq_main/1000UL):0UL, g_vb_edges, g_vb_miss, g_vb_late, g_vb_inpulse,
++                   g_vb_pollmax, g_vb_edges?g_vb_pollsum/g_vb_edges:0UL, g_ack_poll_max, g_ack_notseen);
++        if(shared) printf("flips=%lu  PicoFrames=%lu  (60 fps displayed = both equal)\n", g_flips, rd32(shared,SH_FRAME_COUNTER));
+         if(shared){
+             ULONG pf=rd32(shared,SH_PERF_PICOFRAME);
+             ULONG cv=rd32(shared,SH_PERF_CONVERT);
+@@ -1653,6 +1779,7 @@
+     }
+     exit_step("11 timer / libraries / ROM and blob buffers");
+     if(have_timer) timer_close();
++    sleep_close();   /* 32X */
+     if(fh) Close(fh);
+     if(P96Base) CloseLibrary(P96Base);
+     if(LowLevelBase) CloseLibrary(LowLevelBase);
+@@ -1669,10 +1796,11 @@
+     int ai;
+     if(argc<3){
+         printf("Usage: %s <rom.32x> <blob.bin> [region] [flags]\n", argv[0]);
+-        printf("  region : auto|usa|jap|eur|jappal   (defaut auto)\n");
+-        printf("  flags  : kbd cd32 db9 usb port=N inputlog silence paula ahi 2p noosd\n");
++        printf("  region : auto|usa|jap|eur|jappal   (32X: usa, NTSC)\n");
++        printf("  flags  : kbd cd32 db9 usb port=N inputlog silence paula ahi 2p noosd tof gate\n");
+         printf("  kbd    : arrows, keypad 1/2/3 = A/B/C, keypad 4/5/6 = X/Y/Z, keypad 0 = MODE, Enter = Start\n");
+-        printf("  quit   : Shift+Esc (snapshot A, 30 vblanks, snapshot B, then the exit steps)\n");
++        printf("  Del    : console reset    Shift+Esc : quit    F1-F5 : load state, Shift+F1-F5 : save\n");
++        printf("  tof    : 1.1 pacing on the Amiga vblank (A/B)    gate : 1.1 drawing gate in the blob (A/B)\n");
+         printf("  (sans argument = interface graphique)\n");
+         return 0;
+     }
+@@ -1702,7 +1830,9 @@
+         else if(!strcmp(argv[ai],"sine")||!strcmp(argv[ai],"sinus")) g_sine=1;
+         else if(!strcmp(argv[ai],"hq44")) g_au_hz=44100;
+         else if(!strcmp(argv[ai],"hz22")) g_au_hz=22050;
+-        else if(!strcmp(argv[ai],"noosd")) g_noosd=1;          /* A1diag: blob OSD line off */
++        else if(!strcmp(argv[ai],"noosd")) g_noosd=1;          /* blob OSD line off */
++        else if(!strcmp(argv[ai],"tof")) g_force_tof=1;         /* 32X: 1.1 WaitTOF pacing */
++        else if(!strcmp(argv[ai],"gate")) g_gate=1;             /* 32X: 1.1 drawing gate in the blob */
+         else printf("(unknown flag '%s' ignored)\n", argv[ai]);
+     }
+     return 1;
+@@ -1712,7 +1842,7 @@
+ static void zp_config_defaults(ZP_Config *cfg)
+ {
+     cfg->rom_path[0]=0;
+-    strcpy(cfg->blob_path, "zzpicodrive_p3w_2p.bin");
++    strcpy(cfg->blob_path, "zz32x_rc1.bin");   /* 32X */
+     cfg->region=ZP_REGION_AUTO;
+     cfg->audio =ZP_AUDIO_AHI;
+     cfg->input =ZP_INPUT_CD32_LOWLEVEL;
+@@ -1826,19 +1956,19 @@
+     EasyRequest(w,&es,NULL,0);
+ }
+ static const char *TXT_ABOUT =
+-    "ZZPicoDrive brings Sega Mega Drive / Genesis emulation to\n"
+-    "classic Amigas equipped with an MNT ZZ9000. The emulation\n"
+-    "runs on the ZZ9000's ARM coprocessor and talks to the 68k\n"
+-    "over Zorro through XACP-compatible firmware, keeping the\n"
+-    "host CPU almost free.\n\n"
+-    "Version 1.1 (experimental audio).   Port by Xanxi, 2026.\n"
+-    "Emulation core: PicoDrive (notaz).";
++    "ZZPicoDrive32X brings Sega 32X emulation to classic Amigas\n"
++    "equipped with an MNT ZZ9000. Both SH-2 are recompiled to ARM\n"
++    "on the ZZ9000's coprocessor; the 68k only flips the frames\n"
++    "and feeds the audio.\n\n"
++    "Release candidate 1.   Port by Xanxi, 2026.\n"
++    "Emulation core: PicoDrive (notaz, irixxxx).";
+ static const char *TXT_CONTROLS =
+     "CONTROLS\n\n"
+     "Player 1: keyboard OR a controller on a chosen port.\n"
+     "Player 2: a controller only, on a different port.\n\n"
+     "Keyboard (Player 1):\n"
+-    "  Arrows = D-pad    Numpad 1/2/3 = A/B/C    Enter = Start\n\n"
++    "  Arrows = D-pad    Numpad 1/2/3 = A/B/C    Enter = Start\n"
++    "  Numpad 4/5/6 = X/Y/Z   Numpad 0 = Mode   Del = Reset\n\n"
+     "Controller types:\n"
+     "  DB9 hardware = joystick/pad on the real port (2 buttons)\n"
+     "  CD32 / USB   = CD32 pad, or USB pad via Poseidon\n\n"
+@@ -1935,7 +2065,7 @@
+       if(!gc){ result=-1; goto guiclean; }
+ 
+       win=(struct Window*)OpenWindowTags(NULL,
+-        WA_Title,(ULONG)"ZZPicoDrive 1.1 - Genesis / Mega Drive edition",
++        WA_Title,(ULONG)"ZZPicoDrive32X rc1 - Sega 32X edition",
+         WA_Left,60, WA_Top,40, WA_Width,460, WA_Height,top+154,
+         WA_Gadgets,(ULONG)glist, WA_DragBar,TRUE, WA_DepthGadget,TRUE,
+         WA_CloseGadget,TRUE, WA_Activate,TRUE, WA_SimpleRefresh,TRUE,
+@@ -1979,7 +2109,7 @@
+                         if(controllers_conflict(cfg)){
+                             struct EasyStruct es;
+                             es.es_StructSize=sizeof(struct EasyStruct); es.es_Flags=0;
+-                            es.es_Title=(STRPTR)"ZZPicoDrive";
++                            es.es_Title=(STRPTR)"ZZPicoDrive32X";
+                             es.es_TextFormat=(STRPTR)"Players 1 and 2 use the same port.\nUse different ports for two controllers\n(or set one player to Keyboard).";
+                             es.es_GadgetFormat=(STRPTR)"OK";
+                             EasyRequest(win,&es,NULL,0); DisplayBeep(pub); break;
+@@ -1995,7 +2125,7 @@
+                     struct MenuItem *it=ItemAddress(menu, mn);
+                     if(!it) break;
+                     { ULONG ud=(ULONG)GTMENUITEM_USERDATA(it);
+-                      if(ud==1L)       gui_req(win,"About ZZPicoDrive",TXT_ABOUT);
++                      if(ud==1L)       gui_req(win,"About ZZPicoDrive32X",TXT_ABOUT);
+                       else if(ud==2L){ done=1; result=0; }
+                       else if(ud==3L)  gui_req(win,"Controls",TXT_CONTROLS);
+                       else if(ud==4L)  gui_req(win,"Options",TXT_OPTIONS);
+@@ -2019,12 +2149,33 @@
+ }
+ 
+ /* ===================== main : CLI ou GUI -> run_picodrive ===================== */
++/* 32X: run the program on its own 100 KiB stack.  exec StackSwap() (V37+) moves
++   the task to the new stack and updates tc_SPLower/Upper; main_body() runs there
++   and the original stack is restored before returning to the startup code. */
++static int main_body(int argc, char **argv);
++static int    g_argc; static char **g_argv; static int g_main_rc;
++static struct StackSwapStruct g_sss;
+ int main(int argc, char **argv)
+ {
++    APTR stk;
++    g_argc=argc; g_argv=argv; g_main_rc=20;
++    stk=AllocMem(ZZ32X_STACK_SIZE, MEMF_PUBLIC);
++    if(!stk) return main_body(argc, argv);        /* no memory: run on the Shell stack as 1.1 did */
++    g_sss.stk_Lower=stk;
++    g_sss.stk_Upper=(ULONG)stk+ZZ32X_STACK_SIZE;
++    g_sss.stk_Pointer=(APTR)g_sss.stk_Upper;
++    StackSwap(&g_sss);
++    g_main_rc=main_body(g_argc, g_argv);
++    StackSwap(&g_sss);
++    FreeMem(stk, ZZ32X_STACK_SIZE);
++    return g_main_rc;
++}
++static int main_body(int argc, char **argv)
++{
+     ZP_Config cfg;
+     int rc;
+     zp_config_defaults(&cfg);
+-    zp_config_load(&cfg, "PROGDIR:ZZVirtuaRacing_A1diag.cfg");   /* A1diag: own config file */
++    zp_config_load(&cfg, "PROGDIR:ZZPicoDrive32X.cfg");
+     /* intuition/graphics ouverts UNE seule fois ici (ni la GUI ni run_picodrive ne les ferment) */
+     IntuitionBase=(struct IntuitionBase*)OpenLibrary("intuition.library",39L);
+     GfxBase_     =OpenLibrary("graphics.library",39L);
+@@ -2042,7 +2193,7 @@
+         g=gui_get_config(&cfg);
+         if(g<=0){ rc=0; goto mainclean; }   /* Quit, fermeture, ou GUI indisponible */
+     }
+-    zp_config_save(&cfg, "PROGDIR:ZZVirtuaRacing_A1diag.cfg");   /* A1diag: own file, the 1.1 config is not touched */
++    zp_config_save(&cfg, "PROGDIR:ZZPicoDrive32X.cfg");
+     rc=run_picodrive(&cfg);
+ mainclean:
+     printf("MAIN: closing graphics/intuition\n");

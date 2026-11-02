@@ -1,0 +1,9 @@
+--- /tmp/vr/XACP-ZZ9000/applications/emulators/ZZPicodrive/ZZPicodriveMD/source/arm/zzpico_vectors.S	2026-10-25 01:55:44.252934655 +0200
++++ Core1/zzvr_vectors.S	2026-10-25 10:16:13.879267884 +0100
+@@ -1,5 +1,5 @@
+ /*
+- * zzpico_vectors.S - vecteurs d'exception ARM Cortex-A9 pour le blob Core1.
++ * zzvr_vectors.S - ARM Cortex-A9 exception vectors for the Core1 blob (ZZPicoDriveMD 1.1 zzpico_vectors.S, unchanged).
+  *
+  * Exception vectors: UNDEF / PREFETCH / DATA ->
+  *   ecrit ERROR + PC fautif + FAR/FSR dans shared, STATUS=ERROR, puis WFE.

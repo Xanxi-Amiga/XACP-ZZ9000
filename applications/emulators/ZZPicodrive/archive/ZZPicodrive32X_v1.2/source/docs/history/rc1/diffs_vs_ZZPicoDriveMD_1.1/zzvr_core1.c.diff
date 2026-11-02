@@ -1,0 +1,277 @@
+--- /tmp/vr/XACP-ZZ9000/applications/emulators/ZZPicodrive/ZZPicodriveMD/source/arm/zzpico_core1.c	2026-10-25 01:55:44.252934655 +0200
++++ Core1/zzvr_core1.c	2026-10-25 12:02:47.804898553 +0100
+@@ -1,29 +1,39 @@
+ /*
+- * zzpico_core1.c - ZZPicoDrive Core1 entry (v0: command loop only)
++ * zzvr_core1.c - ZZVirtuaRacingRIX A1a Core1 entry (Sega 32X on Core1).
+  *
+- * Memory authority: XX19 / XACP v1.5 (zzpico_shared.h). Core1 model authority:
+- * ZZDoom (C entry .text.core1_entry, SP from firmware, STOP=0xFF+wfe, no return).
+- *
+- * v0: INIT -> verify ROM (D-cache invalidate + CRC32 byte-exact) ->
+- *     PicoInit/PicoCartInsert/PicoPower/PicoReset. NO PicoFrame/render/audio.
+- * Big .bss -> ARM private pool 0x22000000 (zzpico.ld). ASCII only.
++ * Lineage: the public ZZPicoDriveMD 1.1 zzpico_core1.c, byte-for-byte except
++ * for the changes listed here (one purpose: validate the 32X start-up and
++ * measure PicoFrame() on the A4000, same 68k launcher, same shared ABI):
++ *   1. VFP enabled in core1_entry (CPACR cp10/cp11 + FPEXC.EN) before any C
++ *      code of the core runs: the 32X core and the HLE of A2 use floating point.
++ *   2. cmd_init: 32X options (POPT_EN_32X | POPT_EN_PWM | POPT_ACC_SPRITES |
++ *      POPT_DIS_32C_BORDER), 6-button pad on port 1 (view change keys of
++ *      Virtua Racing Deluxe), autoRgnOrder USA > EUR > JAP.
++ *   3. emu_32x_startup(): the callback PicoDrive makes when the game enables
++ *      the adapter; it re-asserts the RGB555 output format and buffer.
++ *   4. Diagnostics (ZZVR_SH_*, indexes 180..): 32X state, SH-2 pcs, memory
++ *      pools, PicoFrame window statistics, and a one-line OSD drawn in the top
++ *      border of the P96 picture (no 68k change needed to read the numbers).
++ * Memory authority: zzvr_mem.h (XACP v1.7 Core1 arena for BSS and heaps),
++ * zzvr_shared.h (XX19 Zorro-visible zones, unchanged).  ASCII only.
+  */
+ #include <stddef.h>
+-#include "zzpico_shared.h"
++#include "zzvr_shared.h"
++#include "zzvr_mem.h"
+ #include <pico/pico_types.h>
+ #include <pico/pico.h>
+ #include <pico/pico_int.h>
+ #include <pico/sound/ym2612.h>
+-#include "zzpico_font8x8.h"
++#include "zzvr_font8x8.h"
+ 
+ static volatile u32 *shared = (volatile u32 *)ZZPICO_ARM_SHARED;
+ 
+ extern void mmu_init(void);
+-extern void mmu_set_wbwa(u32 addr, u32 len);            /* zzpico_mmu.c (3d) */
+-extern u32  mmu_get_desc(u32 addr);                    /* zzpico_mmu.c (diag) */
+-extern void dcache_inval_range(void *addr, u32 len);   /* zzpico_mmu.c */
+-extern void dcache_clean_range(void *addr, u32 len);   /* zzpico_mmu.c */
+-extern void zz_install_vectors(void);                  /* zzpico_vectors.S */
++extern void mmu_set_wbwa(u32 addr, u32 len);            /* zzvr_mmu.c */
++extern u32  mmu_get_desc(u32 addr);                    /* zzvr_mmu.c (diag) */
++extern void dcache_inval_range(void *addr, u32 len);   /* zzvr_mmu.c */
++extern void dcache_clean_range(void *addr, u32 len);   /* zzvr_mmu.c */
++extern void zz_install_vectors(void);                  /* zzvr_vectors.S */
+ 
+ #define DIAG(v) do{ shared[ZZPICO_SH_DIAG]=(v); __asm__ volatile("dsb":::"memory"); }while(0)
+ 
+@@ -267,6 +277,18 @@
+     return crc_rect_bpp(base,pitch,x0,w,y0,h,2);
+ }
+ 
++/* Callback frontend (pico.h): PicoDrive calls it from Pico32xStartup(), when the
++   game enables the adapter (about 2 frames after power-on), and we call it once
++   from cmd_start.  PDF_RGB555 lays the 32X layer over the Mega Drive layer into
++   the output buffer (the pixels come out as RGB565, as for the MD alone): the
++   1.1 conversion path (convert_lut_p96) is unchanged. */
++void emu_32x_startup(void){
++    PicoDrawSetOutFormat(PDF_RGB555, 0);
++    PicoDrawSetOutBuf((void*)FB3A_BASE, FB3A_PITCH);
++    shared[ZZVR_SH_AHW]=PicoIn.AHW;
++    DIAG(0xA132UL);                                   /* 32X started */
++}
++
+ /* Callback frontend : enregistre le rectangle actif (record-only). */
+ void emu_video_mode_change(int start_line,int line_count,int start_col,int col_count){
+     g_vm_sl=start_line; g_vm_lc=line_count; g_vm_sc=start_col; g_vm_cc=col_count;
+@@ -292,6 +314,19 @@
+ #else
+         PicoIn.opt=POPT_EN_FM|POPT_EN_PSG|POPT_EN_Z80;
+ #endif
++        /* ZZVirtuaRacing A1: the 32X.  POPT_EN_32X lets PicoPower() power the
++           adapter and Pico32xStartup() run when the game sets ADEN; POPT_EN_PWM
++           mixes the 32X PWM sound into the same PCM stream; POPT_ACC_SPRITES and
++           POPT_DIS_32C_BORDER are the settings of the VRDE core (core.c). */
++        PicoIn.opt|=POPT_EN_32X|POPT_EN_PWM|POPT_ACC_SPRITES|POPT_DIS_32C_BORDER;
++#ifdef ZZVR_DRC
++        PicoIn.opt|=POPT_EN_DRC;          /* A1b: SH-2 recompiler */
++#endif
++        PicoIn.autoRgnOrder=0x184;        /* ROM allows several regions: USA, then EUR, then JAP */
++        /* Virtua Racing Deluxe changes the view with the X/Y/Z buttons: 6-button
++           pad on port 1 (PicoDrive's default is the 3-button reader). */
++        PicoSetInputDevice(0, PICO_INPUT_PAD_6BTN);
++        PicoSetInputDevice(1, PICO_INPUT_PAD_3BTN);
+ #ifdef ZZPICO_AUDIO_PROFILE
+         /* AUDIO_PROFILE_1 : reactive la synthese audio pour MESURER son cout.
+            Stereo 44100 Hz. sndOut vers buffer local -> samples generes puis JETES
+@@ -589,20 +624,113 @@
+     DIAG(0xA103UL);
+ }
+ 
++/* ==== ZZVirtuaRacing A1 : VFP, window statistics, OSD ==== */
++
++/* VFPv3: CPACR cp10/cp11 full access, then FPEXC.EN.  Returns FPEXC read back
++   (bit 30 set = enabled).  Must run before any floating-point instruction of
++   the core (Core1 rule: not all blobs activate it; 1.1 did not). */
++static u32 vfp_enable(void){
++    u32 v;
++    __asm__ volatile("mrc p15,0,%0,c1,c0,2":"=r"(v));
++    v|=(3u<<20)|(3u<<22);
++    __asm__ volatile("mcr p15,0,%0,c1,c0,2"::"r"(v):"memory");
++    __asm__ volatile("isb":::"memory");
++    __asm__ volatile("vmsr fpexc, %0"::"r"(1u<<30));
++    __asm__ volatile("isb":::"memory");
++    __asm__ volatile("vmrs %0, fpexc":"=r"(v));
++    return v;
++}
++
++/* PicoFrame() over a window of the last ZZVR_PF_WINDOW frames (600 = 10 s at
++   60 Hz): the launcher-independent measurement asked for A1 (quit during a race,
++   the window holds the race).  Cycles -> us at 666.667 cycles/us. */
++#define ZZVR_PF_WINDOW 600
++static u32 g_pfw[ZZVR_PF_WINDOW];
++static u32 g_pfw_i=0, g_pfw_n=0, g_pfw_sum=0;
++static u32 g_pf_last_us=0, g_pf_avg_us=0, g_pf_max_us=0;
++static u32 cyc_to_us(u32 cyc){ return (u32)(((unsigned long long)cyc*3ull)/2000ull); }
++static u8  g_pfw_drawn[ZZVR_PF_WINDOW];
++static u32 g_pfw_ndrawn=0;
++static void pf_window_add(u32 cyc, int drawn){
++    u32 us=cyc_to_us(cyc), i, mx=0;
++    if(us>65535u) us=65535u;
++    if(g_pfw_n==ZZVR_PF_WINDOW){ g_pfw_sum-=g_pfw[g_pfw_i]; g_pfw_ndrawn-=g_pfw_drawn[g_pfw_i]; } else g_pfw_n++;
++    g_pfw[g_pfw_i]=us; g_pfw_sum+=us; g_pfw_drawn[g_pfw_i]=(u8)(drawn?1:0); g_pfw_ndrawn+=g_pfw_drawn[g_pfw_i];
++    g_pfw_i=(g_pfw_i+1u)%ZZVR_PF_WINDOW;
++    for(i=0;i<g_pfw_n;i++) if(g_pfw[i]>mx) mx=g_pfw[i];
++    g_pf_last_us=us; g_pf_avg_us=g_pfw_sum/g_pfw_n; g_pf_max_us=mx;
++    shared[ZZVR_SH_PF_LAST_US]=us; shared[ZZVR_SH_PF_W_AVG_US]=g_pf_avg_us; shared[ZZVR_SH_PF_W_MAX_US]=mx;
++    shared[ZZVR_SH_W_FRAMES]=g_pfw_n; shared[ZZVR_SH_W_DRAWN]=g_pfw_ndrawn;
++}
++
++/* decimal helpers for the OSD (no stdio in the blob) */
++static char *osd_ms(char *d, u32 us){        /* "12.3" from microseconds, 4 chars, clamps at 99.9 */
++    u32 t=(us+50u)/100u; if(t>999u) t=999u;
++    d[0]=(char)('0'+t/100u); d[1]=(char)('0'+(t/10u)%10u); d[2]='.'; d[3]=(char)('0'+t%10u); return d+4;
++}
++static char *osd_hex(char *d, u32 v, int n){ static const char h[]="0123456789ABCDEF"; int i; for(i=n-1;i>=0;i--){ d[i]=h[v&15u]; v>>=4; } return d+n; }
++
++/* One 8-pixel text line in the top border of the P96 picture (NTSC 224: rows 0..7
++   are border).  Fields: build, PicoFrame last / window average / window maximum
++   in ms, X<ADEN bit>, master SH-2 pc, slave SH-2 pc.  Drawn after the
++   conversion, before the cache clean (same buffer, same frame). */
++static void osd_draw(u32 *buf, u32 pp){
++    char line[48]; char *d=line; u32 aden;
++    if(shared[ZZVR_SH_OSD]) return;
++#ifdef ZZVR_DRC
++    d[0]='A';d[1]='1';d[2]='B';d[3]='3'; d+=4;
++#else
++    d[0]='A';d[1]='1';d[2]='A';d[3]='3'; d+=4;
++#endif
++    *d++=' '; d=osd_ms(d,g_pf_last_us); *d++=' '; d=osd_ms(d,g_pf_avg_us); *d++=' '; d=osd_ms(d,g_pf_max_us);
++    aden=(PicoIn.AHW&PAHW_32X)?1u:0u;
++    *d++=' '; *d++='X'; *d++=(char)('0'+aden);
++    *d++=' '; d=osd_hex(d, aden?msh2.pc:0u, 8);
++    *d++=' '; d=osd_hex(d, aden?ssh2.pc:0u, 8);
++    *d=0;
++    draw_text(buf, pp, 0, 0, line, 0xFFFFFFFFu);
++}
++
++static void zzvr_publish_diag(void){
++    extern u32 zzvr_mmap_used, zzvr_sbrk_used, zzvr_mmap_fail;
++    shared[ZZVR_SH_AHW]=PicoIn.AHW;
++    shared[ZZVR_SH_MMAP_USED]=zzvr_mmap_used;
++    shared[ZZVR_SH_SBRK_USED]=zzvr_sbrk_used;
++    shared[ZZVR_SH_MMAP_FAIL]=zzvr_mmap_fail;
++    if(PicoIn.AHW&PAHW_32X){
++        shared[ZZVR_SH_X32_REG0]=Pico32x.regs[0];
++        shared[ZZVR_SH_X32_VDP0]=Pico32x.vdp_regs[0];
++        shared[ZZVR_SH_MSH2_PC]=msh2.pc;
++        shared[ZZVR_SH_SSH2_PC]=ssh2.pc;
++    }
++}
++
+ void core1_entry(void *env) __attribute__((section(".text.core1_entry")));
+ void core1_entry(void *env)
+ {
+-    u32 hb=0;
++    u32 hb=0, fpexc, entry_sp;
+     (void)env;
++    __asm__ volatile("mov %0, sp":"=r"(entry_sp));
+ 
+-    /* Zero .bss (now at private pool 0x22000000; MMU off -> physical access). */
++    /* Zero .bss (XACP v1.7 Core1 arena, zzvr.ld; MMU off -> physical access). */
+     { extern u32 _bss_start,_bss_end; u32 *p=&_bss_start; while(p<&_bss_end)*p++=0; }
+ 
+-    mmu_init();   /* XX19 sections; enables MMU+caches, A=0/U=1 */
++    fpexc=vfp_enable();   /* before any C of the core: VFP instructions would UNDEF */
++    mmu_init();   /* XX19 sections + arena; enables MMU+caches, A=0/U=1 */
+ 
+     shared[ZZPICO_SH_MAGIC]=ZZPICO_MAGIC;
+     shared[ZZPICO_SH_VERSION]=ZZPICO_VERSION;
+     shared[ZZPICO_SH_STATUS]=ZZPICO_ST_BOOTING;
++    { u32 k; for(k=ZZPICO_SH_COUNT;k<ZZVR_SH_COUNT;k++) shared[k]=0; }
++    shared[ZZVR_SH_MAGIC]=ZZVR_MAGIC;
++#ifdef ZZVR_DRC
++    shared[ZZVR_SH_BUILD]=ZZVR_BUILD_A1B; shared[ZZVR_SH_DRC]=1u;
++#else
++    shared[ZZVR_SH_BUILD]=ZZVR_BUILD_A1A; shared[ZZVR_SH_DRC]=0u;
++#endif
++    shared[ZZVR_SH_VFP]=(fpexc&(1u<<30))?1u:0u;
++    shared[ZZVR_SH_ENTRY_SP]=entry_sp;
++    shared[ZZVR_SH_BUILD2]=3u;
+     shared[ZZPICO_SH_ERROR]=ZZPICO_ERR_NONE;
+     shared[ZZPICO_SH_HEARTBEAT]=0;
+     shared[ZZPICO_SH_ACK_SEQ]=shared[ZZPICO_SH_CMD_SEQ];
+@@ -706,6 +834,8 @@
+                 pc1=pmu_cyc();
+                 ++g_frames;
+                 shared[ZZPICO_SH_FRAME_COUNTER]=g_frames;
++                pf_window_add(pc1-pc0, g_do_render); /* A1: PicoFrame window statistics (us) */
++                zzvr_publish_diag();             /* A1: 32X state, SH-2 pcs, pools */
+                 if(g_frames==1)
+                     zzpico_snap(ZZPICO_SH_F1_PC,ZZPICO_SH_F1_SR,ZZPICO_SH_F1_A7,ZZPICO_SH_F1_ASP);
+                 /* Mode P96 rapide : en rendu direct P96, couper TOUS les
+@@ -770,6 +900,7 @@
+                            ecrite DIRECTEMENT dans le backbuffer P96. */
+                         convert_lut_p96(src, adst, stride_px, loffs, lines);
+                         pc2a=pmu_cyc(); pc2=pc2a;
++                        osd_draw(adst, stride_px);        /* A1: one text line in the top border */
+                         dcache_clean_range((void*)adst, FB3A_H*pitch_b);
+                         pc3=pmu_cyc();
+                         shared[ZZPICO_SH_CONV_MODE]=(u32)cm;
+@@ -802,9 +933,11 @@
+                 }
+                 if(p96_fast){
+                     shared[ZZPICO_SH_PERF_PICOFRAME]=pc1-pc0;
++                    if(g_do_render){   /* A1b3: pc2a/pc3 are only taken when the frame is drawn */
+                     shared[ZZPICO_SH_PERF_CONVERT]=pc2a-pc1;
+                     shared[ZZPICO_SH_PERF_COPY]=pc2-pc2a;
+                     shared[ZZPICO_SH_PERF_DCLEAN]=pc3-pc2;
++                    }
+ #ifdef ZZPICO_NTSC_DIAG
+                     /* NTSC_TIMING_DIAG : accumulateurs session (passif, aucune
+                        influence sur emulation/rendu/audio). Seuils cycles @666667/ms :
+@@ -822,10 +955,12 @@
+                         if(pf>8000004u)  d_g12++;
+                         if(pf>9333338u)  d_g14++;
+                         if(pf>11111117u) d_g67++;
++                        if(g_do_render){          /* A1b3: convert/dclean exist only for drawn frames */
+                         if(cv>d_cmax) d_cmax=cv;
+                         if(cv<d_cmin) d_cmin=cv;
+                         d_csus+=cv/667u;
+                         if(cl>d_lmax) d_lmax=cl;
++                        }
+                         shared[ZZPICO_SH_DIAG_PF_MIN]=d_min;
+                         shared[ZZPICO_SH_DIAG_PF_MAX]=d_max;
+                         shared[ZZPICO_SH_DIAG_PF_SUM_US]=d_sus;
+@@ -931,6 +1066,11 @@
+                         u32 wr=g_pcm_wpos, rd=shared[ZZPICO_SH_PCM_READ_POS];
+                         u32 fbq=(wr>=rd)?(wr-rd):(PCM_RING_SIZE-rd+wr);
+                         if((fbq>>2) < tgt) break;   /* place pour la frame suivante -> produire */
++                        /* A1b3: a command (STOP) pending while the 68k no longer drains the
++                           ring (its audio task is already gone at exit): leave at once, the
++                           command is processed at the top of the loop (1.1 waited the whole
++                           guard, several seconds of NC reads, before acknowledging STOP) */
++                        if(shared[ZZPICO_SH_CMD_SEQ]!=shared[ZZPICO_SH_ACK_SEQ]) break;
+                     }
+                 } else {
+                     u32 cpf = Pico.m.pal ? 13333333u : 11111111u;   /* ~666MHz / (50|60) */
+@@ -938,7 +1078,9 @@
+                     while((pmu_cyc() - g_frame_t0) < cpf && s--){ }
+                     g_frame_t0 = pmu_cyc();
+                     { u32 s2=8000000u;
+-                      while(shared[ZZPICO_SH_FLIP_SEQ] != g_frame_seq && s2--){ } }
++                      while(shared[ZZPICO_SH_FLIP_SEQ] != g_frame_seq && s2--){
++                          if(shared[ZZPICO_SH_CMD_SEQ]!=shared[ZZPICO_SH_ACK_SEQ]) break;   /* A1b3 */
++                      } }
+                 }
+             }
+         }

@@ -1,5 +1,5 @@
 #!/bin/bash
-# build_release.sh - produces the finished ZZPicoDrive32X v1.2 program.
+# build_release.sh - produces the finished ZZPicoDrive32X v1.2.1 program.
 #
 # Run from an MSYS2 shell (Windows) or Linux, in this folder:
 #   ./build_release.sh            all three steps
@@ -39,7 +39,7 @@ step_launcher(){
   mkdir -p release/ZZPicoDrive32X
   ( cd amiga && "$M68K_GCC" -O2 -noixemul -m68020 -Wno-pointer-sign \
         -o ../release/ZZPicoDrive32X/ZZPicoDrive32X ZZPicoDrive32X.c blob_data.c -lamiga )
-  cp README.md INSTALL.md RELEASE_NOTES_v1.2.md COPYING_PICODRIVE.txt THIRD_PARTY_NOTICES.md release/ZZPicoDrive32X/
+  cp README.md INSTALL.md RELEASE_NOTES_v1.2.1.md RELEASE_NOTES_v1.2.md COPYING_PICODRIVE.txt THIRD_PARTY_NOTICES.md release/ZZPicoDrive32X/
   ls -l release/ZZPicoDrive32X/ZZPicoDrive32X
   echo "done: release/ZZPicoDrive32X/  (copy this folder to the Amiga)"
 }

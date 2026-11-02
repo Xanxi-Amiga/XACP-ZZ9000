@@ -1,4 +1,4 @@
-# Building ZZPicoDrive32X v1.2
+# Building ZZPicoDrive32X v1.2.1
 
 The finished program is one 68k executable with the ARM Core1 program
 embedded in it. Three steps, all run from this folder in an MSYS2 shell
@@ -52,6 +52,12 @@ check one 32X game before publishing, or embed the reference itself:
 BLOB=reference/zz32x_v1.2_reference.bin ./build_release.sh embed
 ./build_release.sh launcher
 ```
+
+## Development build
+
+`amiga/blob_data_stub.c` replaces `blob_data.c` when no program is embedded;
+the Core1 program file is then given on the command line
+(`ZZPicoDrive32X Doom.32x bin/zz32x_v1.2.bin usa ahi`).
 
 ## Layout
 

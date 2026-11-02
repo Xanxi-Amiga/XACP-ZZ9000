@@ -1,6 +1,6 @@
 # Source, licensing and credits
 
-ZZPicoDrive32X 1.2 combines an AmigaOS 68k launcher and ZZ9000 ARM Core1
+ZZPicoDrive32X 1.2.1 combines an AmigaOS 68k launcher and ZZ9000 ARM Core1
 program with the PicoDrive Sega 32X emulation core.
 
 **PicoDrive is distributed under a historical non-commercial licence.** Do

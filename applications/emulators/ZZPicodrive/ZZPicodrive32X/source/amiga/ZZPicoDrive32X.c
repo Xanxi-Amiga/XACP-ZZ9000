@@ -1,12 +1,19 @@
 /*
- * ZZPicoDrive32X v1.2 - Sega 32X (and Mega Drive / Genesis) launcher for the
+ * ZZPicoDrive32X v1.2.1 - Sega 32X (and Mega Drive / Genesis) launcher for the
  * MNT ZZ9000.
  *
- * RELEASE v1.2 (31.10.2026).  Build: see BUILD.md (blob built with
+ * RELEASE v1.2.1 (01.11.2026).  Build: see BUILD.md (blob built with
  * "ZZVR_DRC=1 ./build_arm.sh", embedded with tools/bin2c, launcher compiled with
  *   m68k-amigaos-gcc -O2 -noixemul -m68020 -Wno-pointer-sign
  *       -o ZZPicoDrive32X ZZPicoDrive32X.c blob_data.c -lamiga ).
  *
+ * v1.2.1 (01.11.2026), launcher only (Core1 program of v1.2 unchanged), the
+ * fixes of ZZPicoDriveVR v1.2: CD32 / USB pad left and right shoulders = X and
+ * Y, yellow = Z (1.2: yellow = Mode, no X / Y / Z on the pad); checked Core1
+ * start (no MAGIC / INIT timeout: report, image read back, ARM_RUN = 0, one
+ * more load); GUI session log in T:ZZPicoDrive32X.log and a requester with the
+ * reason of a failed start; "SH-2 PCs frozen" watchdog line only when the game
+ * runs the 32X.
  * ZZPicoDrive32X v1.2 = the ZZPicoDriveMD v1.2 launcher (which already carries
  * every 32X change of ZZPicoDrive32X rc1: StackSwap, vblank PLL, Del reset with
  * handshake, keypad X/Y/Z/MODE, 1.5 MiB savestates, 32X blob diagnostics) with
@@ -223,7 +230,7 @@
  *   ('ZPM1' MD rc2, or 'ZVR1' 32X); the launcher also runs the 1.1 blob.
  *
  * Usage:
- *   ZZPicoDrive32X rom.32x [blob|-] [region] [flags]
+ *   ZZPicoDrive32X rom.bin [blob|-] [region] [flags]
  *   region: auto | eur | usa | jap
  *   flags : kbd cd32 db9 usb port=N silence paula ahi 2p inputlog osd tof gate no50 no60 pri0 norecheck
  *   (no argument = GUI; the Core1 blob is embedded; a file zz32x_v1.2.bin next to
@@ -283,12 +290,23 @@ struct Library *LowLevelBase = NULL;   /* lowlevel.library : ReadJoyPort (mode C
 struct Library *GadToolsBase = NULL;   /* GUI de lancement */
 struct Library *AslBase = NULL;        /* requester fichier ROM */
 
-/* sortie debug : active en mode CLI, muette en mode GUI (pas de fenetre console) */
+/* sortie debug : active en mode CLI ; en mode GUI (pas de fenetre console) elle
+   va dans T:ZZPicoDrive32X.log (v1.2 RC4: a GUI start that failed said nothing) */
 static int g_quiet = 0;
+static BPTR g_logfh = 0;
 static void qprintf(const char *fmt, ...)
 {
     va_list ap;
-    if(g_quiet) return;
+    if(g_quiet){
+        if(g_logfh){
+            static char lb[512];
+            va_start(ap, fmt);
+            vsnprintf(lb, sizeof(lb), fmt, ap);
+            va_end(ap);
+            FPuts(g_logfh, (STRPTR)lb); Flush(g_logfh);
+        }
+        return;
+    }
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end(ap);
@@ -1314,6 +1332,8 @@ static void wr32(volatile UBYTE *b, ULONG o, ULONG v)
 #define CP_GREEN  0x00100000UL
 #define CP_YELLOW 0x00200000UL
 #define CP_START  0x00020000UL
+#define CP_REVERSE 0x00040000UL   /* left shoulder  (JPB_BUTTON_REVERSE, 18) */
+#define CP_FORWARD 0x00080000UL   /* right shoulder (JPB_BUTTON_FORWARD, 19) */
 /* touches clavier joueur 2 (WASD + FGH + Tab) */
 #define RK_W 0x11
 #define RK_A 0x20
@@ -1339,7 +1359,13 @@ static ULONG read_pad(int mode, ULONG port, int keyset)
                 if(jp&CP_BLUE)  pm|=ZP_A;
                 if(jp&CP_RED)   pm|=ZP_B;
                 if(jp&CP_GREEN) pm|=ZP_C;
-                if(jp&CP_YELLOW)pm|=ZP_MODE;
+                /* v1.2.1: the 6-button functions on a CD32 / USB (Poseidon)
+                   pad: shoulders = X / Y, yellow = Z (Virtua Racing Deluxe: the
+                   views; 1.2 had yellow = Mode and no X / Y / Z on the pad).
+                   Mode stays on keypad 0. */
+                if(jp&CP_REVERSE)pm|=ZP_X;
+                if(jp&CP_FORWARD)pm|=ZP_Y;
+                if(jp&CP_YELLOW)pm|=ZP_Z;
                 if(jp&CP_START) pm|=ZP_START;
             }
         }
@@ -1738,7 +1764,7 @@ static int run_picodrive(const ZP_Config *cfg)
     int uncapped=0; const char *pacing_mode="TIMER"; int vbl_ok=0;
     int g_pace_zz=0; ULONG efreq_main=0;   /* 32X: 1 = PLL on the ZZ9000 vblank, 0 = WaitTOF */
 
-    printf("ZZPicoDrive32X v1.2 - Sega 32X on the ZZ9000 Core1\n");
+    printf("ZZPicoDrive32X v1.2.1 - Sega 32X on the ZZ9000 Core1\n");
     stack_report("start");
     region_in=region_from_cfg(cfg->region,&region_label);
     switch(cfg->input){
@@ -1769,19 +1795,18 @@ static int run_picodrive(const ZP_Config *cfg)
     cd=FindConfigDev(NULL,ZZ9000_MANUF,ZZ9000_PROD);
     if(!cd) cd=FindConfigDev(NULL,ZZ9000_MANUF,0x0A);
     CloseLibrary((struct Library*)ExpansionBase); ExpansionBase=NULL;
-    if(!cd){ printf("ZZ9000 not found\n"); return 10; }
+    if(!cd){ printf("ZZ9000 not found\n"); g_exit_reason="ZZ9000 not found"; return 10; }
     board=(volatile UBYTE*)cd->cd_BoardAddr; fb=board+MNT_FB_BASE; shared=fb+FB_SHARED;
     printf("board=0x%08lX fb=0x%08lX shared=0x%08lX\n",(ULONG)board,(ULONG)fb,(ULONG)shared);
 
     /* ROM */
     fh=Open((STRPTR)cfg->rom_path,MODE_OLDFILE);
-    if(!fh){ printf("Cannot open ROM\n"); rc=10; goto done; }
+    if(!fh){ printf("Cannot open ROM\n"); g_exit_reason="cannot open the ROM"; rc=10; goto done; }
     Seek(fh,0,OFFSET_END); rom_size=(LONG)Seek(fh,0,OFFSET_END); Seek(fh,0,OFFSET_BEGINNING);
     if(rom_size<=0){ Close(fh); rc=10; goto done; }
     rombuf=(UBYTE*)AllocMem((ULONG)rom_size+ROM_PAD,MEMF_PUBLIC|MEMF_CLEAR);
-    if(!rombuf||Read(fh,rombuf,rom_size)!=rom_size){ printf("ROM read fail\n"); Close(fh); rc=10; goto done; }
+    if(!rombuf||Read(fh,rombuf,rom_size)!=rom_size){ printf("ROM read fail\n"); g_exit_reason="ROM read failed"; Close(fh); rc=10; goto done; }
     Close(fh); fh=0; printf("ROM: %ld bytes\n",rom_size);
-
     /* blob : fichier si present (override dev), sinon blob embarque dans l'executable (release) */
     fh=Open((STRPTR)cfg->blob_path,MODE_OLDFILE);
     if(fh){
@@ -1813,30 +1838,59 @@ static int run_picodrive(const ZP_Config *cfg)
        wrong page table descriptor read back (0 instead of 0x00b10c02), i.e. any
        variable could start with a value of the previous program.  The firmware
        stop holds CPU1 in reset and cleans + invalidates L1 and the shared L2. */
-    ZZ_WR(board,REG_ARM_RUN_HI,0);
-    ZZ_WR(board,REG_ARM_RUN_LO,0);
-    Delay(2);
-    printf("ARM_RUN=0 before loading (previous Core1 program stopped, caches flushed)\n");
-    copy_uword(fb+FB_ROM,rombuf,rom_size);
-    { volatile UWORD *pad=(volatile UWORD*)(fb+FB_ROM+(ULONG)rom_size);
-      for(i=0;i<(int)(ROM_PAD/2);i++) pad[i]=0; }
-    copy_uword(fb+FB_BLOB,blobbuf,blob_size);
+    /* v1.2.1 (from ZZPicoDriveVR v1.2): a GUI start failed with no message and CPU1 was left
+       running a program that never answered ("No MAGIC" went straight to the
+       exit): the next Core1 program (Julia) then crashed.  Now a start that does
+       not answer is reported (blob image read back, Core1 status), CPU1 is
+       parked with ARM_RUN = 0, and the load is done once more from scratch. */
+    {   int attempt;
+        for(attempt=0;;attempt++){
+            int ok=0;
+            ZZ_WR(board,REG_ARM_RUN_HI,0);
+            ZZ_WR(board,REG_ARM_RUN_LO,0);
+            Delay(attempt?10:5);
+            printf("ARM_RUN=0 before loading (previous Core1 program stopped, caches flushed)%s\n", attempt?" - second attempt":"");
+            copy_uword(fb+FB_ROM,rombuf,rom_size);
+            { volatile UWORD *pad=(volatile UWORD*)(fb+FB_ROM+(ULONG)rom_size);
+              for(i=0;i<(int)(ROM_PAD/2);i++) pad[i]=0; }
+            copy_uword(fb+FB_BLOB,blobbuf,blob_size);
 
-    /* A1diag: also clear slots 160..199 (A1 fields incl. the 'ZVR1' magic) so a
-       previous run cannot leave a stale identification (1.1 cleared 0..159) */
-    { volatile UWORD *p=(volatile UWORD*)shared; for(i=0;i<400;i++) p[i]=0; }
-    ZZ_WR(board,REG_ARM_RUN_HI,(UWORD)(ARM_BLOB>>16));
-    ZZ_WR(board,REG_ARM_RUN_LO,(UWORD)(ARM_BLOB&0xFFFF));
+            /* A1diag: also clear slots 160..199 (A1 fields incl. the 'ZVR1' magic) so a
+               previous run cannot leave a stale identification (1.1 cleared 0..159) */
+            { volatile UWORD *p=(volatile UWORD*)shared; for(i=0;i<400;i++) p[i]=0; }
+            ZZ_WR(board,REG_ARM_RUN_HI,(UWORD)(ARM_BLOB>>16));
+            ZZ_WR(board,REG_ARM_RUN_LO,(UWORD)(ARM_BLOB&0xFFFF));
 
-    { LONG t=250; while(t-->0 && rd32(shared,SH_MAGIC)!=ZZPICO_MAGIC) Delay(1); }
-    if(rd32(shared,SH_MAGIC)!=ZZPICO_MAGIC){ printf("No MAGIC\n"); rc=10; goto done; }
-    printf("Core1 READY.\n");
-
-    if(!send_cmd(shared,ZP_CMD_INIT,250)){ printf("INIT timeout\n"); diag_fault_report(shared); g_exit_reason="INIT timeout"; rc=12; goto stop; }
+            { LONG t=250; while(t-->0 && rd32(shared,SH_MAGIC)!=ZZPICO_MAGIC) Delay(1); }
+            if(rd32(shared,SH_MAGIC)!=ZZPICO_MAGIC){
+                printf("No MAGIC (the Core1 program did not answer)\n");
+                g_exit_reason="the Core1 program did not start";
+            } else {
+                printf("Core1 READY.\n");
+                if(send_cmd(shared,ZP_CMD_INIT,250)) ok=1;
+                else { printf("INIT timeout\n"); g_exit_reason="INIT timeout"; }
+            }
+            if(ok) break;
+            diag_fault_report(shared);
+            {   /* is the program image still the one copied? */
+                volatile UWORD *m=(volatile UWORD*)(fb+FB_BLOB); const UWORD *src=(const UWORD*)blobbuf;
+                ULONG n=(ULONG)blob_size/2, k, bad=0, first=0;
+                for(k=0;k<n;k++) if(m[k]!=src[k]){ if(!bad) first=k*2; bad++; }
+                if(bad) printf("  program image in ZZ9000 memory: %lu words differ, first at +0x%lx\n", bad, first);
+                else    printf("  program image in ZZ9000 memory: identical to the copy\n");
+            }
+            ZZ_WR(board,REG_ARM_RUN_HI,0);
+            ZZ_WR(board,REG_ARM_RUN_LO,0);
+            Delay(5);
+            printf("  ARM_RUN=0 written (CPU1 parked)\n");
+            if(attempt>=1){ blob_stopped=1; rc=12; goto done; }
+            printf("Core1 start failed: loading again\n");
+        }
+    }
     wr32(shared,SH_ROM_ADDR,ARM_ROM); wr32(shared,SH_ROM_SIZE,(ULONG)rom_size);
     wr32(shared,SH_ROM_CRC_68K,crc_68k);
     if(!send_cmd(shared,ZP_CMD_LOAD_ROM,250)){ printf("LOAD_ROM timeout\n"); diag_fault_report(shared); g_exit_reason="LOAD_ROM timeout"; rc=13; goto stop; }
-    if(rd32(shared,SH_ERROR)!=0){ printf("LOAD_ROM err=%lu\n",rd32(shared,SH_ERROR)); rc=14; goto stop; }
+    if(rd32(shared,SH_ERROR)!=0){ printf("LOAD_ROM err=%lu\n",rd32(shared,SH_ERROR)); g_exit_reason="ROM refused by the Core1 program"; rc=14; goto stop; }
     printf("ROM loaded (CRC_ARM=0x%08lX)\n",rd32(shared,SH_ROM_CRC_ARM));
     /* A1diag: identify the blob, OSD flag */
     if(diag_blob(shared)){
@@ -1889,11 +1943,11 @@ static int run_picodrive(const ZP_Config *cfg)
     }
     if(g_input_mode==3) printf("INPUT J1 DB9 hardware pur, port %lu\n", g_joyport);
     if(g_players==2) printf("INPUT 2 joueurs : J1 port %lu, J2 port %lu\n", g_joyport, g_joyport2);
-    if(!IntuitionBase||!GfxBase_||!P96Base){ printf("libs missing (P96?)\n"); rc=17; goto stop; }
+    if(!IntuitionBase||!GfxBase_||!P96Base){ printf("libs missing (P96?)\n"); g_exit_reason="Picasso96 missing"; rc=17; goto stop; }
 
     modeid=p96BestModeIDTags(P96BIDTAG_NominalWidth,(ULONG)IMG_W,
         P96BIDTAG_NominalHeight,(ULONG)IMG_H,P96BIDTAG_Depth,32,TAG_DONE);
-    if(modeid==(ULONG)INVALID_ID){ printf("No 32-bit RTG mode\n"); rc=18; goto stop; }
+    if(modeid==(ULONG)INVALID_ID){ printf("No 32-bit RTG mode\n"); g_exit_reason="no 320x240 32-bit screen mode"; rc=18; goto stop; }
     /* v1.01 : ouverture ecran robuste. On essaie D'ABORD l'ouverture stricte
        (comportement V1.0 valide, qui marche sur la plupart des configs). Seulement
        si elle ECHOUE (certaines AmigaOS 3.2 + Picasso96/iComp recentes la refusent
@@ -1924,7 +1978,7 @@ static int run_picodrive(const ZP_Config *cfg)
     win=(struct Window*)OpenWindowTags(NULL,WA_Left,0,WA_Top,0,WA_Width,(ULONG)IMG_W,
         WA_Height,(ULONG)IMG_H,WA_Flags,WFLG_BACKDROP|WFLG_BORDERLESS|WFLG_RMBTRAP|WFLG_ACTIVATE,
         WA_IDCMP,IDCMP_RAWKEY,WA_CustomScreen,(ULONG)my_scr,TAG_DONE);   /* v1.2: no mouse button events (the mouse never quits) */
-    if(!win){ printf("OpenWindow failed\n"); rc=18; goto closescr; }
+    if(!win){ printf("OpenWindow failed\n"); g_exit_reason="window could not be opened"; rc=18; goto closescr; }
 
     /* cacher le pointeur souris sur l'ecran PicoDrive (sprite blank en Chip RAM) */
     g_blankspr=(UWORD*)AllocMem(12L, MEMF_CHIP|MEMF_CLEAR);   /* 6 words a 0 = invisible */
@@ -2282,7 +2336,7 @@ static int run_picodrive(const ZP_Config *cfg)
                 printf("WATCHDOG iter=%lu: NO NEW FRAME for %lu vblanks while the blob runs (ready=%lu flip=%lu inflight=%d)\n",
                        g_wd_iter, g_wd_iter - wd_rd_iter, rd, rd32(shared,SH_FLIP_SEQ), flip_inflight);
                 diag_snapshot(shared, board, "noframe");
-            } else if(is_zvr && g_wd_iter - wd_pc_iter >= 120 && g_wd_iter - wd_fc_iter < 120 && g_wd_iter >= wd_next_sh2){
+            } else if(is_zvr && (rd32(shared,SH_ZVR_AHW)&2UL) && g_wd_iter - wd_pc_iter >= 120 && g_wd_iter - wd_fc_iter < 120 && g_wd_iter >= wd_next_sh2){
                 wd_next_sh2 = g_wd_iter + 600;
                 printf("WATCHDOG iter=%lu: SH-2 PCS FROZEN for %lu vblanks while PicoFrame runs (msh2=0x%08lx ssh2=0x%08lx)\n",
                        g_wd_iter, g_wd_iter - wd_pc_iter, rd32(shared,SH_ZVR_MSH2_PC), rd32(shared,SH_ZVR_SSH2_PC));
@@ -2754,7 +2808,7 @@ static void gui_req(struct Window *w, const char *title, const char *text){
     es.es_GadgetFormat=(STRPTR)"OK";
     EasyRequest(w,&es,NULL,0);
 }
-static const char zz32x_version[] __attribute__((used)) = "$VER: ZZPicoDrive32X 1.2 (31.10.2026)";
+static const char zz32x_version[] __attribute__((used)) = "$VER: ZZPicoDrive32X 1.2.1 (01.11.2026)";
 static const char *TXT_ABOUT =
     "ZZPicoDrive32X brings Sega 32X (and Mega Drive) emulation to\n"
     "classic Amigas equipped with an MNT ZZ9000. The emulation\n"
@@ -2774,7 +2828,9 @@ static const char *TXT_CONTROLS =
     "  Numpad 4/5/6 = X/Y/Z   Numpad 0 = Mode   Del = Reset\n\n"
     "Controller types:\n"
     "  DB9 hardware = joystick/pad on the real port (2 buttons)\n"
-    "  CD32 / USB   = CD32 pad, or USB pad via Poseidon\n\n"
+    "  CD32 / USB   = CD32 pad, or USB pad via Poseidon:\n"
+    "    blue/red/green = A/B/C, left/right shoulder = X/Y,\n"
+    "    yellow = Z, play = Start\n\n"
     "Start fallback (for a pad with no Start button):\n"
     "  Player 1 = Enter     Player 2 = Tab\n"
     "These keys always work, even with a controller.";
@@ -2887,7 +2943,7 @@ static int gui_get_config(ZP_Config *cfg)
       if(!gc){ result=-1; goto guiclean; }
 
       win=(struct Window*)OpenWindowTags(NULL,
-        WA_Title,(ULONG)"ZZPicoDrive32X v1.2 - Sega 32X edition",
+        WA_Title,(ULONG)"ZZPicoDrive32X v1.2.1 - Sega 32X edition",
         WA_Left,60, WA_Top,40, WA_Width,460, WA_Height,top+172,
         WA_Gadgets,(ULONG)glist, WA_DragBar,TRUE, WA_DepthGadget,TRUE,
         WA_CloseGadget,TRUE, WA_Activate,TRUE, WA_SimpleRefresh,TRUE,
@@ -2957,7 +3013,7 @@ static int gui_get_config(ZP_Config *cfg)
                         if(controllers_conflict(cfg)){
                             struct EasyStruct es;
                             es.es_StructSize=sizeof(struct EasyStruct); es.es_Flags=0;
-                            es.es_Title=(STRPTR)"ZZPicoDrive32X v1.2";
+                            es.es_Title=(STRPTR)"ZZPicoDrive32X";
                             es.es_TextFormat=(STRPTR)"Players 1 and 2 use the same port.\nUse different ports for two controllers\n(or set one player to Keyboard).";
                             es.es_GadgetFormat=(STRPTR)"OK";
                             EasyRequest(win,&es,NULL,0); DisplayBeep(pub); break;
@@ -3050,10 +3106,22 @@ static int main_body(int argc, char **argv)
         g_quiet=1;                       /* GUI : aucune sortie console */
         g=gui_get_config(&cfg);
         if(g<=0){ rc=0; goto mainclean; }   /* Quit, fermeture, ou GUI indisponible */
+        /* v1.2 RC4: the GUI session log (the Shell prints it) */
+        g_logfh=Open((STRPTR)"T:ZZPicoDrive32X.log", MODE_NEWFILE);
+        printf("ZZPicoDrive32X 1.2.1 GUI session - ROM %s\n", cfg.rom_path);
     }
     zp_config_save(&cfg, "PROGDIR:ZZPicoDrive32X.cfg");
     rc=run_picodrive(&cfg);
+    if(g_quiet && rc!=0){   /* v1.2 RC4: a GUI start that failed says why */
+        struct EasyStruct es;
+        es.es_StructSize=sizeof(struct EasyStruct); es.es_Flags=0;
+        es.es_Title=(STRPTR)"ZZPicoDrive32X";
+        es.es_TextFormat=(STRPTR)"The game stopped: %s (code %ld).\nThe details are in T:ZZPicoDrive32X.log.";
+        es.es_GadgetFormat=(STRPTR)"OK";
+        EasyRequest(NULL,&es,NULL,(ULONG)g_exit_reason,(LONG)rc);
+    }
 mainclean:
+    if(g_logfh){ Close(g_logfh); g_logfh=0; }
     printf("MAIN: closing graphics/intuition\n");
     if(GfxBase_){ CloseLibrary(GfxBase_); GfxBase_=NULL; }
     if(IntuitionBase){ CloseLibrary((struct Library*)IntuitionBase); IntuitionBase=NULL; }

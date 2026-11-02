@@ -1,0 +1,74 @@
+--- /tmp/vr/XACP-ZZ9000/applications/emulators/ZZPicodrive/ZZPicodriveMD/source/arm/zzpico_shared.h	2026-10-25 01:55:44.252934655 +0200
++++ Core1/zzvr_shared.h	2026-10-25 11:36:58.127344295 +0100
+@@ -1,5 +1,11 @@
+ /*
+- * zzpico_shared.h - ZZPicoDrive shared contract (Core1 ARM blob <-> 68k)
++ * zzvr_shared.h - ZZVirtuaRacingRIX shared contract (Core1 ARM blob <-> 68k)
++ *
++ * IDENTICAL to the public ZZPicoDriveMD 1.1 zzpico_shared.h for indexes 0..175
++ * (the public launcher drives this blob unchanged).  Additions only:
++ * ZZVR_SH_* at indexes 180.. (A1 diagnostics), ZZVR_SH_COUNT.
++ * The ARM-private addresses (BSS/heap) of 1.1 are NOT used by this blob:
++ * see zzvr_mem.h (XACP v1.7 Core1 arena).
+  *
+  * MEMORY AUTHORITY: XX19 / XACP v1.5 canonical map (NOT ZZDoom320).
+  * ZZDoom is authority ONLY for the Core1 model (STOP, handshake, MMU/cache).
+@@ -10,8 +16,8 @@
+  * Shared NC: ARM writes direct (no bswap); 68k rd32/wr32 byteswap, off = idx*4.
+  * ASCII only.
+  */
+-#ifndef ZZPICO_SHARED_H
+-#define ZZPICO_SHARED_H
++#ifndef ZZVR_SHARED_H
++#define ZZVR_SHARED_H
+ 
+ #define ZZPICO_MAGIC        0x5A504943UL   /* 'ZPIC' */
+ #define ZZPICO_VERSION      1UL
+@@ -25,11 +31,10 @@
+ #define ZZPICO_ARM_VIDEO    0x05600000UL   /* fb+0x05400000, WB/WA (phase 4)     */
+ #define ZZPICO_ARM_AUDIO    0x05700000UL   /* fb+0x05500000, NC    (phase 5)     */
+ #define ZZPICO_ARM_DEBUG    0x05800000UL   /* fb+0x05600000, 2 MB debug/margin   */
+-/* ARM private pool (ARM-only, not 68k-visible): */
+-#define ZZPICO_ARM_BSS      0x22000000UL   /* WB/WA, 4 MB (..0x22400000)         */
+-#define ZZPICO_ARM_BSS_END  0x22400000UL
+-#define ZZPICO_ARM_HEAP     0x22800000UL   /* WB/WA, 8 MB (..0x23000000)         */
+-#define ZZPICO_HEAP_SIZE    (8UL*1024UL*1024UL)
++/* ARM private memory (ARM-only, not 68k-visible): ZZVirtuaRacing uses the
++ * XACP v1.7 Core1 arena only, see zzvr_mem.h.  The 1.1 private pool constants
++ * (ZZPICO_ARM_BSS 0x22000000, ZZPICO_ARM_HEAP 0x22800000) are deliberately
++ * removed from this header so that nothing can reference them. */
+ 
+ #define ZZPICO_FB_BLOB      0x04300000UL
+ #define ZZPICO_FB_SHARED    0x04500000UL
+@@ -274,4 +279,30 @@
+ #define ZP_MENU   (1u<<13)
+ #define ZZPICO_SH_COUNT 176
+ 
+-#endif
++/* ==== ZZVirtuaRacingRIX A1 additions (Core1 -> 68k, diagnostics; read-only for the 68k) ==== */
++#define ZZVR_SH_MAGIC          180   /* 'ZVR1' = 0x5A565231 : identifies a ZZVirtuaRacing blob */
++#define ZZVR_SH_BUILD          181   /* 0x0A1A = A1a (SH-2 interpreter), 0x0A1B = A1b (DRC)      */
++#define ZZVR_SH_AHW            182   /* PicoIn.AHW (bit PAHW_32X = 0x04 when the ROM is 32X)      */
++#define ZZVR_SH_X32_REG0       183   /* Pico32x.regs[0] (ADEN bit0, nRES bit1, FM bit15)          */
++#define ZZVR_SH_MSH2_PC        184   /* master SH-2 pc at frame end                               */
++#define ZZVR_SH_SSH2_PC        185   /* slave SH-2 pc at frame end                                */
++#define ZZVR_SH_MMAP_USED      186   /* plat_mmap bytes handed out (Pico32xMem...)                */
++#define ZZVR_SH_SBRK_USED      187   /* _sbrk bytes handed out                                    */
++#define ZZVR_SH_PF_W_AVG_US    188   /* PicoFrame average over the last 600 frames (~10 s), us   */
++#define ZZVR_SH_PF_W_MAX_US    189   /* PicoFrame maximum over the same window, us                */
++#define ZZVR_SH_PF_LAST_US     190   /* PicoFrame of the last frame, us                           */
++#define ZZVR_SH_VFP            191   /* 1 = VFP enabled in core1_entry (FPEXC.EN read back)       */
++#define ZZVR_SH_DRC            192   /* A1b: 1 = recompiler compiled in and enabled, 0 = interpreter */
++#define ZZVR_SH_MMAP_FAIL      193   /* plat_mmap refusals (must stay 0)                          */
++#define ZZVR_SH_X32_VDP0       194   /* Pico32x.vdp_regs[0] (mode bits 0-1: 0 blank,1 packed,2 direct,3 RLE) */
++#define ZZVR_SH_OSD            195   /* 68k -> Core1 (optional): 0 = OSD on (default), 1 = OSD off */
++#define ZZVR_SH_W_FRAMES       196   /* frames in the PicoFrame window (<= 600)                   */
++#define ZZVR_SH_W_DRAWN        197   /* of which drawn (the others ran with skipFrame = 1)        */
++#define ZZVR_SH_ENTRY_SP       198   /* SP at core1_entry (expected 0x05FFFFxx: firmware stack)    */
++#define ZZVR_SH_BUILD2         199   /* sub-build: 1 = A1a/A1b first build, 2 = A1a2/A1b2 (stack cached) */
++#define ZZVR_SH_COUNT          200
++#define ZZVR_MAGIC             0x5A565231UL
++#define ZZVR_BUILD_A1A         0x0A1AUL   /* A1a2: 0x0A1A2 is not representable in 16 bits: see ZZVR_SH_BUILD2 */
++#define ZZVR_BUILD_A1B         0x0A1BUL
++
++#endif /* ZZVR_SHARED_H */
