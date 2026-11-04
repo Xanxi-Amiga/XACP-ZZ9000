@@ -171,7 +171,7 @@ See [INSTALL.md](INSTALL.md).
 
 The complete source is included: 68k launcher (`amiga/`), ARM Core1 program
 (`Core1/`), PicoDrive and Cyclone (`third_party/`), and the build scripts.
-See [BUILD.md](BUILD.md).
+See [source/BUILD.md](source/BUILD.md).
 
 ## Credits
 

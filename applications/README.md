@@ -38,8 +38,9 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `ZZScreensaver/` | **[ZZScreensavers 1.1](ZZScreensaver/README.md)** | Earth/Julia on Core1; Solar Winds via RasterIX | Current |
 | `emulators/ZZPicodrive/ZZPicodriveMD/` | **[ZZPicoDriveMD 1.2](emulators/ZZPicodrive/ZZPicodriveMD/README.md)** | Sega Mega Drive / Genesis; smooth PAL/NTSC gameplay | Current |
 | `emulators/ZZPicodrive/ZZPicodriveSMS/` | **[ZZPicoDriveSMS 1.2](emulators/ZZPicodrive/ZZPicodriveSMS/README.md)** | Sega Master System with YM2413 FM sound | Current |
-| `emulators/ZZPicodrive/ZZPicodrive32X/` | **[ZZPicoDrive32X 1.2](emulators/ZZPicodrive/ZZPicodrive32X/README.md)** | Sega 32X with dual-SH-2 recompilation and smooth PAL/NTSC gameplay | Current |
-| `games/ZZDoom/`                         | **ZZDoom**                | Doom engine running on ARM Core1               | Current              |
+| `emulators/ZZPicodrive/ZZPicodrive32X/` | **[ZZPicoDrive32X 1.2.1](emulators/ZZPicodrive/ZZPicodrive32X/README.md)** | Sega 32X with dual-SH-2 recompilation and six-button controller support | Current |
+| `emulators/ZZPicodrive/ZZPicodriveVR/` | **[ZZPicoDriveVR 1.2](emulators/ZZPicodrive/ZZPicodriveVR/README.md)** | Original Mega Drive Virtua Racing cartridge with SVP emulation | Current |
+| `emulators/ZZPicodrive/ZZPicodriveMegaCD/` | **[ZZPicoDriveMegaCD 1.2](emulators/ZZPicodrive/ZZPicodriveMegaCD/README.md)** | Sega Mega-CD / Sega CD, CHD disc images and Sega CD 32X support | Current || `games/ZZDoom/`                         | **ZZDoom**                | Doom engine running on ARM Core1               | Current              |
 | `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current              |
 | `games/ZZQuake2/` | **[ZZQuake2 1.0](games/ZZQuake2/README.md)** | Quake II with software, TinyGL and RasterIX renderers | Current |
 | `games/ZZQuakeHighRes/`                 | **ZZQuake HighRes 1.0**   | Quake 640x480 / 800x600 / 1024x768 on Core1   | Current              |
@@ -182,37 +183,37 @@ See [ZZScreensavers documentation](ZZScreensaver/README.md).
 
 Directory: [emulators/ZZPicodrive/](emulators/ZZPicodrive/README.md)
 
-ZZPicoDrive runs Sega console emulation on the ZZ9000 ARM Cortex-A9 Core1.
-AmigaOS handles the Workbench launcher, Picasso96 display, audio, input and
-file access. The three current editions use synchronized PAL/NTSC output
-for smooth gameplay and support direct Paula or AHI audio.
+ZZPicoDrive provides five Sega emulation editions for classic Amigas equipped with an MNT ZZ9000.
+
+The emulation engines run on ARM Core1, while AmigaOS provides the Workbench launcher, Picasso96 display, input, audio and file access.
+
+All five editions support synchronized PAL/NTSC gameplay with Paula or AHI audio output.
 
 ## [ZZPicoDriveMD 1.2](emulators/ZZPicodrive/ZZPicodriveMD/README.md)
 
-Sega Mega Drive / Genesis emulation, with SRAM, savestates and keyboard /
-gamepad input. The 1.2 release introduces smoother PAL 50 Hz and NTSC 60 Hz
-presentation and improved synchronization.
+Mega Drive / Genesis emulation with smooth PAL/NTSC presentation, SRAM, savestates and controller support.
 
 ## [ZZPicoDriveSMS 1.2](emulators/ZZPicodrive/ZZPicodriveSMS/README.md)
 
-Sega Master System emulation with **Yamaha YM2413 FM Sound Unit** support,
-alongside smooth PAL/NTSC presentation, SRAM and savestates.
+Sega Master System emulation with Yamaha YM2413 FM Sound Unit support, smooth PAL/NTSC presentation and savestates.
 
-## [ZZPicoDrive32X 1.2](emulators/ZZPicodrive/ZZPicodrive32X/README.md)
+## [ZZPicoDrive32X 1.2.1](emulators/ZZPicodrive/ZZPicodrive32X/README.md)
 
-First public Sega 32X edition, based on the ZZPicoDriveMD 1.2 platform.
-Uses PicoDrive's dynamic recompilation for both SH-2 processors and provides
-smooth PAL/NTSC gameplay, audio and savestates. Accepts `.32x` and `.bin`
-cartridge images.
+Sega 32X emulation using dynamic recompilation for both SH-2 processors. Version 1.2.1 improves six-button controller handling and launcher startup reliability.
 
-**Firmware:** XACP XX19c or later compatible firmware; XX19d-RIX or a later
-compatible version is recommended, with the matching `zz9000.card`.
-The original MD and SMS 1.1 releases remain in the
-[historical archive](emulators/ZZPicodrive/archive/).
+## [ZZPicoDriveMD Virtua Racing Edition 1.2](emulators/ZZPicodrive/ZZPicodriveVR/README.md)
 
-Each edition provides its Amiga executable, corresponding sources and
-third-party licensing notices. No commercial game ROMs are included.
+Dedicated emulation of the original Mega Drive Virtua Racing cartridge, including its SVP processor. European, US and Japanese cartridge versions are supported.
 
+## [ZZPicoDriveMegaCD 1.2](emulators/ZZPicodrive/ZZPicodriveMegaCD/README.md)
+
+Sega Mega-CD / Sega CD emulation with CD audio, backup RAM, savestates, multi-disc support and Sega CD 32X compatibility. CHD is the recommended disc-image format.
+
+**Firmware:** XACP XX19c or a later compatible XACP release. XX19d-RIX or a later compatible firmware is recommended, with the matching `zz9000.card`.
+
+The original MD and SMS 1.1 releases remain in the [historical archive](emulators/ZZPicodrive/archive/).
+
+Each edition provides an Amiga executable, complete corresponding sources and third-party licensing notices. No commercial game ROMs, Mega-CD BIOS files or disc images are included.
 
 ---
 
