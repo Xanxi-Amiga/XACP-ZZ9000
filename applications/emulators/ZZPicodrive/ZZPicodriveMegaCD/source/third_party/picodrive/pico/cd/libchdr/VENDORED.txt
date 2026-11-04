@@ -1,0 +1,7 @@
+libchdr, vendored for ZZPicoDriveMegaCD (offline build).
+Source: https://github.com/irixxxx/libchdr commit e62ac5995b1c7ef65ece35293914843b8ee57d49
+(the pico/cd/libchdr submodule commit of the PicoDrive tree in this package).
+Kept: src/, include/libchdr/, the decoder parts of deps/zlib-1.3.1,
+deps/lzma-24.05 and deps/zstd-1.5.6, with their licences. Files unchanged.
+dr_flac.h (platform/common/dr_libs/): https://github.com/mackron/dr_libs
+commit dd762b861ecadf5ddd5fb03e9ca1db6707b54fbb (PicoDrive's submodule commit).
