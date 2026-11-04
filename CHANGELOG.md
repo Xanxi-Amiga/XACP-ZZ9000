@@ -1,5 +1,49 @@
 # Changelog
 
+
+## ZZPicoDriveMD Virtua Racing Edition 1.2 - 4 November 2026
+
+First public edition dedicated to the original Mega Drive / Genesis Virtua Racing cartridge.
+
+- Emulates the cartridge's SVP processor using PicoDrive on ZZ9000 ARM Core1.
+- Supports European, US and Japanese Virtua Racing cartridge versions.
+- Provides smooth PAL/NTSC gameplay, full-width rendering, Paula or AHI audio and six-button controller support.
+- Includes five savestate slots, Workbench launcher and clean restart handling.
+- Publishes the Amiga distribution, complete corresponding sources and third-party licence notices.
+- Compatible with XACP XX19c; XX19d-RIX or later compatible XACP firmware recommended.
+
+Documentation: [ZZPicoDriveVR 1.2](applications/emulators/ZZPicodrive/ZZPicodriveVR/README.md).
+
+---
+
+## ZZPicoDriveMegaCD 1.2 - Sega Mega-CD / Sega CD - 4 November 2026
+
+First public Mega-CD / Sega CD edition for ZZ9000 ARM Core1.
+
+- Supports CHD (recommended) and CUE/BIN disc images.
+- Provides CD audio, PCM sound, Paula or AHI output, backup RAM and five savestate slots.
+- Supports multi-disc games with M3U playlists and disc switching.
+- Adds Sega CD 32X compatibility, tested with Corpse Killer and Surgical Strike.
+- Includes regional BIOS selection and an Amiga Workbench launcher.
+- Publishes the Amiga distribution, complete corresponding sources and third-party licence notices.
+- Compatible with XACP XX19c; XX19d-RIX or later compatible XACP firmware recommended.
+
+Documentation: [ZZPicoDriveMegaCD 1.2](applications/emulators/ZZPicodrive/ZZPicodriveMegaCD/README.md).
+
+---
+
+## ZZPicoDrive32X 1.2.1 - Controller and launcher update - 2 November 2026
+
+Maintenance update to the first public Sega 32X edition.
+
+- Adds X/Y/Z button support for CD32 and Poseidon USB controllers, including Virtua Racing Deluxe camera controls.
+- Improves ARM Core1 startup recovery and error reporting.
+- Retains the existing ARM emulation engine and performance of version 1.2.
+
+Documentation: [ZZPicoDrive32X 1.2.1](applications/emulators/ZZPicodrive/ZZPicodrive32X/README.md).
+
+---
+
 ## ZZPicoDrive32X 1.2 - First public Sega 32X edition - 1 November 2026
 
 First public ZZPicoDrive32X edition, based on the ZZPicoDriveMD 1.2 platform.
