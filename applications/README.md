@@ -42,7 +42,6 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `emulators/ZZPicodrive/ZZPicodriveVR/` | **[ZZPicoDriveVR 1.2](emulators/ZZPicodrive/ZZPicodriveVR/README.md)** | Original Mega Drive Virtua Racing cartridge with SVP emulation | Current |
 | `emulators/ZZPicodrive/ZZPicodriveMegaCD/` | **[ZZPicoDriveMegaCD 1.2](emulators/ZZPicodrive/ZZPicodriveMegaCD/README.md)** | Sega Mega-CD / Sega CD, CHD disc images and Sega CD 32X support | Current |
 | `games/ZZDoom/` | **ZZDoom** | Doom engine running on ARM Core1 | Current |
-
 | `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current              |
 | `games/ZZQuake2/` | **[ZZQuake2 1.0](games/ZZQuake2/README.md)** | Quake II with software, TinyGL and RasterIX renderers | Current |
 | `games/ZZQuakeHighRes/`                 | **ZZQuake HighRes 1.0**   | Quake 640x480 / 800x600 / 1024x768 on Core1   | Current              |
