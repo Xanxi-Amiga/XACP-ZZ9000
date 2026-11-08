@@ -122,7 +122,7 @@ Historical builds and source remain archived for regression testing.
 |---|---|
 | **[ZZMIDI](applications/ZZMIDI/README.md)** | SoundFont MIDI synthesis on Core0 with AHI playback |
 | **[ZZVGMPlay](applications/ZZVGMPlay/README.md)** | VGM/VGZ game music; arcade, console and computer sound-chip emulation on Core1 |
-| **[ZZPicoDrive â€” MD / SMS / 32X / VR / Mega-CD](applications/emulators/ZZPicodrive/README.md)** | Five Sega emulation editions on Core1: Mega Drive, Master System, 32X, original Virtua Racing (SVP) and Mega-CD / Sega CD |
+**[ZZPicoDrive - MD / SMS / 32X / VR / Mega-CD](applications/emulators/ZZPicodrive/README.md)**
 | **[ZZPPC](applications/emulators/ZZPPC/README.md)** | Experimental PPC32/FPU execution on Core1 |
 | **[ZZDoom](applications/games/ZZDoom/README.md)** | Doom engine on Core1 |
 | **[ZZQuake](applications/games/ZZQuake/README.md)** | WinQuake/quakegeneric software renderer on Core1 |
