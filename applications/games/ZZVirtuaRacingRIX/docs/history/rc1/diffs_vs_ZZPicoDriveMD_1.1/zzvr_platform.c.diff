@@ -1,0 +1,168 @@
+--- /tmp/vr/XACP-ZZ9000/applications/emulators/ZZPicodrive/ZZPicodriveMD/source/arm/zzpico_platform.c	2026-10-25 01:55:44.252934655 +0200
++++ Core1/zzvr_platform.c	2026-10-25 10:10:40.401781890 +0100
+@@ -1,20 +1,25 @@
+ /*
+- * zzpico_platform.c - minimal OS surface for the PicoDrive core (bare-metal).
+- *
+- * Provides only what the minimal Mega Drive C build references:
+- *   - lprintf (no-op; elprintf is compiled out)
+- *   - plat_mmap / plat_mremap / plat_munmap (signatures from pico/pico.h)
+- *   - memcpy / memset / memmove (the compiler emits calls to these)
+- *   - _sbrk + minimal newlib syscall stubs
+- *
+- * _sbrk heap is the validated ZZDoom region (ZZPICO_ARM_HEAP, 8 MB). In v0
+- * PicoDrive aims for ~0 heap; this exists only so the link is clean and any
+- * stray allocation fails cleanly (returns (void*)-1) rather than corrupting.
++ * zzvr_platform.c - minimal OS surface for the PicoDrive core (bare-metal Core1).
+  *
++ * From ZZPicoDriveMD 1.1 zzpico_platform.c, with what the 32X core needs:
++ *   - plat_mmap / plat_mremap / plat_munmap: a REAL bump allocator in the
++ *     arena MMAP pool (zzvr_mem.h).  Pico32xStartup() mmaps Pico32xMem
++ *     (~0.6 MiB, ~0.85 MiB with the DRC tables) when the game enables the
++ *     adapter; 1.1 returned NULL here (nothing 32X was compiled in).
++ *     Allocations are 4 KiB aligned, zero-filled (mmap semantics) and bounded:
++ *     an exhausted pool returns NULL, never a pointer outside the region.
++ *   - _sbrk on the arena SBRK region, bounded (clean failure).
++ *   - memcpy / memset / memmove by aligned 32-bit words where possible
++ *     (1.1 was byte-wise; the 32X layer copies palettes and frame lines every
++ *     frame, the HLE of A2 clears 870 KiB per scene).
++ *   - plat_mem_get_for_drc / plat_mem_set_exec: the SH-2 recompiler cache in
++ *     the arena DRC region (A1b; harmless in A1a, cpu/drc/cmn.c links them).
++ *   - lprintf silenced, newlib syscall stubs.
+  * ASCII only.
+  */
+ #include <stddef.h>
+-#include "zzpico_shared.h"
++#include "zzvr_shared.h"
++#include "zzvr_mem.h"
+ 
+ typedef unsigned int  u32;
+ typedef unsigned char u8;
+@@ -22,46 +27,107 @@
+ /* ---- logging: silenced ---- */
+ void lprintf(const char *fmt, ...) { (void)fmt; }
+ 
+-/* ---- mmap surface ----
+- * The minimal MD path uses PicoCartInsert with a caller-provided pointer, so
+- * these should not be hit. If they are, fail cleanly (never fake a pointer). */
++/* ---- statistics published by zzvr_core1.c ---- */
++u32 zzvr_mmap_used  = 0;   /* bytes handed out by plat_mmap */
++u32 zzvr_mmap_calls = 0;
++u32 zzvr_mmap_fail  = 0;
++u32 zzvr_sbrk_used  = 0;
++
++/* ---- mmap surface: bump allocator, 4 KiB aligned, zero-filled, bounded ---- */
++static u32 mmap_next = ZZVR_ARENA_MMAP;
++
+ void *plat_mmap(unsigned long addr, size_t size, int need_exec, int is_fixed)
+-{ (void)addr; (void)size; (void)need_exec; (void)is_fixed; return (void*)0; }
++{
++    u32 base, sz;
++    (void)addr; (void)need_exec; (void)is_fixed;   /* the address is only a hint in PicoDrive */
++    if(size == 0) return (void*)0;
++    sz = ((u32)size + 4095u) & ~4095u;
++    base = (mmap_next + 4095u) & ~4095u;
++    zzvr_mmap_calls++;
++    if(base + sz > ZZVR_ARENA_MMAP_END || base + sz < base){ zzvr_mmap_fail++; return (void*)0; }
++    mmap_next = base + sz;
++    zzvr_mmap_used = mmap_next - ZZVR_ARENA_MMAP;
++    { u32 *p = (u32*)base, *e = (u32*)(base + sz); while(p < e) *p++ = 0u; }
++    return (void*)base;
++}
++
+ void *plat_mremap(void *ptr, size_t oldsize, size_t newsize)
+-{ (void)ptr; (void)oldsize; (void)newsize; return (void*)0; }
+-void  plat_munmap(void *ptr, size_t size)
+-{ (void)ptr; (void)size; }
+-
+-/* ---- mem* (freestanding, byte-wise; MMU+Normal handles unaligned) ---- */
+-void *memset(void *d, int c, size_t n)
+-{ u8 *p=(u8*)d; while(n--) *p++=(u8)c; return d; }
++{
++    void *n;
++    if(ptr == 0) return plat_mmap(0, newsize, 0, 0);
++    if(newsize <= oldsize) return ptr;             /* shrink: keep the block */
++    n = plat_mmap(0, newsize, 0, 0);
++    if(n == 0) return (void*)0;
++    { const u8 *s=(const u8*)ptr; u8 *d=(u8*)n; size_t i; for(i=0;i<oldsize;i++) d[i]=s[i]; }
++    return n;                                       /* the old block is not reclaimed (bump) */
++}
+ 
+-void *memcpy(void *d, const void *s, size_t n)
+-{ u8 *pd=(u8*)d; const u8 *ps=(const u8*)s; while(n--) *pd++=*ps++; return d; }
++void plat_munmap(void *ptr, size_t size)
++{ (void)ptr; (void)size; }                          /* bump allocator: no free */
++
++/* ---- SH-2 recompiler code cache (A1b) ---- */
++void *plat_mem_get_for_drc(size_t size)
++{
++    if(size > ZZVR_ARENA_DRC_SIZE) return (void*)0;   /* cmn.c falls back to its static tcache */
++    return (void*)ZZVR_ARENA_DRC;
++}
++int plat_mem_set_exec(void *ptr, size_t size)
++{ (void)ptr; (void)size; return 0; }                /* our sections carry no XN bit */
++
++/* ---- mem* (freestanding; word path when both sides are 4-aligned) ----
++ * The loops must not be turned back into memcpy/memset calls by the compiler. */
++#define ZZVR_NOPATTERN __attribute__((optimize("no-tree-loop-distribute-patterns")))
++ZZVR_NOPATTERN void *memset(void *d, int c, size_t n)
++{
++    u8 *p=(u8*)d;
++    if(n >= 16 && (((u32)(size_t)p) & 3u) == 0){
++        u32 v = (u32)(u8)c; v |= v<<8; v |= v<<16;
++        u32 *w=(u32*)p; size_t nw=n>>2;
++        while(nw >= 4){ w[0]=v; w[1]=v; w[2]=v; w[3]=v; w+=4; nw-=4; }
++        while(nw--) *w++=v;
++        p=(u8*)w; n&=3u;
++    }
++    while(n--) *p++=(u8)c;
++    return d;
++}
++
++ZZVR_NOPATTERN void *memcpy(void *d, const void *s, size_t n)
++{
++    u8 *pd=(u8*)d; const u8 *ps=(const u8*)s;
++    if(n >= 16 && ((((u32)(size_t)pd) | ((u32)(size_t)ps)) & 3u) == 0){
++        u32 *wd=(u32*)pd; const u32 *ws=(const u32*)ps; size_t nw=n>>2;
++        while(nw >= 4){ wd[0]=ws[0]; wd[1]=ws[1]; wd[2]=ws[2]; wd[3]=ws[3]; wd+=4; ws+=4; nw-=4; }
++        while(nw--) *wd++=*ws++;
++        pd=(u8*)wd; ps=(const u8*)ws; n&=3u;
++    }
++    while(n--) *pd++=*ps++;
++    return d;
++}
+ 
+-void *memmove(void *d, const void *s, size_t n)
++ZZVR_NOPATTERN void *memmove(void *d, const void *s, size_t n)
+ {
+     u8 *pd=(u8*)d; const u8 *ps=(const u8*)s;
+     if(pd==ps || n==0) return d;
+-    if(pd<ps){ while(n--) *pd++=*ps++; }
+-    else { pd+=n; ps+=n; while(n--) *--pd=*--ps; }
++    if(pd < ps || pd >= ps + n) return memcpy(d, s, n);   /* no forward overlap */
++    pd+=n; ps+=n; while(n--) *--pd=*--ps;
+     return d;
+ }
+ 
+-/* ---- heap (validated ZZDoom region) ---- */
++/* ---- heap (arena SBRK region, bounded) ---- */
+ static char *heap_ptr = 0;
+ void *_sbrk(int incr)
+ {
+     char *old;
+-    if(heap_ptr==0) heap_ptr=(char*)ZZPICO_ARM_HEAP;
++    if(heap_ptr==0) heap_ptr=(char*)ZZVR_ARENA_SBRK;
+     old=heap_ptr;
+-    if((u32)(heap_ptr+incr) > (u32)(ZZPICO_ARM_HEAP+ZZPICO_HEAP_SIZE))
++    if((u32)(size_t)(heap_ptr+incr) > (u32)ZZVR_ARENA_SBRK_END || (u32)(size_t)(heap_ptr+incr) < (u32)ZZVR_ARENA_SBRK)
+         return (void*)-1;          /* clean failure, no sentinel corruption */
+     heap_ptr+=incr;
++    zzvr_sbrk_used = (u32)(size_t)heap_ptr - (u32)ZZVR_ARENA_SBRK;
+     return old;
+ }
+ 
+-/* ---- minimal newlib syscall stubs (no filesystem in v0) ---- */
++/* ---- minimal newlib syscall stubs (no filesystem) ---- */
+ int  _close(int f){ (void)f; return -1; }
+ int  _read(int f, char *b, int l){ (void)f; (void)b; (void)l; return 0; }
+ int  _write(int f, char *b, int l){ (void)f; (void)b; return l; }

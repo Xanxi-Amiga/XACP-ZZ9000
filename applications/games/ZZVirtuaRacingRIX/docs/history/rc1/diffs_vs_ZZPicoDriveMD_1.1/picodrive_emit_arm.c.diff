@@ -1,0 +1,22 @@
+--- /tmp/vr/VirtuaRacingDeluxeEnhanced/third_party/picodrive/cpu/drc/emit_arm.c	2026-10-25 01:55:45.313695085 +0200
++++ third_party/picodrive/cpu/drc/emit_arm.c	2026-10-25 10:26:31.192991394 +0100
+@@ -595,12 +595,15 @@
+ 	}
+ 	else
+ 	{
+-#ifdef __EPOC32__
++#if defined(__EPOC32__) || defined(ZZVR_FAR_CALLS)
++		// ZZVR: the code cache lives in the ZZ9000 Core1 arena (0x30000000+),
++		// more than 32 MiB away from the blob's C handlers (0x04500000):
++		// indirect branch through a literal, as the Symbian port does.
+ //		elprintf(EL_SVP, "emitting indirect jmp %08x->%08x", tcache_ptr, target);
+ 		if (is_call)
+-			EOP_ADD_IMM(LR,PC,0,8);			// add lr,pc,#8
+-		EOP_C_AM2_IMM(cond,1,0,1,PC,PC,0);		// ldrcc pc,[pc]
+-		EOP_MOV_REG_SIMPLE(PC,PC);			// mov pc, pc
++			EOP_C_DOP_IMM(cond,A_OP_ADD,0,PC,LR,0,8);	// add<cond> lr,pc,#8
++		EOP_C_AM2_IMM(cond,1,0,1,PC,PC,0);		// ldr<cond> pc,[pc]
++		EOP_MOV_REG(A_COND_AL,0,PC,PC,A_AM1_LSL,0);	// mov pc, pc (skips the literal when cond is false)
+ 		EMIT((u32)target,M1(PC),0);
+ #else
+ 		// should never happen
