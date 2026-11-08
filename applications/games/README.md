@@ -43,6 +43,22 @@ and audio. User-supplied Quake II data is required.
 
 [Download ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0).
 
+### ZZVirtuaRacingRIX 1.0
+
+[ZZVirtuaRacingRIX](ZZVirtuaRacingRIX/README.md) enhances Sega's
+Virtua Racing Deluxe (32X) with hardware-accelerated 3D graphics rendered
+by the RasterIX GPU in the ZZ9000 FPGA at 640x480. Interpolation provides
+up to 60 displayed images per second; original game logic and sound
+remain emulated by PicoDrive on ARM Core1.
+
+Improved shadows, smoke, sky, track draw distance and wheel effects.
+Requires XX19d-RIX or later compatible XACP firmware for RasterIX.
+The Workbench setup builds the executable from a user-supplied USA ROM;
+the game ROM is not included.
+
+[Download ZZVirtuaRacingRIX 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZVirtuaRacingRIX-1.0) |
+[Watch gameplay video](https://youtu.be/NvPGxhvwGZo).
+
 ### ZZRastan
 Standalone recreation of the Taito Rastan arcade hardware for ZZ9000 Core1.
 The original arcade CPUs and hardware are emulated on the ARM side, while the
