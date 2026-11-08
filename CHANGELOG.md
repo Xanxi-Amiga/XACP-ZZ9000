@@ -1,5 +1,26 @@
 # Changelog
 
+## ZZVirtuaRacingRIX 1.0 - Enhanced Virtua Racing Deluxe / RasterIX - 8 November 2026
+
+First public release of the enhanced Sega 32X Virtua Racing Deluxe for the
+ZZ9000 FPGA RasterIX GPU.
+
+- Reconstructs and hardware-renders the game's 3D polygons at 640x480.
+- Displays up to 60 interpolated images per second while retaining the
+  original 32X gameplay and sound emulation on ARM Core1.
+- Improves transparency, track draw distance, sky and wheel animation.
+- Includes a Workbench setup that validates the user's USA ROM and generates
+  the local executable; no commercial ROM is distributed.
+- Provides CD32 or joystick controls, Paula or optional AHI audio and savestates.
+- Requires XACP XX19d-RIX for RasterIX acceleration.
+- Publishes the Amiga setup, complete corresponding source and SHA-256 checksums.
+- Two-player VS mode is not supported in version 1.0.
+
+Release: [ZZVirtuaRacingRIX 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZVirtuaRacingRIX-1.0).
+Video: [Enhanced RasterIX gameplay](https://youtu.be/NvPGxhvwGZo).
+Documentation: [ZZVirtuaRacingRIX](applications/games/ZZVirtuaRacingRIX/README.md).
+
+---
 
 ## ZZPicoDriveMD Virtua Racing Edition 1.2 - 4 November 2026
 
