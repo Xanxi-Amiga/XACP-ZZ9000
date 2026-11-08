@@ -4,6 +4,9 @@ Enhanced Virtua Racing Deluxe (Sega 32X) on classic Amigas with an MNT
 ZZ9000: hardware-accelerated 3D graphics, improved image quality and smoother
 presentation at up to 60 displayed images per second in 640 x 480.
 
+**[Download ZZVirtuaRacingRIX 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZVirtuaRacingRIX-1.0)** |
+**[Watch the RasterIX gameplay video](https://youtu.be/NvPGxhvwGZo)**
+
 The game logic and sound are emulated by PicoDrive on the ZZ9000 ARM Core1.
 Race geometry is reconstructed from the game's polygon lists using the
 VirtuaRacingDeluxeEnhanced HLE and rendered by the RasterIX FPGA GPU, instead
