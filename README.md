@@ -42,7 +42,7 @@ synthesis and shared multimedia operations.
 
 Complete engines can be dynamically loaded onto the second Cortex-A9. Current
 projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZQuake2,
-ZZDarkForcesNEXT, ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech,
+ZZVirtuaRacingRIX, ZZDarkForcesNEXT, ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech,
 ZZScreensavers (Earth, Julia and Solar Winds), ZZVGMPlay and
 other experimental engines.
 
@@ -52,11 +52,12 @@ XX19d-RIX adds the RasterIX hardware 3D renderer to the ZZ9000 FPGA and
 introduces XACP v1.8 with a dedicated JPEG/PNG image-service window. The
 AmigaOS datatype clients are in development and will be released later.
 
-RasterIX is now used by three separately released applications:
+RasterIX is now used by four separately released applications:
 
 - [ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0) - Quake II with software, TinyGL and FPGA RasterIX renderers.
 - [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1) - FPGA-accelerated Solar Winds.
 - [ZZOpenLara 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZOpenLara-1.0) - Tomb Raider I with software and FPGA RasterIX rendering.
+- [ZZVirtuaRacingRIX 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZVirtuaRacingRIX-1.0) - Enhanced Virtua Racing Deluxe (Sega 32X) with RasterIX 3D at 640x480 and up to 60 displayed images/s. [Video](https://youtu.be/NvPGxhvwGZo).
 
 The ZZQuake2 software and ARM TinyGL renderers, as well as the ZZOpenLara software renderer, remain compatible with XX19c. RasterIX acceleration requires XX19d-RIX.
 
@@ -119,24 +120,25 @@ Historical builds and source remain archived for regression testing.
 
 | Project | Role |
 |---|---|
-| **ZZMIDI** | SoundFont MIDI synthesis on Core0 with AHI playback |
+| **[ZZMIDI](applications/ZZMIDI/README.md)** | SoundFont MIDI synthesis on Core0 with AHI playback |
 | **[ZZVGMPlay](applications/ZZVGMPlay/README.md)** | VGM/VGZ game music; arcade, console and computer sound-chip emulation on Core1 |
-| **[ZZPicoDrive � MD / SMS / 32X / VR / Mega-CD](applications/emulators/ZZPicodrive/README.md)** | Five Sega emulation editions on Core1: Mega Drive, Master System, 32X, original Virtua Racing (SVP) and Mega-CD / Sega CD |
-| **ZZPPC** | Experimental PPC32/FPU execution on Core1 |
-| **ZZDoom** | Doom engine on Core1 |
-| **ZZQuake** | WinQuake/quakegeneric software renderer on Core1 |
+| **[ZZPicoDrive â€” MD / SMS / 32X / VR / Mega-CD](applications/emulators/ZZPicodrive/README.md)** | Five Sega emulation editions on Core1: Mega Drive, Master System, 32X, original Virtua Racing (SVP) and Mega-CD / Sega CD |
+| **[ZZPPC](applications/emulators/ZZPPC/README.md)** | Experimental PPC32/FPU execution on Core1 |
+| **[ZZDoom](applications/games/ZZDoom/README.md)** | Doom engine on Core1 |
+| **[ZZQuake](applications/games/ZZQuake/README.md)** | WinQuake/quakegeneric software renderer on Core1 |
 | **[ZZQuake2 1.0](applications/games/ZZQuake2/README.md)** | Quake II on Core1 with software, ARM TinyGL and FPGA RasterIX rendering |
 | **[ZZOpenLara 1.0](applications/games/ZZOpenLara/README.md)** | Tomb Raider I on Core1 with ARM software and FPGA RasterIX rendering |
-| **ZZQuake HighRes** | 640x480, 800x600 and 1024x768 Quake builds on Core1 |
-| **ZZDarkForcesNEXT** | The Force Engine / Dark Forces on Core1 with enhanced TFE features |
-| **ZZRastan** | Rastan arcade hardware recreation on Core1 |
-| **ZZSpeech** | Speech synthesis acceleration |
+| **[ZZVirtuaRacingRIX 1.0](applications/games/ZZVirtuaRacingRIX/README.md)** | Enhanced Sega 32X Virtua Racing Deluxe with RasterIX 3D at 640x480, up to 60 interpolated images/s |
+| **[ZZQuake HighRes](applications/games/ZZQuakeHighRes/README.md)** | 640x480, 800x600 and 1024x768 Quake builds on Core1 |
+| **[ZZDarkForcesNEXT](applications/games/ZZDarkForcesNEXT/README.md)** | The Force Engine / Dark Forces on Core1 with enhanced TFE features |
+| **[ZZRastan](applications/games/ZZRastan/README.md)** | Rastan arcade hardware recreation on Core1 |
+| **[ZZSpeech](applications/ZZSpeech/README.md)** | Speech synthesis acceleration |
 | **[ZZScreensavers 1.1](applications/ZZScreensaver/README.md)** | Core1 Earth and Julia plus FPGA RasterIX-accelerated Solar Winds |
-| **ZZ-MPEG** | MPEG-1 / MP2 playback |
-| **ZZPlayGUI / MP3 tools** | ARM-accelerated MP3/MP2 decoding |
-| **zz9000.engine** | AmigaAMP external XACP engine |
-| **mpega.library integration** | MPEGA-compatible ARM decode path |
-| **ZZBench GUI** | 68k/ARM/memory benchmarking |
+| **[ZZ-MPEG](applications/mpegplayer/README.md)** | MPEG-1 / MP2 playback |
+| **[ZZPlayGUI / MP3 tools](applications/mp3/README.md)** | ARM-accelerated MP3/MP2 decoding |
+| **[zz9000.engine](applications/mp3/README.md)** | AmigaAMP external XACP engine |
+| **[mpega.library integration](applications/mp3/README.md)** | MPEGA-compatible ARM decode path |
+| **[ZZBench GUI](applications/benchmarks/)** | 68k/ARM/memory benchmarking |
 
 Application material lives under `applications/`.
 
@@ -158,7 +160,7 @@ under `demos/`.
 
 | Driver | Role |
 |---|---|
-| **ZZ9000AX Fitzsteve Edition** | Two-channel variant of the MNT ZZ9000AX AHI 4.19 driver for XACP game ports using AHI SFX together with MP3 or ZZMIDI music |
+| **[ZZ9000AX Fitzsteve Edition](drivers/README.md)** | Two-channel variant of the MNT ZZ9000AX AHI 4.19 driver for XACP game ports using AHI SFX together with MP3 or ZZMIDI music |
 
 Driver material lives under `drivers/`.
 
