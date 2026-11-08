@@ -44,6 +44,7 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `games/ZZDoom/` | **ZZDoom** | Doom engine running on ARM Core1 | Current |
 | `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current              |
 | `games/ZZQuake2/` | **[ZZQuake2 1.0](games/ZZQuake2/README.md)** | Quake II with software, TinyGL and RasterIX renderers | Current |
+| `games/ZZVirtuaRacingRIX/` | **[ZZVirtuaRacingRIX 1.0](games/ZZVirtuaRacingRIX/README.md)** | Enhanced Virtua Racing Deluxe (32X), RasterIX 3D at 640x480, up to 60 displayed images/s | Current |
 | `games/ZZQuakeHighRes/`                 | **ZZQuake HighRes 1.0**   | Quake 640x480 / 800x600 / 1024x768 on Core1   | Current              |
 | `games/ZZDarkForcesNEXT/`               | **ZZDarkForcesNEXT**      | The Force Engine / Dark Forces on ARM Core1    | Current              |
 | `games/ZZRastan/`                       | **ZZRastan 1.0**          | Rastan arcade hardware recreation on ARM Core1 | Current              |
@@ -380,6 +381,27 @@ The eight Core1 executable variants are GPL-covered with corresponding source
 and build instructions. The separate Amiga 68k launcher and GUI are freeware.
 
 See [ZZQuake2 documentation](games/ZZQuake2/README.md).
+
+---
+
+# ZZVirtuaRacingRIX 1.0
+
+Directory: `games/ZZVirtuaRacingRIX/`
+
+[ZZVirtuaRacingRIX 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZVirtuaRacingRIX-1.0) enhances Sega's Virtua Racing Deluxe
+(32X) with GPU-accelerated polygon rendering on the ZZ9000 RasterIX FPGA.
+
+- 640x480 hardware-accelerated 3D rendering, up to 60 displayed images/s
+  using interpolation between the original game's approximately 20 FPS updates.
+- Improved shadows, smoke, sky, draw distance and wheel animation.
+- Original 32X logic and audio emulated by PicoDrive on ARM Core1.
+- Workbench setup builds the executable from a user-supplied USA ROM;
+  no commercial ROM is distributed.
+- Requires XX19d-RIX or later compatible XACP firmware for RasterIX acceleration.
+- Distributed under PicoDrive's historical non-commercial terms, with
+  third-party components retaining their own licences.
+
+[Gameplay video](https://youtu.be/NvPGxhvwGZo) | [Documentation](games/ZZVirtuaRacingRIX/README.md)
 
 ---
 
