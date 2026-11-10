@@ -43,6 +43,7 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `emulators/ZZPicodrive/ZZPicodriveMegaCD/` | **[ZZPicoDriveMegaCD 1.2](emulators/ZZPicodrive/ZZPicodriveMegaCD/README.md)** | Sega Mega-CD / Sega CD, CHD disc images and Sega CD 32X support | Current |
 | `games/ZZDoom/` | **ZZDoom** | Doom engine running on ARM Core1 | Current |
 | `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current              |
+| `games/ZZQuakeGL/` | **[ZZQuakeGL 1.0](games/ZZQuakeGL/README.md)** | Original GLQuake renderer with FPGA RasterIX 3D acceleration | Current |
 | `games/ZZQuake2/` | **[ZZQuake2 1.0](games/ZZQuake2/README.md)** | Quake II with software, TinyGL and RasterIX renderers | Current |
 | `games/ZZVirtuaRacingRIX/` | **[ZZVirtuaRacingRIX 1.0](games/ZZVirtuaRacingRIX/README.md)** | Enhanced Virtua Racing Deluxe (32X), RasterIX 3D at 640x480, up to 60 displayed images/s | Current |
 | `games/ZZOpenLara/` | **[ZZOpenLara 1.0](games/ZZOpenLara/README.md)** | Tomb Raider I with software and RasterIX rendering | Current |
@@ -316,6 +317,32 @@ icons, matching Core1 blobs, and complete GPL-covered Core1 source/build
 material. The Amiga launcher source remains private.
 
 Original Quake game data is required and is not included.
+
+---
+
+# ZZQuakeGL 1.0
+
+Directory: [`games/ZZQuakeGL/`](games/ZZQuakeGL/README.md)
+
+[ZZQuakeGL 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuakeGL-1.0) runs Quake 1 with id Software's original GLQuake renderer,
+hardware-accelerated by RasterIX in the ZZ9000 FPGA. The Quake engine and
+GL renderer run on ARM Cortex-A9 Core1, while the Amiga 68k launcher handles
+Picasso96 display, input, files and audio.
+
+Four resolutions are supported: 320x240, 640x480, 800x600 and 1024x768.
+On an Amiga 4000/68060, `timedemo demo1` measured 106.5, 48.0, 35.2
+and 24.1 FPS respectively at 16-bit colour.
+
+The Workbench icon defaults to **640x480**, **MUSIC=MP3** and **MAXFPS=50**.
+Firmware XX19d-RIX / XACP v1.8 and a matching `zz9000.card` are required.
+Only the original Quake game (`id1`) is supported; mission packs and custom
+`GAME=` mods are not supported in version 1.0. Original Quake data must be
+supplied by the user; no commercial PAK files are included.
+
+The Core1 engine and its corresponding GPL sources are published; the
+separate Amiga 68k launcher is proprietary freeware.
+
+[Gameplay video](https://youtu.be/cV312wjwoPc) | [Documentation](games/ZZQuakeGL/README.md)
 
 ---
 
