@@ -1,0 +1,7 @@
+# Upstream source
+
+Engine base: erysdren/quakegeneric, commit `13052102577c629650cf07a46151a4b6e1b19c3c`.
+
+The Quake engine originates from id Software's GPL release. The package also includes `snd_dma.c`, `snd_mem.c` and `snd_mix.c` from the GPL Quake source tree because they are required by the ZZQuake audio build.
+
+See `COPYING` and `LICENSE.quakegeneric`.
