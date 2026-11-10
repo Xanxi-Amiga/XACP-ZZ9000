@@ -41,7 +41,7 @@ synthesis and shared multimedia operations.
 ### Core1 applications
 
 Complete engines can be dynamically loaded onto the second Cortex-A9. Current
-projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZQuake2,
+projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZQuake2, ZZQuakeGL,
 ZZVirtuaRacingRIX, ZZDarkForcesNEXT, ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech,
 ZZScreensavers (Earth, Julia and Solar Winds), ZZVGMPlay and
 other experimental engines.
@@ -52,9 +52,10 @@ XX19d-RIX adds the RasterIX hardware 3D renderer to the ZZ9000 FPGA and
 introduces XACP v1.8 with a dedicated JPEG/PNG image-service window. The
 AmigaOS datatype clients are in development and will be released later.
 
-RasterIX is now used by four separately released applications:
+RasterIX is now used by five separately released applications:
 
 - [ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0) - Quake II with software, TinyGL and FPGA RasterIX renderers.
+- [ZZQuakeGL 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuakeGL-1.0) - Original GLQuake renderer with RasterIX FPGA hardware acceleration at 320x240 to 1024x768. [Video](https://youtu.be/cV312wjwoPc).
 - [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1) - FPGA-accelerated Solar Winds.
 - [ZZOpenLara 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZOpenLara-1.0) - Tomb Raider I with software and FPGA RasterIX rendering.
 - [ZZVirtuaRacingRIX 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZVirtuaRacingRIX-1.0) - Enhanced Virtua Racing Deluxe (Sega 32X) with RasterIX 3D at 640x480 and up to 60 displayed images/s. [Video](https://youtu.be/NvPGxhvwGZo).
@@ -122,10 +123,11 @@ Historical builds and source remain archived for regression testing.
 |---|---|
 | **[ZZMIDI](applications/ZZMIDI/README.md)** | SoundFont MIDI synthesis on Core0 with AHI playback |
 | **[ZZVGMPlay](applications/ZZVGMPlay/README.md)** | VGM/VGZ game music; arcade, console and computer sound-chip emulation on Core1 |
-**[ZZPicoDrive - MD / SMS / 32X / VR / Mega-CD](applications/emulators/ZZPicodrive/README.md)**
+| **[ZZPicoDrive - MD / SMS / 32X / VR / Mega-CD](applications/emulators/ZZPicodrive/README.md)** | Sega console emulation on ARM Core1 |
 | **[ZZPPC](applications/emulators/ZZPPC/README.md)** | Experimental PPC32/FPU execution on Core1 |
 | **[ZZDoom](applications/games/ZZDoom/README.md)** | Doom engine on Core1 |
 | **[ZZQuake](applications/games/ZZQuake/README.md)** | WinQuake/quakegeneric software renderer on Core1 |
+| **[ZZQuakeGL 1.0](applications/games/ZZQuakeGL/README.md)** | Quake 1 with original GLQuake renderer accelerated by RasterIX FPGA hardware |
 | **[ZZQuake2 1.0](applications/games/ZZQuake2/README.md)** | Quake II on Core1 with software, ARM TinyGL and FPGA RasterIX rendering |
 | **[ZZOpenLara 1.0](applications/games/ZZOpenLara/README.md)** | Tomb Raider I on Core1 with ARM software and FPGA RasterIX rendering |
 | **[ZZVirtuaRacingRIX 1.0](applications/games/ZZVirtuaRacingRIX/README.md)** | Enhanced Sega 32X Virtua Racing Deluxe with RasterIX 3D at 640x480, up to 60 interpolated images/s |
