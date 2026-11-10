@@ -1,5 +1,30 @@
 # Changelog
 
+## ZZQuakeGL 1.0 - Hardware-accelerated GLQuake / RasterIX - 10 November 2026
+
+First public release of Quake 1 with id Software's original GLQuake renderer,
+hardware-accelerated by the RasterIX GPU in the MNT ZZ9000 FPGA.
+
+- Runs the Quake engine and GL renderer on ZZ9000 ARM Cortex-A9 Core1, with
+  AmigaOS/68k handling Picasso96 display, input, filesystem and audio.
+- Supports 320x240, 640x480, 800x600 and 1024x768 in 16-bit RTG mode.
+- Measures 106.5, 48.0, 35.2 and 24.1 FPS respectively in `timedemo demo1`
+  on an Amiga 4000/68060 with ZZ9000.
+- Uses XX19d-RIX / XACP v1.8 and the matching XACP-compatible `zz9000.card`.
+- Ships with a Workbench icon defaulting to 640x480, `MUSIC=MP3` and
+  `MAXFPS=50`; alternative resolutions are selectable from Shell or ToolTypes.
+- Supports original Quake (`id1`) only in version 1.0. The HIPNOTIC and ROGUE
+  mission packs and custom `GAME=` mods are not supported.
+- Publishes an Amiga LHA and complete corresponding GPL source for the Core1
+  components. The Amiga 68k launcher remains binary-only freeware.
+- Requires user-supplied Quake PAK files; no commercial game data is included.
+
+Release: [ZZQuakeGL 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuakeGL-1.0).
+Video: [Hardware-accelerated GLQuake gameplay](https://youtu.be/cV312wjwoPc).
+Documentation: [ZZQuakeGL](applications/games/ZZQuakeGL/README.md).
+
+---
+
 ## ZZVirtuaRacingRIX 1.0 - Enhanced Virtua Racing Deluxe / RasterIX - 8 November 2026
 
 First public release of the enhanced Sega 32X Virtua Racing Deluxe for the
