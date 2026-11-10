@@ -19,6 +19,26 @@ Companion high-resolution pack for ZZQuake with separate 640x480, 800x600 and
 blob. The original ZZQuake 1.0 320x240 release remains available separately.
 Quake game data is not included.
 
+### ZZQuakeGL 1.0
+
+[ZZQuakeGL](ZZQuakeGL/README.md) runs Quake 1 with id Software's original
+GLQuake renderer, hardware-accelerated by RasterIX in the ZZ9000 FPGA. The
+engine and GL renderer execute on ARM Cortex-A9 Core1, while the Amiga 68k
+handles Picasso96 display, input, audio and file access.
+
+Four rendering resolutions are supported: 320x240 (106.5 FPS), 640x480
+(48.0 FPS), 800x600 (35.2 FPS) and 1024x768 (24.1 FPS), measured using
+`timedemo demo1` on an Amiga 4000/68060 with ZZ9000 at 16-bit colour.
+
+Requires XX19d-RIX / XACP v1.8 and an XACP-compatible `zz9000.card`.
+The Workbench icon defaults to 640x480, MUSIC=MP3 and MAXFPS=50.
+Original Quake `id1` data is required and is not distributed. Mission packs
+and `GAME=` mods are not supported in v1.0. The Core1 sources are GPL-covered;
+the Amiga launcher is binary-only freeware.
+
+[Download ZZQuakeGL 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuakeGL-1.0) |
+[Watch gameplay video](https://youtu.be/cV312wjwoPc).
+
 ### ZZDarkForcesNEXT
 The Force Engine / STAR WARS: Dark Forces running natively on the ZZ9000 ARM
 Core1, with AmigaOS handling Picasso96 display, input, AHI audio, filesystem
