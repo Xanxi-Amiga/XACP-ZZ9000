@@ -17,6 +17,12 @@ Four resolutions are supported without changing the firmware or FPGA bitstream.
 
 Results are measurements on the development machine, not guarantees for other systems. The 1024 x 768 build uses a dedicated DDR framebuffer layout.
 
+## Gameplay video
+
+[![ZZQuakeGL 1.0 - RasterIX hardware-accelerated GLQuake gameplay](https://img.youtube.com/vi/cV312wjwoPc/hqdefault.jpg)](https://youtu.be/cV312wjwoPc)
+
+[Watch ZZQuakeGL 1.0 on YouTube](https://youtu.be/cV312wjwoPc)
+
 ## Requirements
 
 - AmigaOS 3.0 or later, Picasso96, Amiga with MNT ZZ9000
@@ -27,7 +33,7 @@ Results are measurements on the development machine, not guarantees for other sy
 
 Place the following files in one Amiga drawer:
 
-```
+```text
 ZZQuakeGL
 ZZQuakeGL.info
 zzqgl.bin         640 x 480
@@ -38,9 +44,10 @@ zzqgl_1024.bin    1024 x 768
 
 Copy your own `id1/pak0.pak` into `id1/`; add `id1/pak1.pak` for registered Quake. The same game-data drawer used by ZZQuake640 can be used, including saves and configuration.
 
-Launch from Workbench using the supplied icon (which has `1024` and `MUSIC=MHI` enabled), or from Shell without those ToolTypes:
+The Workbench icon defaults to **640 x 480**, **MUSIC=MP3** and
+**MAXFPS=50**. Shell launch defaults to 640 x 480 as well:
 
-```
+```text
 ZZQuakeGL          640 x 480
 ZZQuakeGL 320      320 x 240
 ZZQuakeGL 800      800 x 600
@@ -63,8 +70,10 @@ Quake and GLQuake: id Software (GNU GPL v2). quakegeneric: erysdren (GNU GPL v2)
 
 ## Release files
 
-The five executables in this directory are the Windows/MSYS builds supplied for version 1.0. `ZZQuakeGL.info` retains the original Workbench artwork. Its `1024`, `MUSIC=MHI` and `MAXFPS=50` ToolTypes are enabled in the author-supplied icon. Disable or change them in Workbench Icon Information if desired.
-
+The five executables in this directory are the validated Windows/MSYS builds
+for version 1.0. `ZZQuakeGL.info` defaults to 640 x 480, `MUSIC=MP3` and
+`MAXFPS=50`. Other settings can be selected through Workbench Icon Information.
 `SHA256SUMS` records the exact files in this repository.
 
-The GitHub release offers an Amiga LHA with the binaries and documentation, plus the complete Core1 GPL source ZIP.
+[The GitHub release](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuakeGL-1.0) offers an Amiga LHA with the binaries and documentation,
+plus the complete Core1 GPL source ZIP.
