@@ -144,6 +144,21 @@ Historical builds and source remain archived for regression testing.
 
 Application material lives under `applications/`.
 
+## Third-party projects using XACP
+
+XACP is also used by independent developers to take advantage of the ZZ9000 ARM Cortex-A9 processors alongside AmigaOS.
+
+### Projects by SkiltonUSA
+
+- **[ZZDosBox-ARM-68K](https://github.com/SkiltonUSA/ZZDosBox-ARM-68K)** — DOSBox PC emulation accelerated by the ZZ9000 ARM processor.
+- **[ZZUAE-ARM-68K](https://github.com/SkiltonUSA/ZZUAE-ARM-68K)** — Amiga OCS/ECS emulation based on UAE4ARM, with an AmigaOS MUI frontend.
+- **[ZZNes-ARM-68K](https://github.com/SkiltonUSA/ZZNes-ARM-68K)** — Nintendo Entertainment System emulation using the ZZ9000 ARM processor.
+- **[ZZSNES-ARM-68K](https://github.com/SkiltonUSA/ZZSNES-ARM-68K)** — Super Nintendo emulation research for the ZZ9000.
+
+These projects are independently developed and maintained by SkiltonUSA.
+
+For downloads, documentation and the latest developments, visit the individual repositories or the [SkiltonUSA GitHub profile](https://github.com/SkiltonUSA).
+
 ## FPGA Acceleration Demos
 
 | Project | Description |
