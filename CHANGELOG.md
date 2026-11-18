@@ -1,5 +1,28 @@
 # Changelog
 
+## ZZHalfLife 1.0 - Half-Life / RasterIX - 19 November 2026
+
+First public release of Half-Life for AmigaOS 3.x and the MNT ZZ9000.
+
+**ZZHalfLife is the sixth released XACP application to use the RasterIX FPGA GPU**, following ZZQuake2, ZZScreensavers (Solar Winds), ZZOpenLara, ZZVirtuaRacingRIX and ZZQuakeGL.
+
+- Runs the Xash3D FWGS engine and Half-Life game code on the ZZ9000 ARM Cortex-A9 Core1, with RasterIX hardware-accelerated 3D rendering.
+- Supports 320x240, 640x480 and 800x600. The default 640x480 mode was used for development and optimization.
+- Uses a Workbench launcher for Picasso96 display, input, file access, sound and music; supports MP3, CD audio and MHI music options.
+- Provides a Windows preparation tool that reorganizes a user's original Steam Half-Life data into chapter-based archives optimized for loading on the Amiga/ZZ9000.
+- Requires user-supplied original Half-Life game data. No commercial Valve assets are distributed.
+- Requires RasterIX-enabled XX19d-RIX / XACP v1.8 or compatible later firmware.
+- Publishes the ARM engine and game module sources, build scripts and applicable license notices; the AmigaOS 68k launcher remains binary-only freeware.
+- Multiplayer is not supported in version 1.0.
+
+Release: [ZZHalfLife 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZHalfLife-1.0).
+
+Video: [ZZHalfLife gameplay at 640x480](https://youtu.be/EkbUq131PZ8).
+
+Documentation: [ZZHalfLife](applications/games/ZZHalfLife/README.md).
+
+---
+
 ## ZZQuakeGL 1.0 - Hardware-accelerated GLQuake / RasterIX - 10 November 2026
 
 First public release of Quake 1 with id Software's original GLQuake renderer,

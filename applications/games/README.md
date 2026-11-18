@@ -63,6 +63,22 @@ and audio. User-supplied Quake II data is required.
 
 [Download ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0).
 
+### ZZHalfLife 1.0
+
+[ZZHalfLife](ZZHalfLife/README.md) brings the original Half-Life to the ZZ9000.
+Xash3D FWGS and the Half-Life game code run on ARM Core1, with 3D graphics
+accelerated by the RasterIX FPGA GPU. Supported resolutions are 320x240,
+640x480 and 800x600; 640x480 is the reference resolution.
+
+Requires XX19d-RIX / XACP v1.8 or compatible later firmware. Users must
+provide their own original Steam copy of Half-Life. The supplied Windows
+preparation tool reorganizes the game data into chapter-based archives
+optimized for loading on the Amiga/ZZ9000 platform. No Valve game data is
+distributed. Multiplayer is not supported.
+
+[Download ZZHalfLife 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZHalfLife-1.0) |
+[Watch gameplay video](https://youtu.be/EkbUq131PZ8).
+
 ### ZZVirtuaRacingRIX 1.0
 
 [ZZVirtuaRacingRIX](ZZVirtuaRacingRIX/README.md) enhances Sega's

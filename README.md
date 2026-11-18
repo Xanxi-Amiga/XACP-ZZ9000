@@ -42,7 +42,7 @@ synthesis and shared multimedia operations.
 
 Complete engines can be dynamically loaded onto the second Cortex-A9. Current
 projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZQuake2, ZZQuakeGL,
-ZZVirtuaRacingRIX, ZZDarkForcesNEXT, ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech,
+ZZVirtuaRacingRIX, ZZHalfLife, ZZDarkForcesNEXT, ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech,
 ZZScreensavers (Earth, Julia and Solar Winds), ZZVGMPlay and
 other experimental engines.
 
@@ -52,8 +52,9 @@ XX19d-RIX adds the RasterIX hardware 3D renderer to the ZZ9000 FPGA and
 introduces XACP v1.8 with a dedicated JPEG/PNG image-service window. The
 AmigaOS datatype clients are in development and will be released later.
 
-RasterIX is now used by five separately released applications:
+RasterIX is now used by six separately released applications:
 
+- [ZZHalfLife 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZHalfLife-1.0) - Half-Life running on ARM Core1 with FPGA RasterIX rendering at 320x240, 640x480 and 800x600. Requires original Steam game data. [Video](https://youtu.be/EkbUq131PZ8).
 - [ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0) - Quake II with software, TinyGL and FPGA RasterIX renderers.
 - [ZZQuakeGL 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuakeGL-1.0) - Original GLQuake renderer with RasterIX FPGA hardware acceleration at 320x240 to 1024x768. [Video](https://youtu.be/cV312wjwoPc).
 - [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1) - FPGA-accelerated Solar Winds.
@@ -129,6 +130,7 @@ Historical builds and source remain archived for regression testing.
 | **[ZZQuake](applications/games/ZZQuake/README.md)** | WinQuake/quakegeneric software renderer on Core1 |
 | **[ZZQuakeGL 1.0](applications/games/ZZQuakeGL/README.md)** | Quake 1 with original GLQuake renderer accelerated by RasterIX FPGA hardware |
 | **[ZZQuake2 1.0](applications/games/ZZQuake2/README.md)** | Quake II on Core1 with software, ARM TinyGL and FPGA RasterIX rendering |
+| **[ZZHalfLife 1.0](applications/games/ZZHalfLife/README.md)** | Half-Life on ARM Core1 with FPGA RasterIX acceleration; original Steam game data required |
 | **[ZZOpenLara 1.0](applications/games/ZZOpenLara/README.md)** | Tomb Raider I on Core1 with ARM software and FPGA RasterIX rendering |
 | **[ZZVirtuaRacingRIX 1.0](applications/games/ZZVirtuaRacingRIX/README.md)** | Enhanced Sega 32X Virtua Racing Deluxe with RasterIX 3D at 640x480, up to 60 interpolated images/s |
 | **[ZZQuake HighRes](applications/games/ZZQuakeHighRes/README.md)** | 640x480, 800x600 and 1024x768 Quake builds on Core1 |

@@ -44,6 +44,7 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `games/ZZDoom/` | **ZZDoom** | Doom engine running on ARM Core1 | Current |
 | `games/ZZQuake/`                        | **ZZQuake 1.0**           | Quake software renderer running on ARM Core1   | Current              |
 | `games/ZZQuakeGL/` | **[ZZQuakeGL 1.0](games/ZZQuakeGL/README.md)** | Original GLQuake renderer with FPGA RasterIX 3D acceleration | Current |
+| `games/ZZHalfLife/` | **[ZZHalfLife 1.0](games/ZZHalfLife/README.md)** | Half-Life on ARM Core1 with RasterIX acceleration; original Steam game data required | Current |
 | `games/ZZQuake2/` | **[ZZQuake2 1.0](games/ZZQuake2/README.md)** | Quake II with software, TinyGL and RasterIX renderers | Current |
 | `games/ZZVirtuaRacingRIX/` | **[ZZVirtuaRacingRIX 1.0](games/ZZVirtuaRacingRIX/README.md)** | Enhanced Virtua Racing Deluxe (32X), RasterIX 3D at 640x480, up to 60 displayed images/s | Current |
 | `games/ZZOpenLara/` | **[ZZOpenLara 1.0](games/ZZOpenLara/README.md)** | Tomb Raider I with software and RasterIX rendering | Current |
