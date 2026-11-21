@@ -110,8 +110,5 @@ selected NewIcons images.
   `omarandlorraine/fake6502` fork; source states GNU GPL v2.0.
 - See `THIRD_PARTY.md` and `COPYING.GPL-2.0.txt` for third-party license notices.
 
-**Publication checklist:** confirm the licensing of original Xanxi-authored
-files before uploading a public binary. The bundled third-party components
-are GPL; see `PUBLICATION_CHECKLIST.md`.
 
 See [RELEASE_NOTES.md](RELEASE_NOTES.md) and [BUILD_DETAILS.md](BUILD_DETAILS.md).
