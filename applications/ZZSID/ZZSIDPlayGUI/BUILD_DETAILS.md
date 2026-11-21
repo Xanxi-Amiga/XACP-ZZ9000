@@ -39,8 +39,4 @@ It is used **only for provenance / historical A1 builds**. A2, and the public
 
 ## Release integrity
 
-The final 1.0 **Amiga binary is generated on the author's Windows/MSYS
-installation** using the complete local toolchains. It has not been
-cross-compiled in the environment that assembled this GitHub staging package.
-Keep and verify the generated `output/ZZSIDPlayGUI` and `SHA256SUMS.txt` before
-publishing the release asset.
+The ZZSIDPlayGUI 1.0 release includes the final executable, tested and validated on a real Amiga 4000 equipped with ZZ9000/XACP.
