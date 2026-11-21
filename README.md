@@ -124,6 +124,7 @@ Historical builds and source remain archived for regression testing.
 |---|---|
 | **[ZZMIDI](applications/ZZMIDI/README.md)** | SoundFont MIDI synthesis on Core0 with AHI playback |
 | **[ZZVGMPlay](applications/ZZVGMPlay/README.md)** | VGM/VGZ game music; arcade, console and computer sound-chip emulation on Core1 |
+| **[ZZSIDPlayGUI 1.0](applications/ZZSID/ZZSIDPlayGUI/README.md)** | Commodore 64 SID music player with ARM Core1 reSID emulation, 1SID/2SID stereo and AHI audio |
 | **[ZZPicoDrive - MD / SMS / 32X / VR / Mega-CD](applications/emulators/ZZPicodrive/README.md)** | Sega console emulation on ARM Core1 |
 | **[ZZPPC](applications/emulators/ZZPPC/README.md)** | Experimental PPC32/FPU execution on Core1 |
 | **[ZZDoom](applications/games/ZZDoom/README.md)** | Doom engine on Core1 |
