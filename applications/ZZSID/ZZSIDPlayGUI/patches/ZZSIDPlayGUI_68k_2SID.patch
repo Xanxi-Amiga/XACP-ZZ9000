@@ -1,0 +1,74 @@
+--- REFERENCE_22OCT/ZZSIDPlay.c
++++ A1/sources/ZZSIDPlay.c
+@@ -684,26 +684,33 @@
+     Printf("  %s  load=$%04lx init=$%04lx play=$%04lx  songs=%lu\n",
+            (ULONG)(si->is_rsid ? "RSID" : "PSID"),
+            si->load, si->init, si->play, si->songs);
+-    /* PSID v3 and later declare extra chips at 0x7A and 0x7B. The value is
+-     * the MIDDLE byte of the address: $42 means $D420. Reported only - the
+-     * launcher does not act on it yet, so the base still comes from
+-     * -sid2base. This is what tells a 2SID file from a 1SID one. */
++    /* PSID v3/v4: SID #2 and #3 have their own 32-byte I/O windows.
++     * Valid additional SID areas are $D420-$D7E0 and $DE00-$DFE0;
++     * $D800-$DDFF is NOT valid, and v5 uses another header layout.
++     * Preserve the base in SidInfo so the GUI can send it to Core1. */
+     si->sid2 = 0; si->sid3 = 0;
+-    if (si->version >= 3 && g_sidsize >= 0x7C) {
++    if (si->version >= 3 && si->version <= 4 && g_sidsize >= 0x7C) {
+         UBYTE b2 = d[0x7A], b3 = d[0x7B];
+-        if (b2 >= 0x42 && b2 <= 0xFE && (b2 & 1) == 0) si->sid2 = 0xD000UL | ((ULONG)b2 << 4);
+-        if (b3 >= 0x42 && b3 <= 0xFE && (b3 & 1) == 0) si->sid3 = 0xD000UL | ((ULONG)b3 << 4);
++        if (!(b2 & 1) && ((b2 >= 0x42 && b2 <= 0x7E) ||
++                           (b2 >= 0xE0 && b2 <= 0xFE)))
++            si->sid2 = 0xD000UL | ((ULONG)b2 << 4);
++        if (si->version >= 4 && !(b3 & 1) && b3 != b2 &&
++            ((b3 >= 0x42 && b3 <= 0x7E) ||
++             (b3 >= 0xE0 && b3 <= 0xFE)))
++            si->sid3 = 0xD000UL | ((ULONG)b3 << 4);
+     }
+     Printf("  PSID v%lu", si->version);
+     if (si->sid2) Printf("  2nd SID at $%04lx", si->sid2);
+     if (si->sid3) Printf("  3rd SID at $%04lx", si->sid3);
+     if (!si->sid2) Printf("  single SID");
+     Printf("\n");
++#ifndef ZZSID_GUI
+     if (si->sid2 && g_num_sids < 2)
+-        Printf("  HINT: this is a 2SID tune - add -2sid -sid2base 0x%04lx\n", si->sid2);
++        Printf("  HINT: 2SID tune - use -2sid -sid2base 0x%04lx\n", si->sid2);
+     if (si->sid2 && g_num_sids > 1 && si->sid2 != g_sid1_base)
+         Printf("  WARNING: header says $%04lx but -sid2base is $%04lx\n",
+                si->sid2, g_sid1_base);
++#endif
+ 
+     /* Model selection. The header's opinion is used unless the user forced
+      * one, and what was chosen and why is always printed: a model picked
+@@ -2069,7 +2076,28 @@
+     g_have_tune = 1;
+     g_song_cur  = g_si.startsong;
+     g_cur       = idx;
+-    gui_status("loaded");
++
++    /* Before this fix, the PSID parser reported $D500 but the launcher
++     * always sent $D420 (g_sid1_base) to Core1. Select the chip count and
++     * actual base for EACH new tune, including playlist transitions.
++     * Manual SID mode remains available until the next file is loaded. */
++    g_sid_sel   = g_si.sid2 ? 1 : 0;
++    g_sid1_base = g_si.sid2 ? g_si.sid2 : 0xD420UL;
++    gui_apply_gadgets();
++    if (g_win && g_gad[GAD_SIDMODE])
++        GT_SetGadgetAttrs(g_gad[GAD_SIDMODE], g_win, NULL,
++                          GTCY_Active, (ULONG)g_sid_sel, TAG_END);
++    Printf("SID routing: %lu chip(s), SID2=$%04lx, mirror=%lu\n",
++           g_num_sids, g_sid1_base, g_mirror);
++    if (g_si.sid3) {
++        Printf("WARNING: 3SID at $%04lx; third SID not supported\n", g_si.sid3);
++        gui_status("3SID: only first 2 chips supported");
++    } else if (g_si.version >= 5) {
++        Printf("WARNING: PSID v5 multi-SID metadata is not supported\n");
++        gui_status("PSID v5 multi-SID unsupported");
++    } else {
++        gui_status("loaded");
++    }
+     return 1;
+ }
+ 

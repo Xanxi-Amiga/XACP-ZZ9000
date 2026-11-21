@@ -32,6 +32,7 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 
 | Directory                               | Application               | Role                                           | Status               |
 | --------------------------------------- | ------------------------- | ---------------------------------------------- | -------------------- |
+| `ZZSID/ZZSIDPlayGUI/` | **[ZZSIDPlayGUI 1.0](ZZSID/ZZSIDPlayGUI/README.md)** | Commodore 64 SID music player; ARM Core1 reSID emulation, 1SID/2SID stereo and AHI output | Current |
 | `ZZMIDI/`                               | **ZZMIDI**                | SoundFont MIDI synthesis using the ZZ9000 ARM  | Current              |
 | `ZZVGMPlay/` | **[ZZVGMPlay 1.0](ZZVGMPlay/README.md)** | VGM/VGZ music, sound-chip emulation on Core1 | Current |
 | `ZZSpeech/`                             | **ZZSpeech**              | CMU Flite speech synthesis on ARM Core1        | Current              |
@@ -123,6 +124,32 @@ is distributed with the player).
 Sources and offline MSYS build instructions: [ZZVGMPlay/README.md](ZZVGMPlay/README.md).
 
 Release: https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZVGMPlay-1.0
+
+---
+
+# ZZSIDPlayGUI
+
+Directory: [ZZSID/ZZSIDPlayGUI/](ZZSID/ZZSIDPlayGUI/README.md)
+
+ZZSIDPlayGUI 1.0 is a Commodore 64 SID music player for AmigaOS 3.x and the MNT ZZ9000.
+
+The native 68k GadTools application provides playlist management, subtune selection, autoplay, configurable music directories and stereo AHI output.
+
+C64 CPU emulation and reSID sound synthesis run on the ZZ9000 ARM Cortex-A9 Core1, with support for MOS 6581 and 8580 emulation.
+
+Version 1.0 supports both 1SID and 2SID playback, including independent stereo channels, automatic SID address detection and extended SID addressing. Both SID chips must use the same model.
+
+The 2SID implementation was tested on a real Amiga 4000 / ZZ9000 and compared with an USBSID-Pico equipped with two real MOS 6581 chips.
+
+The ARM Core1 binary is embedded in the Amiga executable. No separate ARM file is required.
+
+**Requires:** AmigaOS 3.x, ZZ9000 with compatible XACP firmware and AHI audio support.
+
+**License:** GNU GPL v2, including the corresponding source code and third-party notices.
+
+Future developments include playsid.library support and SID MIDI support.
+
+See [ZZSIDPlayGUI documentation](ZZSID/ZZSIDPlayGUI/README.md) for installation, features, limitations and source build instructions.
 
 ---
 

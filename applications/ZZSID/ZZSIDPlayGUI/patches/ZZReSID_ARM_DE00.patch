@@ -1,0 +1,57 @@
+--- REFERENCE_1OCT/zzresid_core1.cpp
++++ A2/sources/ARM/zzresid_core1.cpp
+@@ -459,7 +459,8 @@
+         /* A second chip needs a base that is inside the I/O page, aligned
+          * on 32 bytes, and not overlapping chip 0. */
+         if (req_n > 1u) {
+-            if (req_b1 < 0xD420u || req_b1 > 0xDFE0u || (req_b1 & 0x1Fu) != 0u)
++            if (req_b1 < 0xD420u || req_b1 > 0xDFE0u || (req_b1 & 0x1Fu) != 0u ||
++                (req_b1 >= 0xD800u && req_b1 < 0xDE00u))
+                 req_b1 = 0xD420u;
+             g_sid_base[1] = (uint16_t)req_b1;
+         }
+@@ -909,12 +910,15 @@
+ extern "C" uint8_t fake6502_mem_read(fake6502_context *c, uint16_t address)
+ {
+     (void)c;
+-    if (address >= 0xD400u && address <= 0xD7FFu) {
+-        /* Some tunes read osc3/env3 ($D41B/$D41C) as a noise source. */
++    /* Ask the configured decoder, rather than limiting the SID hooks to
++     * $D400-$D7FF: legal SID2 ranges also include $DE00-$DFFF. */
++    {
+         uint8_t reg;
+         int chip = sid_find_chip(address, &reg);
+-        if (chip >= 0 && g_sid[chip]) return (uint8_t)g_sid[chip]->read(reg);
+-        return 0;
++        if (chip >= 0) {
++            /* Some tunes use osc3/env3 ($D41B/$D41C) as noise sources. */
++            return g_sid[chip] ? (uint8_t)g_sid[chip]->read(reg) : 0;
++        }
+     }
+     /* Everything in this block is reachable only for a play == $0000 tune.
+      * For every other tune the test fails and the branch order below is
+@@ -935,14 +939,18 @@
+ extern "C" void fake6502_mem_write(fake6502_context *c, uint16_t address, uint8_t val)
+ {
+     (void)c;
+-    if (address >= 0xD400u && address <= 0xD7FFu) {
++    /* A second SID can live at $D500, $DE00 or $DF00. The SID decoder
++     * already knows those windows; never bypass it in the write hook. */
++    {
+         uint8_t reg;
+         int chip = sid_find_chip(address, &reg);
+-        if (chip >= 0 && reg <= 0x18u) {
+-            sid_write_chip((uint32_t)chip, reg, val);
+-            g_sid_writes++;
+-        }
+-        return;
++        if (chip >= 0) {
++            if (reg <= 0x18u) {
++                sid_write_chip((uint32_t)chip, reg, val);
++                g_sid_writes++;
++            }
++            return;
++        }
+     }
+     /* Same gate as the read hook: unreachable unless play == $0000. The
+      * value is also kept in RAM so a tune that reads back what it wrote

@@ -1,0 +1,119 @@
+# Makefile_core1 - build ZZReSID Core1 blob
+#
+# Build modes:
+#   make -f Makefile_core1 BUILD=A   (default: fixed 440Hz, no reSID)
+#   make -f Makefile_core1 BUILD=B   (construct reSID, fixed PCM)
+#   make -f Makefile_core1 BUILD=C   (full reSID render)
+#
+# Produces zzresid_core1.bin (raw ARM binary, load at fb+0x04000000).
+# Author: Xanxi / 2026
+
+CROSS   = arm-none-eabi-
+CC      = $(CROSS)gcc
+CXX     = $(CROSS)g++
+AS      = $(CROSS)gcc
+LD      = $(CROSS)g++
+OBJCOPY = $(CROSS)objcopy
+SIZE    = $(CROSS)size
+
+RESID_DIR = resid
+
+# NOTE - do not re-add -DNEW_8580_FILTER=0.
+# resid/siddefs.h already defines it to 0, and resid/sid.h guards on it with
+# the value form (#if, not #ifdef), so the command-line -D was redundant.
+# At 0, sid.h includes filter.h, whose model_filter[2] models BOTH the 6581
+# and the 8580 - the 8580 is fully modelled here. Setting it to 1 would pull
+# in filter8580new.h, whose filter8580new.cc is NOT in RESID_SRCS below, so
+# the flag advertises a choice this Makefile cannot honour anyway.
+
+BUILD ?= A
+BUILDDEF = -DZZRESID_BUILD_$(BUILD)=1
+
+CPU = -mcpu=cortex-a9 -marm -mfpu=vfpv3-d16 -mfloat-abi=hard
+
+CXXFLAGS = $(CPU) -O2 \
+           -ffunction-sections -fdata-sections \
+           -fno-unwind-tables -fno-asynchronous-unwind-tables \
+           -std=c++11 -fno-exceptions -fno-rtti -fno-threadsafe-statics \
+           -DNDEBUG -DNMOS6502 $(BUILDDEF) \
+           -I. -I$(RESID_DIR)
+
+ASFLAGS = $(CPU)
+
+LDFLAGS = $(CPU) -nostartfiles --specs=nosys.specs -Wl,--gc-sections \
+          -T zzresid_core1.ld -Wl,-Map,zzresid_core1.map
+
+# reSID objects only needed for BUILD B and C
+ifneq ($(BUILD),A)
+RESID_SRCS = $(RESID_DIR)/sid.cc $(RESID_DIR)/voice.cc $(RESID_DIR)/wave.cc \
+             $(RESID_DIR)/envelope.cc $(RESID_DIR)/filter.cc \
+             $(RESID_DIR)/extfilt.cc $(RESID_DIR)/pot.cc $(RESID_DIR)/dac.cc
+RESID_OBJS = $(RESID_SRCS:.cc=.o)
+# The 6502 core for the .sid player. Plain C, needs NMOS6502.
+PLAYER_OBJS = fake6502.o
+else
+RESID_OBJS =
+PLAYER_OBJS =
+endif
+
+OBJS = startup.o zzresid_core1.o $(PLAYER_OBJS) $(RESID_OBJS)
+
+# LIBGCC = $(shell $(CROSS)gcc $(CPU) -print-libgcc-file-name)
+
+TARGET = zzresid_core1
+
+all: $(TARGET).bin
+
+$(TARGET).elf: $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+	$(SIZE) $@
+
+# ONE command, and it is the one that matters.
+#
+# The previous recipe ended with a quoted @echo and a wc, which need a shell
+# this MSYS install does not have: Error 127 on every build. objcopy had
+# already run by then, so the .bin was correct and only the cosmetic tail
+# failed - but make reported a failed target, which is a terrible way to end
+# a build you are about to trust.
+#
+# Nothing but the toolchain goes in this recipe. The .elf rule above already
+# prints the size, and a byte count is not worth a red line.
+$(TARGET).bin: $(TARGET).elf
+	$(OBJCOPY) -O binary $< $@
+
+startup.o: startup.S
+	$(AS) $(ASFLAGS) -c -o $@ $<
+
+zzresid_core1.o: zzresid_core1.cpp zzresid_shared.h
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+fake6502.o: fake6502.c fake6502.h
+	$(CC) $(CPU) -O2 -DNMOS6502 -ffunction-sections -fdata-sections -c -o $@ $<
+
+%.o: %.cc
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(OBJS) $(TARGET).elf $(TARGET).bin $(TARGET).map
+
+# These DO need a shell (pipes). Kept for an environment that has one; on a
+# shell-less MSYS use the individual targets below instead.
+verify: $(TARGET).elf
+	@echo "--- _start address (must be 0x04200000) ---"
+	@$(CROSS)nm $(TARGET).elf | grep _start
+	@echo "--- section headers ---"
+	@$(CROSS)objdump -h $(TARGET).elf
+	@echo "--- first instructions ---"
+	@$(CROSS)objdump -d $(TARGET).elf | head -20
+
+# Shell-free equivalents.
+syms: $(TARGET).elf
+	$(CROSS)nm -n $(TARGET).elf
+
+sections: $(TARGET).elf
+	$(CROSS)objdump -h $(TARGET).elf
+
+disasm: $(TARGET).elf
+	$(CROSS)objdump -d $(TARGET).elf
+
+.PHONY: all clean verify syms sections disasm
