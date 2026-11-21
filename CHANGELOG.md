@@ -1,5 +1,28 @@
 # Changelog
 
+## ZZSIDPlayGUI 1.0 - SID Music Player - 21 November 2026
+
+First public release of ZZSIDPlayGUI for AmigaOS 3.x and MNT ZZ9000.
+
+- Native GadTools SID music player with playlists, subtunes, autoplay,
+  configurable Default Drawer and stereo AHI audio output.
+- C64 CPU emulation using fake6502 and SID synthesis using reSID,
+  running on the ZZ9000 ARM Cortex-A9 Core1.
+- MOS 6581 and 8580 emulation, with 1SID, independent 2SID stereo
+  and 2SID mirror playback.
+- Automatic second SID address detection, including $DE00 support.
+- 2SID playback tested on a real Amiga 4000 / ZZ9000 and compared
+  with an USBSID-Pico equipped with two real MOS 6581 chips.
+- Single AmigaOS executable with embedded ARM payload and NewIcons icon.
+- ZIP and LHA distributions, complete corresponding sources and GPLv2 notices.
+- Future developments include playsid.library and SID MIDI support.
+
+Release: [ZZSIDPlayGUI 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZSIDPlayGUI-1.0).
+
+Documentation: [ZZSIDPlayGUI](applications/ZZSID/ZZSIDPlayGUI/README.md).
+
+---
+
 ## ZZHalfLife 1.0 - Half-Life / RasterIX - 19 November 2026
 
 First public release of Half-Life for AmigaOS 3.x and the MNT ZZ9000.
