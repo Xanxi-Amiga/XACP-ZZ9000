@@ -109,6 +109,10 @@ selected NewIcons images.
 - fake6502: **Mike Chambers**, with subsequent modifications from the
   `omarandlorraine/fake6502` fork; source states GNU GPL v2.0.
 - See `THIRD_PARTY.md` and `COPYING.GPL-2.0.txt` for third-party license notices.
+  
+**License:** ZZSIDPlayGUI is distributed under GNU GPL version 2
+(GPL-2.0-only). Third-party copyright and licensing notices are
+preserved in `THIRD_PARTY.md`.
 
 
 See [RELEASE_NOTES.md](RELEASE_NOTES.md) and [BUILD_DETAILS.md](BUILD_DETAILS.md).
