@@ -1,0 +1,205 @@
+  1  20 GLActiveTextureARB implemented
+  2  24 GLAlphaFunc implemented
+  3  28 GLArrayElement unsupported
+  4  32 GLBegin implemented
+  5  36 GLBindTexture implemented
+  6  40 GLBlendFunc implemented
+  7  44 GLClear implemented
+  8  48 GLClearColor implemented
+  9  52 GLClearDepth implemented
+ 10  56 GLColor3fv implemented
+ 11  60 GLColor3ubv implemented
+ 12  64 GLColor4f implemented
+ 13  68 GLColor4fv implemented
+ 14  72 GLColor4ub implemented
+ 15  76 GLColor4ubv implemented
+ 16  80 GLColorMask implemented
+ 17  84 GLColorPointer implemented
+ 18  88 GLColorTable unsupported
+ 19  92 GLCullFace implemented
+ 20  96 GLDeleteTextures implemented
+ 21 100 GLDepthFunc implemented
+ 22 104 GLDepthMask implemented
+ 23 108 GLDepthRange implemented
+ 24 112 GLDisableClientState implemented
+ 25 116 GLDrawArrays implemented
+ 26 120 GLDrawBuffer implemented
+ 27 124 GLDrawElements implemented
+ 28 128 GLEnableClientState implemented
+ 29 132 GLEnd implemented
+ 30 136 GLFinish implemented
+ 31 140 GLFlush implemented
+ 32 144 GLFogf implemented
+ 33 148 GLFogfv implemented
+ 34 152 GLFrontFace implemented
+ 35 156 GLFrustum implemented
+ 36 160 GLGenTextures implemented
+ 37 164 GLGetBooleanv unsupported
+ 38 168 GLGetError implemented
+ 39 172 GLGetFloatv implemented
+ 40 176 GLGetIntegerv implemented
+ 41 180 GLGetString implemented
+ 42 184 GLHint implemented
+ 43 188 GLIsEnabled unsupported
+ 44 192 GLLoadIdentity implemented
+ 45 196 GLLoadMatrixd implemented
+ 46 200 GLLoadMatrixf implemented
+ 47 204 GLLockArrays implemented
+ 48 208 GLMatrixMode implemented
+ 49 212 GLMultMatrixd implemented
+ 50 216 GLMultMatrixf implemented
+ 51 220 GLMultiTexCoord2fARB implemented
+ 52 224 GLMultiTexCoord2fvARB implemented
+ 53 228 GLNormal3f implemented
+ 54 232 GLOrtho implemented
+ 55 236 GLPixelStorei implemented
+ 56 240 GLPointSize implemented
+ 57 244 GLPolygonMode implemented
+ 58 248 GLPopMatrix implemented
+ 59 252 GLPushMatrix implemented
+ 60 256 GLReadPixels unsupported
+ 61 260 GLRotated implemented
+ 62 264 GLRotatef implemented
+ 63 268 GLRotatefEXT implemented
+ 64 272 GLRotatefEXTs implemented
+ 65 276 GLScaled implemented
+ 66 280 GLScalef implemented
+ 67 284 GLScissor implemented
+ 68 288 GLShadeModel implemented
+ 69 292 GLTexCoord2f implemented
+ 70 296 GLTexCoord2fv implemented
+ 71 300 GLTexCoord4f unsupported
+ 72 304 GLTexCoord4fv unsupported
+ 73 308 GLTexCoordPointer implemented
+ 74 312 GLTexEnvi implemented
+ 75 316 GLTexGeni implemented
+ 76 320 GLTexImage2D implemented
+ 77 324 GLTexParameteri implemented
+ 78 328 GLTexSubImage2D implemented
+ 79 332 GLTranslated implemented
+ 80 336 GLTranslatef implemented
+ 81 340 GLULookAt unsupported
+ 82 344 GLUPerspective implemented
+ 83 348 GLUnlockArrays implemented
+ 84 352 GLVertex2fv implemented
+ 85 356 GLVertex3fv implemented
+ 86 360 GLVertex4f implemented
+ 87 364 GLVertex4fv implemented
+ 88 368 GLVertexPointer implemented
+ 89 372 GLViewport implemented
+ 90 376 MGLClearPointer implemented
+ 91 380 MGLCreateContext implemented
+ 92 384 MGLCreateContextFromID unsupported
+ 93 388 MGLDeleteContext implemented
+ 94 392 MGLDrawMultitexBuffer implemented
+ 95 396 MGLEnableSync implemented
+ 96 400 MGLExit implemented
+ 97 404 MGLGetInputWindowHandle implemented
+ 98 408 MGLGetWindowHandle implemented
+ 99 412 MGLIdleFunc implemented
+100 416 MGLKeyFunc implemented
+101 420 MGLLockBack unsupported
+102 424 MGLLockDisplay implemented
+103 428 MGLLockMode implemented
+104 432 MGLMainLoop implemented
+105 436 MGLMinTriArea implemented
+106 440 MGLMouseFunc unsupported
+107 444 MGLPrintMatrix unsupported
+108 448 MGLPrintMatrixStack unsupported
+109 452 MGLResizeContext implemented
+110 456 MGLSetPointer implemented
+111 460 MGLSetState implemented
+112 464 MGLSetZOffset implemented
+113 468 MGLSpecialFunc unsupported
+114 472 MGLSwitchDisplay implemented
+115 476 MGLTexMemStat unsupported
+116 480 MGLUnlockDisplay implemented
+117 484 MGLWriteShotPPM implemented
+118 488 mglChooseGuardBand implemented
+119 492 mglChooseMtexBufferSize implemented
+120 496 mglChooseNumberOfBuffers implemented
+121 500 mglChoosePixelDepth implemented
+122 504 mglChooseTextureBufferSize unsupported
+123 508 mglChooseVertexBufferSize implemented
+124 512 mglChooseWindowMode implemented
+125 516 mglGetSupportedScreenModes unsupported
+126 520 mglProhibitAlphaFallback unsupported
+127 524 mglProhibitMipMapping unsupported
+128 528 mglProposeCloseDesktop implemented
+129 532 GLPolygonOffset unsupported
+130 536 GLClientActiveTextureARB implemented
+131 540 GLInterleavedArrays unsupported
+132 544 GLMultiDrawArrays unsupported
+133 548 GLBlendEquation unsupported
+134 552 GLBlendFuncSeparate unsupported
+135 556 GLIsTexture implemented
+136 560 mglChooseZBufferDepth unsupported
+137 564 GLLineWidth unsupported
+138 568 GLTexGenfv implemented
+139 572 GLCopyTexImage2D unsupported
+140 576 GLCopyTexSubImage2D unsupported
+141 580 GLAreTexturesResident unsupported
+142 584 GLEdgeFlag unsupported
+143 588 GLEdgeFlagPointer unsupported
+144 592 GLEdgeFlagv unsupported
+145 596 GLGetDoublev unsupported
+146 600 GLGetPointerv unsupported
+147 604 GLIndexi unsupported
+148 608 GLIndexiv unsupported
+149 612 GLIndexPointer unsupported
+150 616 GLPrioritizeTextures unsupported
+151 620 GLReadBuffer unsupported
+152 624 MGLCreateContextFromWindow implemented
+153 628 MGLCreateContextFromBitMap unsupported
+154 632 GLLightf unsupported
+155 636 GLLightfv unsupported
+156 640 GLMaterialf unsupported
+157 644 GLMaterialfv unsupported
+158 648 GLLightModelf unsupported
+159 652 GLLightModelfv unsupported
+160 656 GLGetLightfv unsupported
+161 660 GLGetMaterialfv unsupported
+162 664 GLGenLists unsupported
+163 668 GLDeleteLists unsupported
+164 672 GLIsList unsupported
+165 676 GLNewList unsupported
+166 680 GLEndList unsupported
+167 684 GLCallList unsupported
+168 688 GLUBuild2DMipmaps unsupported
+169 692 GLUErrorString unsupported
+170 696 GLUNewQuadric unsupported
+171 700 GLUDeleteQuadric unsupported
+172 704 GLUQuadricNormals unsupported
+173 708 GLUQuadricTexture unsupported
+174 712 GLUQuadricDrawStyle unsupported
+175 716 GLUQuadricOrientation unsupported
+176 720 GLUCylinder unsupported
+177 724 GLUSphere unsupported
+178 728 GLUDisk unsupported
+179 732 GLUTInit unsupported
+180 736 GLUTInitDisplayMode unsupported
+181 740 GLUTInitWindowSize unsupported
+182 744 GLUTInitWindowPosition unsupported
+183 748 GLUTCreateWindow unsupported
+184 752 GLUTMainLoop unsupported
+185 756 GLUTDisplayFunc unsupported
+186 760 GLUTIdleFunc unsupported
+187 764 GLUTKeyboardFunc unsupported
+188 768 GLUTReshapeFunc unsupported
+189 772 GLUTSwapBuffers unsupported
+190 776 GLUTPostRedisplay unsupported
+191 780 GLUTGet unsupported
+192 784 GLUTGameModeString unsupported
+193 788 GLUTEnterGameMode unsupported
+194 792 GLUTLeaveGameMode unsupported
+195 796 GLUTGameModeGet unsupported
+196 800 GLUTSolidCube unsupported
+197 804 GLUTSolidSphere unsupported
+198 808 GLUTSolidCone unsupported
+199 812 GLUTSolidTorus unsupported
+200 816 GLUTSolidDodecahedron unsupported
+201 820 GLNormalPointer implemented
+202 824 GLUQuadricCallback unsupported
+203 828 GLColorMaterial unsupported
+204 832 GLTexEnvfv unsupported
+205 836 GLNormal3fv implemented
