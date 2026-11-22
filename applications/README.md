@@ -33,6 +33,7 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | Directory                               | Application               | Role                                           | Status               |
 | --------------------------------------- | ------------------------- | ---------------------------------------------- | -------------------- |
 | `ZZSID/ZZSIDPlayGUI/` | **[ZZSIDPlayGUI 1.0](ZZSID/ZZSIDPlayGUI/README.md)** | Commodore 64 SID music player; ARM Core1 reSID emulation, 1SID/2SID stereo and AHI output | Current |
+| `ZZMiniGL/` | **[ZZMiniGL Beta 1](ZZMiniGL/README.md)** | MiniGL 29.1 library: compatible 68k applications render through ARM Core1 and RasterIX | Beta / pre-release |
 | `ZZMIDI/`                               | **ZZMIDI**                | SoundFont MIDI synthesis using the ZZ9000 ARM  | Current              |
 | `ZZVGMPlay/` | **[ZZVGMPlay 1.0](ZZVGMPlay/README.md)** | VGM/VGZ music, sound-chip emulation on Core1 | Current |
 | `ZZSpeech/`                             | **ZZSpeech**              | CMU Flite speech synthesis on ARM Core1        | Current              |
@@ -371,6 +372,30 @@ The Core1 engine and its corresponding GPL sources are published; the
 separate Amiga 68k launcher is proprietary freeware.
 
 [Gameplay video](https://youtu.be/cV312wjwoPc) | [Documentation](games/ZZQuakeGL/README.md)
+
+---
+
+# ZZMiniGL Beta 1
+
+Directory: [`ZZMiniGL/`](ZZMiniGL/README.md)
+
+[ZZMiniGL Beta 1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZMiniGL-Beta1) provides an experimental `minigl.library`
+29.1 ABI for compatible, unmodified 68k programs on a real 68060 and
+MNT ZZ9000. The 68k application remains on the host CPU; rendering
+commands execute on ARM Core1 and the RasterIX FPGA. This differs from
+ZZQuakeGL, whose game engine itself runs on ARM Core1.
+
+Validated software includes GLQuake R200, classic MiniGL GLQuake,
+RadeonGL demonstrations and PiStorm3D demonstrations. The beta includes
+the original, unmodified PiStorm3D `gears` demo and its chrome texture.
+Other third-party applications and demos must be obtained separately.
+Not every MiniGL function or application is supported. Requirements:
+68060 with FPU, Picasso96 and XX19d-RIX / XACP v1.8.
+
+The Amiga binaries and corresponding sources are available as separate
+[pre-release assets](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZMiniGL-Beta1). Keep `minigl.library` and
+`ZZMiniGLLoad` from the same package together in the application
+drawer; do not install this beta in `LIBS:`.
 
 ---
 

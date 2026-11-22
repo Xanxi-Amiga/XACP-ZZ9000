@@ -6,13 +6,13 @@ This directory is an **index of demonstrations, not a separate application distr
 
 ## FPGA graphics acceleration
 
-### XACP-GPU / ZZGearRIX — RasterIX hardware 3D
+### XACP-GPU / ZZGearRIX - RasterIX hardware 3D
 
-**11 October 2026 — [Video](https://youtu.be/A24W72UVJ0A) · [Technical report and driver source snapshot](ZZGearRIX/README.md)**
+**11 October 2026 - [Video](https://youtu.be/A24W72UVJ0A) | [Technical report and driver source snapshot](ZZGearRIX/README.md)**
 
 Hardware-accelerated 3D rendering on a physical Amiga 4000/68060 with the ZZ9000 FPGA running ToNi3141's RasterIX. The ZZ9000's ARM Core1 prepares commands for the FPGA renderer.
 
-The rotating ZZGear scene achieved **59.53 FPS on a 60 Hz display** and **163.5–165.9 completed FPS offscreen**, compared with approximately **27–28 FPS** using the earlier ARM TinyGL software renderer. These results describe the particular ZZGear scene, not expected performance in games.
+The rotating ZZGear scene achieved **59.53 FPS on a 60 Hz display** and **163.5-165.9 completed FPS offscreen**, compared with approximately **27-28 FPS** using the earlier ARM TinyGL software renderer. These results describe the particular ZZGear scene, not expected performance in games.
 
 **Availability:** `librixgpu 1.0` ARM driver source snapshot, API documentation and hardware test evidence are included under [`ZZGearRIX/`](ZZGearRIX/). The complete ZZGear application, its binaries and the FPGA Vivado project are **not** included in this milestone.
 
@@ -23,11 +23,22 @@ Separately released applications using the FPGA renderer include
 and [ZZScreensavers 1.1 / Solar Winds](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1).
 These are application releases, not binaries bundled with the demo index.
 
+## Released MiniGL compatibility demonstration
+
+[ZZMiniGL Beta 1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZMiniGL-Beta1) includes the **unmodified PiStorm3D
+`gears` demonstration** and its required `data/chrome.ppm` texture.
+This third-party demo is run with the existing `ZZDemos` script and
+demonstrates compatibility with the MiniGL 29.1 shared-library ABI
+on a real 68060 / ZZ9000.
+
+The PiStorm3D `gears` binary is a third-party demonstration, distinct
+from the historical ZZGearRIX research shown above.
+
 ## ARM software 3D demonstrations
 
-### ZZTeapot — ARM software-rendered 3D
+### ZZTeapot - ARM software-rendered 3D
 
-**[Video](https://youtu.be/GSLhxQDLhEI) · [Project notes](../applications/ZZTeapot/README.md)**
+**[Video](https://youtu.be/GSLhxQDLhEI) | [Project notes](../applications/ZZTeapot/README.md)**
 
 Classic Utah teapot rendered in software on the ZZ9000's Cortex-A9 processor. This predates the FPGA RasterIX demonstration: **ZZTeapot is an ARM software-rendering experiment, not an FPGA-accelerated demo**.
 
@@ -35,9 +46,9 @@ Classic Utah teapot rendered in software on the ZZ9000's Cortex-A9 processor. Th
 
 ## Coprocessor and CPU-architecture experiments
 
-### ZZPPC — PowerPC/FPU execution on Cortex-A9
+### ZZPPC - PowerPC/FPU execution on Cortex-A9
 
-**6 September 2026 — [Video](https://youtu.be/lP0kV6TtkcY) · [Project notes](../applications/emulators/ZZPPC/README.md)**
+**6 September 2026 - [Video](https://youtu.be/lP0kV6TtkcY) | [Project notes](../applications/emulators/ZZPPC/README.md)**
 
 Proof of concept running the **original, unmodified FlashMandelWOS** PowerPC/FPU workload on the ZZ9000's ARM Core1, without a physical PowerPC accelerator. An experimental `powerpc.library` redirects the workload to a custom PPC32 interpreter; the Amiga displays the resulting fractal.
 
@@ -47,13 +58,13 @@ Proof of concept running the **original, unmodified FlashMandelWOS** PowerPC/FPU
 
 ### Mandelbrot rendering and ARM compute offloading
 
-**7 May 2026 — [Video 1](https://youtu.be/PaW-dg9df0M) · [Video 2](https://youtu.be/C3OIMTwJfA8) · [Historical project notes](../applications/fractals/README.md)**
+**7 May 2026 - [Video 1](https://youtu.be/PaW-dg9df0M) | [Video 2](https://youtu.be/C3OIMTwJfA8) | [Historical project notes](../applications/fractals/README.md)**
 
 Early demonstrations of ARM-side Mandelbrot computation, shared DDR, RTG framebuffer output and experimental rendering pipelines. Some historical clients predate the current XACP memory map and may require adaptation to work with modern firmware.
 
 ### Core1 Julia fractal
 
-**May 2026 — [Video 1](https://youtu.be/SRgtJtQZTxo) · [Video 2](https://youtu.be/Uj4IW-JH0ro) · [Project notes](../applications/fractals/core1-julia-v2/README.md)**
+**May 2026 - [Video 1](https://youtu.be/SRgtJtQZTxo) | [Video 2](https://youtu.be/Uj4IW-JH0ro) | [Project notes](../applications/fractals/core1-julia-v2/README.md)**
 
 Continuous Julia fractal rendering on ARM Core1 with direct RTG output. Historic Core1 Julia program files are maintained under [`applications/fractals/`](../applications/fractals/); check their own README for compatibility and licensing restrictions.
 

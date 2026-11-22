@@ -19,6 +19,9 @@ retains existing v1.7 allocations and introduces the image-service window.
   uses the FPGA renderer alongside two software rendering modes.
   [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1)
   adds the FPGA-accelerated Solar Winds screensaver.
+  The separately released [ZZMiniGL Beta 1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZMiniGL-Beta1)
+  exposes partial MiniGL 29.1 compatibility to 68060 applications
+  through Core1 and RasterIX; it is not bundled with the firmware.
 - JPEG and PNG decoding backends and XACP Image Service API v1.3.
 - XACP v1.8: dedicated 1 MiB shared image window. AmigaOS datatypes are
   under development and are not shipped with the firmware.

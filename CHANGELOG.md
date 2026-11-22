@@ -1,5 +1,28 @@
 # Changelog
 
+## ZZMiniGL Beta 1 - MiniGL 29.1 / RasterIX - 22 November 2026
+
+First public pre-release of a MiniGL 29.1 shared-library implementation
+for AmigaOS 3.x with a genuine 68060 and an MNT ZZ9000.
+
+- Existing compatible 68k applications remain on the 68060 while
+  graphics commands are handled by ARM Core1 and the RasterIX FPGA.
+- Partial MiniGL ABI 5 support: 115 implemented handlers of 205
+  dispatch entries; one context at a time.
+- Validated GLQuake R200 1.5.1, classic MiniGL GLQuake, RadeonGL
+  demonstrations and PiStorm3D demos. The original PiStorm3D `gears`
+  executable and chrome texture are included with upstream credits.
+- A8.29 GLQuake R200 `timedemo demo1`: 22.2 FPS at 640x480 with
+  AHI on A4000 / CyberStorm MK II 68060 at 50 MHz.
+- Requires XX19d-RIX / XACP v1.8, Picasso96 and supported 16-bit modes.
+- Releases separate Amiga and corresponding source archives.
+
+Pre-release: [ZZMiniGL Beta 1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZMiniGL-Beta1).
+
+Documentation: [ZZMiniGL](applications/ZZMiniGL/README.md).
+
+---
+
 ## ZZSIDPlayGUI 1.0 - SID Music Player - 21 November 2026
 
 First public release of ZZSIDPlayGUI for AmigaOS 3.x and MNT ZZ9000.

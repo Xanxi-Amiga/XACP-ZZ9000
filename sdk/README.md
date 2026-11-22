@@ -139,6 +139,17 @@ Developer information for v1.8 and historical v1.7 is available in:
 New allocations should be added to the versioned XACP memory map instead of
 being introduced as undocumented hard-coded DDR addresses.
 
+## Application-level MiniGL compatibility
+
+[ZZMiniGL Beta 1](../applications/ZZMiniGL/README.md) is a separately
+distributed MiniGL 29.1 shared-library implementation for 68060 Amigas
+with a ZZ9000. It translates compatible 68k MiniGL commands to the
+ARM Core1 and RasterIX rendering backend. This is not a new firmware
+service or a general-purpose SDK implementation; applications must use
+the MiniGL 29.1 ABI and the beta has documented compatibility limits.
+
+Downloads: [ZZMiniGL Beta 1 pre-release](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZMiniGL-Beta1).
+
 ## License
 
 The public XACP SDK headers and memory-map definitions in this directory are

@@ -59,6 +59,7 @@ Current references:
 - [Firmware release XX19d-RIX](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19d-RIX)
 - [ZZQuake2 1.0 - Quake II](../applications/games/ZZQuake2/README.md)
 - [ZZScreensavers 1.1 - Solar Winds](../applications/ZZScreensaver/README.md)
+- [ZZMiniGL Beta 1 - MiniGL 29.1 for 68k software](../applications/ZZMiniGL/README.md)
 
 
 ## XACP v1.7 (previous public ABI)
@@ -357,6 +358,7 @@ ZZPicoDrive        Core1 Mega Drive / Genesis emulator
 ZZRastan           Core1 arcade game recreation
 ZZSpeech           ARM-assisted speech synthesis
 ZZVGMPlay          Core1 VGM/VGZ game-music player
+ZZMiniGL           MiniGL 29.1: 68k application with Core1/RasterIX rendering
 ZZScreensavers     Core1 Earth/Julia and FPGA RasterIX Solar Winds
 ZZPPC              experimental PPC32 / FPU execution
 ZZ-MPEG            MPEG-1 / MP2 multimedia playback

@@ -61,6 +61,12 @@ RasterIX is now used by six separately released applications:
 - [ZZOpenLara 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZOpenLara-1.0) - Tomb Raider I with software and FPGA RasterIX rendering.
 - [ZZVirtuaRacingRIX 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZVirtuaRacingRIX-1.0) - Enhanced Virtua Racing Deluxe (Sega 32X) with RasterIX 3D at 640x480 and up to 60 displayed images/s. [Video](https://youtu.be/NvPGxhvwGZo).
 
+**[ZZMiniGL Beta 1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZMiniGL-Beta1)** is a separate, experimental MiniGL 29.1
+shared-library implementation for unmodified compatible 68k software. The
+application engine remains on a real 68060; the ZZ9000 ARM Core1 and
+RasterIX FPGA accelerate the rendering. This differs from ZZQuakeGL,
+which runs the Quake engine and GL renderer on Core1.
+
 The ZZQuake2 software and ARM TinyGL renderers, as well as the ZZOpenLara software renderer, remain compatible with XX19c. RasterIX acceleration requires XX19d-RIX.
 
 - [Firmware XX19d-RIX release](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19d-RIX)
@@ -130,6 +136,7 @@ Historical builds and source remain archived for regression testing.
 | **[ZZDoom](applications/games/ZZDoom/README.md)** | Doom engine on Core1 |
 | **[ZZQuake](applications/games/ZZQuake/README.md)** | WinQuake/quakegeneric software renderer on Core1 |
 | **[ZZQuakeGL 1.0](applications/games/ZZQuakeGL/README.md)** | Quake 1 with original GLQuake renderer accelerated by RasterIX FPGA hardware |
+| **[ZZMiniGL Beta 1](applications/ZZMiniGL/README.md)** | MiniGL 29.1 shared library for compatible 68060 applications; graphics offloaded to Core1 and RasterIX (pre-release) |
 | **[ZZQuake2 1.0](applications/games/ZZQuake2/README.md)** | Quake II on Core1 with software, ARM TinyGL and FPGA RasterIX rendering |
 | **[ZZHalfLife 1.0](applications/games/ZZHalfLife/README.md)** | Half-Life on ARM Core1 with FPGA RasterIX acceleration; original Steam game data required |
 | **[ZZOpenLara 1.0](applications/games/ZZOpenLara/README.md)** | Tomb Raider I on Core1 with ARM software and FPGA RasterIX rendering |
@@ -153,10 +160,10 @@ XACP is also used by independent developers to take advantage of the ZZ9000 ARM 
 
 ### Projects by SkiltonUSA
 
-- **[ZZDosBox-ARM-68K](https://github.com/SkiltonUSA/ZZDosBox-ARM-68K)** — DOSBox PC emulation accelerated by the ZZ9000 ARM processor.
-- **[ZZUAE-ARM-68K](https://github.com/SkiltonUSA/ZZUAE-ARM-68K)** — Amiga OCS/ECS emulation based on UAE4ARM, with an AmigaOS MUI frontend.
-- **[ZZNes-ARM-68K](https://github.com/SkiltonUSA/ZZNes-ARM-68K)** — Nintendo Entertainment System emulation using the ZZ9000 ARM processor.
-- **[ZZSNES-ARM-68K](https://github.com/SkiltonUSA/ZZSNES-ARM-68K)** — Super Nintendo emulation research for the ZZ9000.
+- **[ZZDosBox-ARM-68K](https://github.com/SkiltonUSA/ZZDosBox-ARM-68K)** - DOSBox PC emulation accelerated by the ZZ9000 ARM processor.
+- **[ZZUAE-ARM-68K](https://github.com/SkiltonUSA/ZZUAE-ARM-68K)** - Amiga OCS/ECS emulation based on UAE4ARM, with an AmigaOS MUI frontend.
+- **[ZZNes-ARM-68K](https://github.com/SkiltonUSA/ZZNes-ARM-68K)** - Nintendo Entertainment System emulation using the ZZ9000 ARM processor.
+- **[ZZSNES-ARM-68K](https://github.com/SkiltonUSA/ZZSNES-ARM-68K)** - Super Nintendo emulation research for the ZZ9000.
 
 These projects are independently developed and maintained by SkiltonUSA.
 
