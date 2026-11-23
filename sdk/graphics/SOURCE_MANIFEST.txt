@@ -1,0 +1,18 @@
+# Source snapshot manifest - GitHub commit 158fe613a4ee8a5b17c73ffea341180991d33ab4
+# relative_path | git_blob_sha1 | bytes
+zzgl/zzgl.c | 905ad4c0c5eba65445a31ffe0d73cc6ec4cd4785 | 111501
+zzgl/zzgl.h | 23bd1f537dc7bef92c711793afad122c465b6e40 | 21990
+librixgpu/rix_diag.h | 4bceb400c984b7bc0fd47f05652c337b31d449c8 | 24411
+librixgpu/rix_hw.h | 9d31e3a0f7df635ff354f74e03cdf69330fe01b7 | 12863
+librixgpu/rix_walk_model.h | ec09489a855a4d66ee3ee7fa5e432af49f8f7f7d | 3940
+librixgpu/rix_window.h | 68430154984a68adc880bc02ae0b3dfb763d08ee | 3511
+librixgpu/rixclip.c | 5d4dac3b21f2936a8b231a0e68796bb539f0a1b5 | 6617
+librixgpu/rixclip.h | 4436f756a59ddd81eeed0d46bd3ae9f149e48fde | 2888
+librixgpu/rixdesc.c | 16a269ba94628a620b83dbec21fa0483eb3d830f | 18306
+librixgpu/rixdesc.h | 0618de5da9dd4c7753619dc5bc62cf9cfc7e9b16 | 2488
+librixgpu/rixframe.c | 42836c7f1c111d905c6f3671eb3fc2c83634f64c | 34030
+librixgpu/rixframe.h | e2efc8234a83d271e85794190d282979d0bbe383 | 13525
+librixgpu/rixgpu.c | e969498f4124557df881214030e1227d21cee804 | 105875
+librixgpu/rixgpu.h | 27f6ffaa478d66bc356e3c9539bdc63de10cf96f | 12482
+librixgpu/rixtex.c | 357ad12ffb65b428bf9a7ca900a8403e7644fe5f | 4927
+librixgpu/rixtex.h | 4402a61dce787573674c07e8555b9f08d94df57a | 3406
