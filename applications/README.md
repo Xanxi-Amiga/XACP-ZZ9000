@@ -37,7 +37,7 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `ZZMIDI/`                               | **ZZMIDI**                | SoundFont MIDI synthesis using the ZZ9000 ARM  | Current              |
 | `ZZVGMPlay/` | **[ZZVGMPlay 1.0](ZZVGMPlay/README.md)** | VGM/VGZ music, sound-chip emulation on Core1 | Current |
 | `ZZSpeech/`                             | **ZZSpeech**              | CMU Flite speech synthesis on ARM Core1        | Current              |
-| `ZZScreensaver/` | **[ZZScreensavers 1.1](ZZScreensaver/README.md)** | Earth/Julia on Core1; Solar Winds via RasterIX | Current |
+| `ZZScreensaver/` | **[ZZScreensavers 1.2](ZZScreensaver/README.md)** | Earth/Julia on Core1; Solar Winds and Digital Rain via RasterIX (Digital Rain: approximately 60 FPS at 640x480) | Current |
 | `emulators/ZZPicodrive/ZZPicodriveMD/` | **[ZZPicoDriveMD 1.2](emulators/ZZPicodrive/ZZPicodriveMD/README.md)** | Sega Mega Drive / Genesis; smooth PAL/NTSC gameplay | Current |
 | `emulators/ZZPicodrive/ZZPicodriveSMS/` | **[ZZPicoDriveSMS 1.2](emulators/ZZPicodrive/ZZPicodriveSMS/README.md)** | Sega Master System with YM2413 FM sound | Current |
 | `emulators/ZZPicodrive/ZZPicodrive32X/` | **[ZZPicoDrive32X 1.2.1](emulators/ZZPicodrive/ZZPicodrive32X/README.md)** | Sega 32X with dual-SH-2 recompilation and six-button controller support | Current |
@@ -190,25 +190,42 @@ ZZSpeech 1.0 is distributed as closed-source freeware. See its own documentation
 
 Directory: `ZZScreensaver/`
 
-[ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1)
-provides three screensavers for AmigaOS 3.x with the ZZ9000:
+[ZZScreensavers 1.2](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.2)
+provides four screensavers for AmigaOS 3.x with the ZZ9000:
 
 - `ZZScreensaverE`: rotating textured Earth at 640x480 on ARM Core1.
 - `ZZScreensaverJ`: animated Julia fractal at 320x240 on ARM Core1.
 - `ZZScreensaverS`: Really Slick Solar Winds at 640x480 RGB565 with FPGA
-  RasterIX acceleration. Solar Winds requires XX19d-RIX firmware.
-- `ZZScreensaverHotkeys` 1.2: Commodities helper for Ctrl-Alt-E, Ctrl-Alt-J
-  and Ctrl-Alt-S. The Solar Winds shortcut picks a random preset among
-  1, 2, 3, 4 and 6; preset 5 remains available manually.
+  RasterIX acceleration.
+- `ZZScreensaverR` 1.0: MatrixView Digital Rain at 640x480 RGB565,
+  combining ARM Core1 character rendering and RasterIX flare blending.
+  Approximately 60 FPS across all three presets (80x60, 64x48 and 40x30
+  character grids) on the tested Amiga 4000/68060. This is the seventh
+  released XACP application to use RasterIX FPGA acceleration.
+- `ZZScreensaverHotkeys` 1.3: Commodities helper for Ctrl-Alt-E, Ctrl-Alt-J,
+  Ctrl-Alt-S and the new Ctrl-Alt-R. Solar Winds selects a random preset
+  among 1, 2, 3, 4 and 6; preset 5 remains available manually. Digital Rain
+  selects a random preset among 1, 2 and 3, avoiding immediate repeats.
 
 Hotkeys is a manual shortcut launcher, not an automatic idle-time screen
-blanker. Earth and Julia remain unchanged from the 1.0 release.
+blanker. Earth, Julia and Solar Winds remain unchanged from version 1.1.
+The complete 1.2 LHA includes all four screensavers and Hotkeys; no previous
+installation is required.
+
+Solar Winds and Digital Rain require XX19d-RIX or compatible later firmware;
+Digital Rain hardware measurements were performed with XX19e-RIX. Classic
+AmigaOS 3.x, Picasso96 and a matching XACP `zz9000.card` are required.
 
 Earth, Julia and Hotkeys are separate proprietary freeware executables.
-Solar Winds is GPL-2.0-or-later, with its corresponding 68k/ARM/RasterIX
-source and build scripts published in `ZZScreensaver/source/SolarWinds/`.
+Solar Winds and Digital Rain are GPL-2.0-or-later, with corresponding
+68k/ARM/RasterIX sources and build scripts published in
+[`ZZScreensaver/source/SolarWinds/`](ZZScreensaver/source/SolarWinds/) and
+[`ZZScreensaver/source/MatrixRain/`](ZZScreensaver/source/MatrixRain/).
 
-See [ZZScreensavers documentation](ZZScreensaver/README.md).
+Digital Rain is based on MatrixView by Alex Zolotov, with contributions by
+Tugrul Galatali and the MPlayer port by Pigeon. RasterIX GPU by ToNi3141.
+
+[Digital Rain video at 60 FPS](https://youtu.be/gXnYjHUTfBw) | [ZZScreensavers documentation](ZZScreensaver/README.md).
 
 ---
 
