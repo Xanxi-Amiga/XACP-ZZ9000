@@ -11,7 +11,7 @@ ZZScreensavers 1.2 adds MatrixView digital rain to the existing Earth, Julia and
 
 ## Installation
 
-This is an update to [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1). Quit the old Hotkeys commodity in Exchange, copy both new executables to `C:`, then restart the commodity or reboot. The existing `S:User-Startup` line is unchanged:
+This is a complete package; no previous installation is required. Quit the old Hotkeys commodity in Exchange if running, copy the five executables to `C:`, then restart the commodity or reboot. The existing `S:User-Startup` line is unchanged:
 
 ```text
 Run >NIL: C:ZZScreensaverHotkeys
@@ -21,7 +21,7 @@ Classic AmigaOS 3.x, ZZ9000, Picasso96 and a matching XACP driver are required. 
 
 ## Downloads and licensing
 
-- `ZZScreensavers-1.2-update.zip`: new Digital Rain and Hotkeys executables, documentation and notices.
+- `ZZScreensavers-1.2.lha`: complete Amiga package with all four savers, Hotkeys 1.3, original Earth/Julia icons, documentation and notices.
 - `ZZScreensaverR-1.0-GPL-source.zip`: corresponding Digital Rain source and offline build scripts.
 - `ZZScreensavers-1.2-SHA256SUMS.txt`: release checksums.
 

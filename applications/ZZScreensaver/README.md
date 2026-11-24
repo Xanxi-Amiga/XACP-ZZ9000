@@ -32,7 +32,7 @@ The supplied hardware measurements on an A4000/060 with XX19e-RIX report 59.2, 5
 
 ## Installation and hotkeys
 
-For an existing 1.1 installation, quit the old commodity in Exchange, copy `ZZScreensaverR` and the replacement `ZZScreensaverHotkeys` to `C:`, then restart the commodity or reboot. For a new installation, install Earth, Julia and Solar Winds from 1.1 first. Keep the following line in `S:User-Startup`:
+The complete 1.2 LHA package includes all four savers and Hotkeys; no previous installation is required. Quit the old commodity in Exchange if running, copy all five executables to `C:`, then restart the commodity or reboot. Keep the following line in `S:User-Startup`:
 
 ```text
 Run >NIL: C:ZZScreensaverHotkeys
@@ -67,7 +67,7 @@ ZZScreensaverS DEBUG PRESET 3 > RAM:ZZSW_3.txt
 
 Classic AmigaOS 3.x, MNT ZZ9000, Picasso96 and a matching XACP `zz9000.card` driver. RasterIX requires XX19d-RIX or later. See the [firmware release](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/XX19d-RIX).
 
-- [ZZScreensavers 1.2](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.2): update package and corresponding Digital Rain GPL source.
+- [ZZScreensavers 1.2](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.2): complete LHA binary package (`ZZScreensavers-1.2.lha`) and corresponding Digital Rain GPL source.
 - [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1): original Earth, Julia and Solar Winds binaries, icons, and corresponding Solar Winds GPL source (unchanged).
 - [Digital Rain source and build instructions](source/MatrixRain/README.md).
 - [Solar Winds source](source/SolarWinds/).
