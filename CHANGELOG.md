@@ -1,8 +1,10 @@
 # Changelog
 
-ZZScreensavers 1.2 - Digital Rain / RasterIX - 24 November 2026
+## ZZScreensavers 1.2 - Digital Rain / RasterIX - 24 November 2026
+
 Adds ZZScreensaverR 1.0 (MatrixView Digital Rain), the fourth screensaver
 in the collection and the seventh released XACP application using RasterIX.
+
 - 640x480 RGB565 at approximately 60 FPS across all three presets on the
   tested Amiga 4000/68060 with ZZ9000 and XX19e-RIX.
 - ARM Core1 draws the character cells; RasterIX blends the flares.
@@ -12,13 +14,15 @@ in the collection and the seventh released XACP application using RasterIX.
 - Complete Amiga LHA package and corresponding Digital Rain GPL source.
 - Requires XX19d-RIX or compatible later firmware, Picasso96 and a matching
   XACP driver; reported hardware tests used XX19e-RIX.
-Release: ZZScreensavers 1.2.
 
-Video: Digital Rain at 60 FPS.
+Release: [ZZScreensavers 1.2](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.2).
+
+Video: [Digital Rain at 60 FPS](https://youtu.be/gXnYjHUTfBw).
 
 Documentation: [ZZScreensavers](applications/ZZScreensaver/README.md).
 
 ---
+
 
 ## ZZMiniGL Beta 1 - MiniGL 29.1 / RasterIX - 22 November 2026
 
