@@ -12,6 +12,8 @@ ZZScreensavers combines Earth, Julia, Solar Winds and the new MatrixView digital
 
 ## Digital Rain
 
+ZZScreensaverR is the seventh released XACP application to use RasterIX FPGA acceleration. It runs at approximately 60 FPS in 640x480 RGB565 across all three presets on the tested hardware.
+
 MatrixView by Alex Zolotov, with changes by Tugrul Galatali and the MPlayer port by Pigeon. Core1 draws the character cells directly into the framebuffer; RasterIX blends the flares.
 
 | Preset | Grid | Cell size |
@@ -29,6 +31,12 @@ ZZScreensaverR PRESET 3
 ![Digital Rain, preset 2 (host-rendered preview)](source/MatrixRain/previews/preset_2_64x48.png)
 
 The supplied hardware measurements on an A4000/060 with XX19e-RIX report 59.2, 59.4 and 59.5 frames/s for presets 1, 2 and 3 respectively, over 600 frames per preset. These are not guarantees for other configurations. The image above is a host-rendered preview, not an Amiga screenshot.
+
+### Video demonstration
+
+Digital Rain running on a real Amiga 4000 with ZZ9000/XACP and RasterIX.
+
+[![ZZScreensaverR - Digital Rain at 60 FPS](https://img.youtube.com/vi/gXnYjHUTfBw/hqdefault.jpg)](https://youtu.be/gXnYjHUTfBw)
 
 ## Installation and hotkeys
 

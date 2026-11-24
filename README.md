@@ -43,7 +43,7 @@ synthesis and shared multimedia operations.
 Complete engines can be dynamically loaded onto the second Cortex-A9. Current
 projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZQuake2, ZZQuakeGL,
 ZZVirtuaRacingRIX, ZZHalfLife, ZZDarkForcesNEXT, ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech,
-ZZScreensavers (Earth, Julia and Solar Winds), ZZVGMPlay and
+ZZScreensavers (Earth, Julia, Solar Winds and Digital Rain), ZZVGMPlay and
 other experimental engines.
 
 ## XACP v1.8  -  RasterIX and image decoding
@@ -52,12 +52,14 @@ XX19d-RIX adds the RasterIX hardware 3D renderer to the ZZ9000 FPGA and
 introduces XACP v1.8 with a dedicated JPEG/PNG image-service window. The
 AmigaOS datatype clients are in development and will be released later.
 
-RasterIX is now used by six separately released applications:
+RasterIX is now used by seven released XACP applications (counting Solar Winds
+and Digital Rain as separate executables within ZZScreensavers):
 
 - [ZZHalfLife 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZHalfLife-1.0) - Half-Life running on ARM Core1 with FPGA RasterIX rendering at 320x240, 640x480 and 800x600. Requires original Steam game data. [Video](https://youtu.be/EkbUq131PZ8).
 - [ZZQuake2 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuake2-1.0) - Quake II with software, TinyGL and FPGA RasterIX renderers.
 - [ZZQuakeGL 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZQuakeGL-1.0) - Original GLQuake renderer with RasterIX FPGA hardware acceleration at 320x240 to 1024x768. [Video](https://youtu.be/cV312wjwoPc).
-- [ZZScreensavers 1.1](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.1) - FPGA-accelerated Solar Winds.
+- [ZZScreensaverR 1.0 (ZZScreensavers 1.2)](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.2) - Matrix-style Digital Rain at approximately 60 FPS in 640x480 RGB565 across all three presets. [Video](https://youtu.be/gXnYjHUTfBw).
+- [ZZScreensaverS (ZZScreensavers 1.2)](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZScreensavers-1.2) - FPGA-accelerated Solar Winds.
 - [ZZOpenLara 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZOpenLara-1.0) - Tomb Raider I with software and FPGA RasterIX rendering.
 - [ZZVirtuaRacingRIX 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZVirtuaRacingRIX-1.0) - Enhanced Virtua Racing Deluxe (Sega 32X) with RasterIX 3D at 640x480 and up to 60 displayed images/s. [Video](https://youtu.be/NvPGxhvwGZo).
 
@@ -145,7 +147,7 @@ Historical builds and source remain archived for regression testing.
 | **[ZZDarkForcesNEXT](applications/games/ZZDarkForcesNEXT/README.md)** | The Force Engine / Dark Forces on Core1 with enhanced TFE features |
 | **[ZZRastan](applications/games/ZZRastan/README.md)** | Rastan arcade hardware recreation on Core1 |
 | **[ZZSpeech](applications/ZZSpeech/README.md)** | Speech synthesis acceleration |
-| **[ZZScreensavers 1.1](applications/ZZScreensaver/README.md)** | Core1 Earth and Julia plus FPGA RasterIX-accelerated Solar Winds |
+| **[ZZScreensavers 1.2](applications/ZZScreensaver/README.md)** | Core1 Earth and Julia plus RasterIX-accelerated Solar Winds and Digital Rain (approximately 60 FPS at 640x480) |
 | **[ZZ-MPEG](applications/mpegplayer/README.md)** | MPEG-1 / MP2 playback |
 | **[ZZPlayGUI / MP3 tools](applications/mp3/README.md)** | ARM-accelerated MP3/MP2 decoding |
 | **[zz9000.engine](applications/mp3/README.md)** | AmigaAMP external XACP engine |
