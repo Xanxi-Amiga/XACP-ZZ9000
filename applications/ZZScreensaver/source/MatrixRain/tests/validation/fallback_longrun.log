@@ -1,0 +1,8 @@
+== Matrix transport: status=ff error=00000000 caps=17ff dl=1 swap=1 idle=1
+   frames built=6000 submitted=6000 fenced=6000 swapped=6000 published=6000 flipped=5999 dropped=0 stalls=5997 fence_timeouts=0
+   tris/frame=5694 (mesh 0, culled 0/frame) chunks=355207 (59.2/frame) words/frame=233051 ringwait=8347 us/frame xform=8525 us/frame
+   virtual elapsed=100982.0 ms  gpu avg=9244 us min=3131 max=9870  swap avg=2831 us  loop avg=16823 us  68k pans=5999  violations=0
+   previous-frame copies=0, source/destination lifetime violations=0
+   stream: triangles=34161251 tri_hash=7cfb4655c33e83b1 list_hash=0c93e6c0b6708e68
+   adapter: direct cells=2852; last frame: 2744 quads drawn, 2528 of them direct
+   pixels: path off; frames written by Core1=0; last frame: 0 cells in pixels; quads lost=0

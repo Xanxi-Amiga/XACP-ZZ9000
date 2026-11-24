@@ -1,0 +1,20 @@
+FailAt 21
+; ZZScreensaverR_GuardTest - checks that ZZScreensaverR 1.0 ends when its screen is no longer in front.
+; One run of the 64 x 48 grid. After 300 frames (about five seconds) the program sends its own
+; screen to the back: the Workbench shows and the program must end at once. Should it not, the run
+; ends by itself 60 frames later. Nothing to type; do not touch the mouse or the keyboard.
+; Run ZZScreensaverR_Test first. Switch off any screen blanker of another program first.
+; In the drawer of ZZScreensaverR, from a Shell there:
+;      Execute ZZScreensaverR_GuardTest
+; Everything goes to zzsr_guard.txt in that drawer.
+Echo "=== ZZScreensaverR 1.0 guard test ===" >zzsr_guard.txt
+Version ZZScreensaverR >>zzsr_guard.txt
+Echo "=== PRESET 2 grid 64x48, screen to back after 300 frames ===" >>zzsr_guard.txt
+ZZScreensaverR 360 PRESET 2 TOBACK 300 DEBUG >>zzsr_guard.txt
+If WARN
+  Echo "GUARD RUN FAILED" >>zzsr_guard.txt
+  Echo "ZZScreensaverR_GuardTest: run failed. See zzsr_guard.txt"
+  Quit 10
+EndIf
+Echo "=== ZZScreensaverR 1.0 guard test done ===" >>zzsr_guard.txt
+Echo "ZZScreensaverR_GuardTest done: see zzsr_guard.txt"

@@ -1,0 +1,39 @@
+FailAt 21
+; ZZScreensaverR_Test - run of ZZScreensaverR 1.0 on the Amiga.
+; Three runs of 600 frames, one per character grid, lightest first. Nothing to type: each run ends
+; by itself. Do not touch the mouse or the keyboard, that ends the current run early.
+; Switch off any screen blanker of another program (MCP, Workbench Blanker...) first.
+; In the drawer of ZZScreensaverR, from a Shell there:
+;      Execute ZZScreensaverR_Test
+; Everything goes to zzsr_10.txt in that drawer.
+; The stop on a change of front screen has its own script, ZZScreensaverR_GuardTest.
+Echo "=== ZZScreensaverR 1.0 test ===" >zzsr_10.txt
+Version >>zzsr_10.txt
+Version ZZScreensaverR >>zzsr_10.txt
+
+Echo "=== RUN 1 PRESET 3 grid 40x30 ===" >>zzsr_10.txt
+ZZScreensaverR 600 PRESET 3 DEBUG >>zzsr_10.txt
+If WARN
+  Echo "RUN 1 FAILED: the script stops here" >>zzsr_10.txt
+  Echo "ZZScreensaverR_Test: run 1 failed, stopping. See zzsr_10.txt"
+  Quit 10
+EndIf
+
+Echo "=== RUN 2 PRESET 2 grid 64x48 ===" >>zzsr_10.txt
+ZZScreensaverR 600 PRESET 2 DEBUG >>zzsr_10.txt
+If WARN
+  Echo "RUN 2 FAILED: the script stops here" >>zzsr_10.txt
+  Echo "ZZScreensaverR_Test: run 2 failed, stopping. See zzsr_10.txt"
+  Quit 10
+EndIf
+
+Echo "=== RUN 3 PRESET 1 grid 80x60 ===" >>zzsr_10.txt
+ZZScreensaverR 600 PRESET 1 DEBUG >>zzsr_10.txt
+If WARN
+  Echo "RUN 3 FAILED: the script stops here" >>zzsr_10.txt
+  Echo "ZZScreensaverR_Test: run 3 failed, stopping. See zzsr_10.txt"
+  Quit 10
+EndIf
+
+Echo "=== ZZScreensaverR 1.0 test done ===" >>zzsr_10.txt
+Echo "ZZScreensaverR_Test done: see zzsr_10.txt"

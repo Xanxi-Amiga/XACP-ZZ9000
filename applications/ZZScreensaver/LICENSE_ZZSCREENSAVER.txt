@@ -1,7 +1,7 @@
-ZZScreensavers 1.1 — component licensing
+ZZScreensavers 1.2 - component licensing
 ======================================
 
-Copyright (C) 2026 Xanxi.
+Copyright (C) 2026 Xanxi (XACP adaptations and proprietary components).
 
 ZZScreensaverE, ZZScreensaverJ and ZZScreensaverHotkeys are proprietary
 freeware. Redistribution of the complete, unmodified Xanxi freeware binaries
@@ -9,15 +9,18 @@ in this package is permitted; modification or separate redistribution of
 modified versions requires the copyright holder's permission. Their original
 1.0 licensing terms are retained for these separately identifiable programs.
 
-ZZScreensaverS (Solar Winds) is a distinct GPL-2.0-or-later program. It is a
-derivative of Solar Winds by Terence M. Welsh (C) 1999-2010, with Amiga/Core1
-adaptation (C) 2026 Xanxi. The Solar Winds executable and its corresponding
-source are licensed under GNU GPL version 2 or later, not under the Xanxi
-proprietary freeware terms above. See COPYING_SolarWinds.txt and the separate
-source ZIP distributed alongside this package.
+ZZScreensaverS (Solar Winds) is a distinct GPL-2.0-or-later program derived
+from Solar Winds by Terence M. Welsh (C) 1999-2010. Its corresponding source
+is available in the ZZScreensavers 1.1 release; the binary is unchanged.
 
-The three distinct programs and commodity may be distributed together as an
-aggregate; no closed-source restriction is asserted over GPL-covered code.
+ZZScreensaverR (Digital Rain) is a distinct GPL-2.0-or-later program derived
+from MatrixView by Alex Zolotov (C) 2003, with changes by Tugrul Galatali and
+an MPlayer port by Pigeon (2006). Its corresponding source is provided in
+ZZScreensaverR-1.0-GPL-source.zip. See COPYING_MatrixView.txt and original
+notices in the source. 0BSD support components retain their original terms.
+
+The four screensavers and the commodity are distributed as an aggregate;
+no closed-source restriction is asserted over GPL-covered code.
 
 NASA imagery embedded in ZZScreensaverE is not owned by Xanxi; see
 NASA_CREDITS.txt and NASA media use guidance.

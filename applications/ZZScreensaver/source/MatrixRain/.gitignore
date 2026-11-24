@@ -1,0 +1,5 @@
+/build/
+/tests/build/
+/ZZScreensaverR
+/BINARY_SHA256SUMS.txt
+__pycache__/

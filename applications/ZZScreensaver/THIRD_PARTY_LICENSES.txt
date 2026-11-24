@@ -1,13 +1,16 @@
-ZZScreensavers 1.1 — third-party credits
+ZZScreensavers 1.2 - third-party credits
 ======================================
 Solar Winds: Terence M. Welsh, copyright (C) 1999-2010.
 Original project: https://github.com/reallyslickscreensavers/reallyslickscreensavers
-License: GPL-2.0-or-later. The corresponding source is in the release source ZIP.
+License: GPL-2.0-or-later. Corresponding source: ZZScreensavers 1.1 release.
+
+MatrixView: Alex Zolotov, copyright (C) 2003; changes by Tugrul Galatali;
+MPlayer video-out port by Pigeon (2006).
+Source: https://github.com/Distrotech/MPlayer
+License: GPL-2.0-or-later. Corresponding source: ZZScreensaverR-1.0-GPL-source.zip.
+See source/MatrixRain/PROVENANCE.md for the exact upstream revision.
 
 XACP adaptation: Xanxi, copyright (C) 2026. Some librixgpu/ZZGL components
-carry 0BSD notices; original headers and LICENSES/0BSD.txt are retained in
-the Solar Winds source ZIP. The combined Solar Winds executable is provided
-under GPL-2.0-or-later.
-
+carry 0BSD notices; original headers and LICENSES/0BSD.txt are retained.
 NASA Visible Earth / Blue Marble: see NASA_CREDITS.txt.
 MNT ZZ9000: MNT Research GmbH. RasterIX GPU: ToNi3141.
