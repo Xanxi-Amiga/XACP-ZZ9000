@@ -100,4 +100,21 @@ Standalone recreation of the Taito Rastan arcade hardware for ZZ9000 Core1.
 The original arcade CPUs and hardware are emulated on the ARM side, while the
 Amiga handles launch, RTG display, input and AHI audio.
 
+### ZZStrider 1.0
+
+[ZZStrider](ZZStrider/README.md) brings the original Capcom Strider
+arcade game (1989) to classic Amiga systems equipped with the ZZ9000.
+
+Based on the ZZRastan/XACP architecture and an adapted FinalBurn Alpha
+CPS-1 engine, the complete arcade machine is emulated on ARM Core1,
+including software rendering and sound emulation.
+
+Full arcade speed on tested 68030 and 68060 systems.
+
+Requires firmware XX19d-RIX or later XACP-compatible firmware,
+Picasso96 and AHI unit 0 for audio. Original arcade ROMs are not included.
+
+[Download ZZStrider 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZStrider_V1.0) |
+[Watch gameplay video](https://youtu.be/jJQBhGBkgtg).
+
 See each game directory for requirements, installation and licensing details.
