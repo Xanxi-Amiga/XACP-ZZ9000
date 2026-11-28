@@ -1,0 +1,30 @@
+BSD 3-Clause License - applies to the MAME files used as REFERENCE for ZZStrider:
+
+  src/mame/capcom/cps1.cpp, cps1_v.cpp, cps1.h   copyright-holders: Paul Leaman
+  src/devices/sound/okim6295.cpp                 copyright-holders: Mirko Buffoni, Aaron Giles
+  src/devices/sound/okiadpcm.cpp                 copyright-holders: Andrew Gardner, Aaron Giles
+
+arm/zzs_msm6295.c follows the behaviour of okim6295.cpp / okiadpcm.cpp (command decoding,
+ADPCM step tables, volume table); the star field, the palette page rule and the video-control
+gating in arm/cps1/cps_draw.cpp and cps_pal.cpp follow cps1_v.cpp.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted
+provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of
+   conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice, this list of
+   conditions and the following disclaimer in the documentation and/or other materials provided
+   with the distribution.
+3. Neither the name of the copyright holder nor the names of its contributors may be used to
+   endorse or promote products derived from this software without specific prior written
+   permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
