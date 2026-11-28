@@ -1,5 +1,36 @@
 # Changelog
 
+## ZZStrider 1.0 - Capcom CPS-1 Arcade Emulation - 28 November 2026
+
+First public release of ZZStrider for AmigaOS 3.x and the MNT ZZ9000.
+
+- Standalone emulation of the original Capcom Strider (1989) arcade game.
+- Builds on the ZZRastan/XACP architecture with an adapted FinalBurn
+  Alpha CPS-1 emulation engine running natively on ARM Core1.
+- Cyclone 68000, CZ80, CPS-1 video, YM2151 and MSM6295 emulation.
+- Full arcade speed at approximately 59.64 FPS on tested 68030
+  and 68060 systems.
+- Approximately 20% host CPU usage on an A4000/68060 at 50 MHz
+  and 70% on the tested 68030 system.
+- Fullscreen Picasso96 RTG display with ARM software rendering.
+- Keyboard, DB9 joystick and game controller support.
+- GUI for ROM selection, difficulty and sound, with pause/resume
+  during gameplay.
+- Requires XX19d-RIX or later XACP-compatible firmware,
+  Picasso96 and AHI unit 0 for audio.
+- Original arcade ROMs are required and are not distributed.
+- Non-commercial freeware with ARM Core1 sources and third-party
+  licence notices. Amiga launcher and GUI remain proprietary.
+
+Release: [ZZStrider 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZStrider_V1.0).
+
+Video: [ZZStrider gameplay](https://youtu.be/jJQBhGBkgtg).
+
+Documentation: [ZZStrider](applications/games/ZZStrider/README.md).
+
+---
+
+
 ## ZZScreensavers 1.2 - Digital Rain / RasterIX - 24 November 2026
 
 Adds ZZScreensaverR 1.0 (MatrixView Digital Rain), the fourth screensaver
