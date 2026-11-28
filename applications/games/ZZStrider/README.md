@@ -63,6 +63,10 @@ The applicable third-party terms, including publication of modified source, non-
 
 Both the binary package and ARM source archive are available from the [ZZStrider 1.0 release](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZStrider_V1.0).
 
+## Gameplay video
+
+[![ZZStrider 1.0 - Arcade gameplay on Amiga with ZZ9000](https://img.youtube.com/vi/jJQBhGBkgtg/0.jpg)](https://youtu.be/jJQBhGBkgtg)
+
 ## Credits
 
 Xanxi (ZZ9000/XACP integration); FB Alpha, FBNeo and MAME contributors; FinalDave and notaz (Cyclone 68000); notaz and PicoDrive contributors; Stephane Dallongeville and NJ (CZ80); Jarek Burczynski (YM2151); Mirko Buffoni, Aaron Giles and Andrew Gardner (MAME OKI sound reference); MNT Research (ZZ9000); Fitzsteve (68030 testing).
