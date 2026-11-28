@@ -42,9 +42,9 @@ synthesis and shared multimedia operations.
 
 Complete engines can be dynamically loaded onto the second Cortex-A9. Current
 projects include ZZDoom, ZZQuake, ZZQuake HighRes, ZZQuake2, ZZQuakeGL,
-ZZVirtuaRacingRIX, ZZHalfLife, ZZDarkForcesNEXT, ZZPicoDrive, ZZRastan, ZZPPC, ZZSpeech,
-ZZScreensavers (Earth, Julia, Solar Winds and Digital Rain), ZZVGMPlay and
-other experimental engines.
+ZZVirtuaRacingRIX, ZZHalfLife, ZZDarkForcesNEXT, ZZPicoDrive, ZZRastan,
+ZZStrider, ZZPPC, ZZSpeech, ZZScreensavers (Earth, Julia, Solar Winds and
+Digital Rain), ZZVGMPlay and other experimental engines.
 
 ## XACP v1.8  -  RasterIX and image decoding
 
@@ -146,6 +146,7 @@ Historical builds and source remain archived for regression testing.
 | **[ZZQuake HighRes](applications/games/ZZQuakeHighRes/README.md)** | 640x480, 800x600 and 1024x768 Quake builds on Core1 |
 | **[ZZDarkForcesNEXT](applications/games/ZZDarkForcesNEXT/README.md)** | The Force Engine / Dark Forces on Core1 with enhanced TFE features |
 | **[ZZRastan](applications/games/ZZRastan/README.md)** | Rastan arcade hardware recreation on Core1 |
+| **[ZZStrider 1.0](applications/games/ZZStrider/README.md)** | Strider / Capcom CPS-1 arcade emulation on ARM Core1 |
 | **[ZZSpeech](applications/ZZSpeech/README.md)** | Speech synthesis acceleration |
 | **[ZZScreensavers 1.2](applications/ZZScreensaver/README.md)** | Core1 Earth and Julia plus RasterIX-accelerated Solar Winds and Digital Rain (approximately 60 FPS at 640x480) |
 | **[ZZ-MPEG](applications/mpegplayer/README.md)** | MPEG-1 / MP2 playback |
