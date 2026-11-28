@@ -540,6 +540,8 @@ framebuffer rendering
 ```
 
 Rastan World and Rastan Saga Japan ROM sets are supported.
+No commercial game ROMs or game assets are distributed.
+The source corresponding to the ARM Core1 blob is included where required by the applicable third-party licenses. The Amiga-side launcher and GUI remain proprietary.
 
 ---
 
@@ -579,6 +581,4 @@ The separate Amiga launcher and GUI remain proprietary.
 [Gameplay video](https://youtu.be/jJQBhGBkgtg) |
 [Documentation](games/ZZStrider/README.md)
 
-No commercial game ROMs or game assets are distributed.
 
-The source corresponding to the ARM Core1 blob is included where required by the applicable third-party licenses. The Amiga-side launcher and GUI remain proprietary.
