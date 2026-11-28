@@ -541,6 +541,44 @@ framebuffer rendering
 
 Rastan World and Rastan Saga Japan ROM sets are supported.
 
+---
+
+# ZZStrider 1.0
+
+Directory: [`games/ZZStrider/`](games/ZZStrider/README.md)
+
+ZZStrider is a standalone emulator of the Capcom CPS-1 arcade hardware
+for Strider (1989), based on the ZZRastan/XACP architecture and an
+adapted FinalBurn Alpha CPS-1 emulation engine.
+
+The complete arcade machine is emulated on the ZZ9000 ARM Cortex-A9
+Core1, while AmigaOS handles program launch, Picasso96 display,
+keyboard and controller input, ROM loading and AHI audio.
+
+Main features:
+
+- Full arcade speed on tested 68030 and 68060 systems.
+- Cyclone 68000 and CZ80 Z80 emulation.
+- CPS-1 software rendering on ARM Core1.
+- YM2151 FM and MSM6295 ADPCM sound.
+- Fullscreen RTG display.
+- Keyboard, DB9 joystick and game controller support.
+- GUI for ROM selection, difficulty and sound.
+- Pause and resume.
+
+Requires firmware XX19d-RIX or later XACP-compatible firmware,
+Picasso96 and AHI unit 0 for audio.
+
+Original arcade ROMs are required and are not included.
+
+ZZStrider is distributed as freeware for non-commercial use.
+ARM Core1 sources and third-party licence notices are provided.
+The separate Amiga launcher and GUI remain proprietary.
+
+[Download ZZStrider 1.0](https://github.com/Xanxi-Amiga/XACP-ZZ9000/releases/tag/ZZStrider_V1.0) |
+[Gameplay video](https://youtu.be/jJQBhGBkgtg) |
+[Documentation](games/ZZStrider/README.md)
+
 No commercial game ROMs or game assets are distributed.
 
 The source corresponding to the ARM Core1 blob is included where required by the applicable third-party licenses. The Amiga-side launcher and GUI remain proprietary.
