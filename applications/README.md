@@ -53,6 +53,7 @@ The only exception is the set of **very early fractal / Core1 demonstration prog
 | `games/ZZQuakeHighRes/`                 | **ZZQuake HighRes 1.0**   | Quake 640x480 / 800x600 / 1024x768 on Core1   | Current              |
 | `games/ZZDarkForcesNEXT/`               | **ZZDarkForcesNEXT**      | The Force Engine / Dark Forces on ARM Core1    | Current              |
 | `games/ZZRastan/`                       | **ZZRastan 1.0**          | Rastan arcade hardware recreation on ARM Core1 | Current              |
+| `games/ZZStrider/` | **[ZZStrider 1.0](games/ZZStrider/README.md)** | Strider / Capcom CPS-1 arcade emulation on ARM Core1 | Current |
 | `mpegplayer/`                           | **ZZ-MPEG**               | MPEG-1 video / MP2 audio playback              | Advanced Beta        |
 | `mp3/`                                  | **ZZMP3Play / ZZPlayGUI** | ARM-accelerated MP3 / MP2 playback             | Current / historical |
 | `mp3/`                                  | **zz9000.engine**          | AmigaAMP external ARM decoding engine          | Current / historical |
